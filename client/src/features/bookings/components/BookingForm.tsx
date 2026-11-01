@@ -106,12 +106,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* 2. Guest & Contact Information */}
+      {/* 2. Customer & Contact Information */}
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2 text-slate-900 font-semibold">
             <User className="w-5 h-5 text-slate-700" />
-            <CardTitle>Guest & Primary Contact Details</CardTitle>
+            <CardTitle>Customer & Contact Details</CardTitle>
           </div>
           <CardDescription>
             Record the client or guest representative details responsible for this catering event.
@@ -120,7 +120,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Guest / Contact Name *"
+              label="Customer / Contact Name *"
               placeholder="e.g. Subhashish Roy"
               leftIcon={<User className="w-4 h-4" />}
               error={errors.guestName?.message}
@@ -138,7 +138,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Guest Email (Optional)"
+              label="Customer Email (Optional)"
               type="email"
               placeholder="e.g. guest@example.com"
               leftIcon={<Mail className="w-4 h-4" />}
