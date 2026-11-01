@@ -1,0 +1,23 @@
+{
+  "name": "lotus-caterer",
+  "version": "1.0.0",
+  "description": "Internal Catering Management System for Lotus Caterer",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "build:server": "npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:server && npm run build:client",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev"
+  },
+  "keywords": [
+    "catering-management",
+    "express",
+    "react",
+    "typescript",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC"
+}
