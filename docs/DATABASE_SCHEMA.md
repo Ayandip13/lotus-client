@@ -19,21 +19,34 @@ Based on confirmed requirements, the domain requires persisting data for:
 
 ---
 
-## 3. Proposed Schema Specifications
+## 3. Implemented Schemas (Phase 2)
 
-### 3.1 Partner Account Entity (`partners`)
-Represents the three business partners.
+### 3.1 Partner Entity (`partners`)
+Represents the three business partners holding equal operational and financial authority.
 
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | Yes | Unique partner identifier |
-| `name` | String | Yes | Full name of the partner |
-| `email` | String | Yes (Unique)| Email address for login and notifications |
-| `phone` | String | No | Contact phone number |
-| `currentBalance` | Number | Yes | Calculated/cached current funds held by this partner |
-| `isActive` | Boolean | Yes | Account status (default: `true`) |
-| `createdAt` | Date | Auto | Timestamp |
-| `updatedAt` | Date | Auto | Timestamp |
+| Field | Type | Required | Unique | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique partner identifier |
+| `name` | String | Yes | No | Full partner name (min 2 chars) |
+| `email` | String | No | Sparse | Contact email address |
+| `phone` | String | No | No | Contact phone number |
+| `status` | String (Enum) | Yes | No | Account status: `ACTIVE` \| `INACTIVE` (default: `ACTIVE`) |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
+
+### 3.2 User Entity (`users`)
+Maintains login authentication credentials mapped 1-to-1 with a partner.
+
+| Field | Type | Required | Unique | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique user identifier |
+| `partner` | ObjectId (Ref) | Yes | Yes | Reference to associated `Partner` document |
+| `username` | String | Yes | Yes | Login identifier (lowercase, trimmed, min 3 chars) |
+| `passwordHash`| String | Yes | No | Bcrypt hashed password (`select: false`, stripped from JSON) |
+| `status` | String (Enum) | Yes | No | Login status: `ACTIVE` \| `INACTIVE` (default: `ACTIVE`) |
+| `lastLoginAt` | Date | No | No | Timestamp of most recent successful login |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
 
 ### 3.2 Booking Entity (`bookings`)
 Maintains customer reservation records.

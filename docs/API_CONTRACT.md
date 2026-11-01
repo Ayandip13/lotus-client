@@ -101,12 +101,67 @@ The backend strictly uses standard HTTP status codes:
 
 ---
 
-## 5. Phase 1 Implemented Endpoints
+## 5. Implemented Endpoints
 
-In accordance with Phase 1 constraints, **only infrastructure probes are exposed**:
-
+### 5.1 System Probes
 | Method | Path | Description | Access |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | Service uptime, timestamp, and environment probe | Public |
+| `GET` | `/health` / `/api/health` | Service uptime, timestamp, and environment probe | Public |
 
-*Domain feature endpoints (Partners, Bookings, Events, Transactions) will be established in subsequent phases upon business clarification.*
+### 5.2 Authentication Endpoints (Phase 2)
+| Method | Path | Description | Access | Headers |
+| :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/login` | Authenticate partner credentials and receive JWT | Public | None |
+| `POST` | `/api/auth/logout` | Discard partner session | Public | None |
+| `GET` | `/api/auth/me` | Resolve current authenticated partner and user session | Protected | `Authorization: Bearer <token>` |
+
+#### Login Request Payload:
+```json
+{
+  "username": "partner1",
+  "password": "Partner1@Lotus2026"
+}
+```
+
+#### Login Success Response:
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsIn...",
+    "user": {
+      "id": "6ae74e7f83df4e2c4c410097",
+      "username": "partner1",
+      "status": "ACTIVE",
+      "lastLoginAt": "2026-11-01T14:39:05.204Z"
+    },
+    "partner": {
+      "id": "6ae74e7f83df4e2c4c410093",
+      "name": "Partner 1",
+      "status": "ACTIVE"
+    }
+  }
+}
+```
+
+#### Me Success Response:
+```json
+{
+  "success": true,
+  "message": "Current partner session retrieved successfully",
+  "data": {
+    "user": {
+      "id": "6ae74e7f83df4e2c4c410097",
+      "username": "partner1",
+      "status": "ACTIVE",
+      "lastLoginAt": "2026-11-01T14:39:05.204Z"
+    },
+    "partner": {
+      "id": "6ae74e7f83df4e2c4c410093",
+      "name": "Partner 1",
+      "status": "ACTIVE"
+    }
+  }
+}
+```

@@ -155,3 +155,29 @@ Every incoming request flows through a strict, predictable pipeline:
 3. **Validation Layer**: `validateRequest(schema)` uses Zod to validate request parts. Invalid inputs are rejected immediately with a `400 Bad Request` and structured validation errors.
 4. **Controller Execution**: Thin controllers extract validated inputs and delegate business operations.
 5. **Centralized Error Boundary**: Any error thrown (or passed to `next(err)`) is trapped by `errorHandler`, normalized to the standard `ApiResponse` envelope, and returned with appropriate HTTP status codes.
+
+---
+
+## 6. Authentication & Partner Authorization Architecture (Phase 2)
+
+```
+[ Browser / Client ]                  [ Express API Server ]                  [ MongoDB ]
+        │                                       │                                  │
+        │── 1. POST /api/auth/login ───────────▶│                                  │
+        │      { username, password }           │── 2. Find user & compare hash ──▶│
+        │                                       │◀─ 3. Return user & partner ──────│
+        │◀─ 4. Return JWT Token + Session ──────│                                  │
+        │                                       │                                  │
+        │── 5. Subsequent Requests ────────────▶│                                  │
+        │      Authorization: Bearer <token>    │── 6. requireAuth (verify JWT)    │
+        │                                       │── 7. requirePartner (active check)
+        │                                       │── 8. Attach req.user & partner   │
+        │                                       │── 9. Controller handles action   │
+        │◀─ 10. Standard JSON Response ─────────│                                  │
+```
+
+### Key Security & Authorization Characteristics:
+- **Stateless Authorization**: JWT token issued with standard claims (`userId`, `partnerId`, `username`) and signed using `JWT_SECRET`.
+- **Equal Partner Policy**: All three partners share the exact same permissions. There is no hierarchical privilege escalation or Admin/Staff segregation.
+- **Identity Integrity**: Authenticated partner identity is derived directly from the verified token in `requireAuth` / `requirePartner` middleware; client-supplied partner IDs are never trusted blindly.
+- **Idempotent Provisioning**: Partner accounts are seeded using a dedicated script without public signup exposure or credential overwrites.

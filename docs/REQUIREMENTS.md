@@ -56,7 +56,7 @@ The following questions require formal client clarification before corresponding
 | :--- | :--- | :--- | :--- |
 | **Q1** | **Are bookings and events separate entities?** | Dictates whether Booking and Event are distinct database models or synonyms. | **Pending Clarification** |
 | **Q2** | **Can one booking contain multiple events?** | Affects one-to-one vs. one-to-many relationship modeling between Bookings and Events (e.g., a multi-day wedding with separate ceremonies). | **Pending Clarification** |
-| **Q3** | **What exactly are the three user roles?** | Determines whether roles correspond to specific partners (e.g., Partner A, Partner B, Partner C) or functional administrative tiers (e.g., Admin, Partner, Staff). | **Pending Clarification** |
+| **Q3** | **What exactly are the three user roles?** | **RESOLVED in Phase 2**: Confirmed equal 3-partner access model. Exactly three partners with individual credentials, shared internal visibility, equal administrative rights, and no Admin/Staff hierarchy. | **CONFIRMED & IMPLEMENTED** |
 | **Q4** | **Can partners transfer money between themselves?** | Affects the transaction model: determines if inter-partner balance adjustments/transfers need explicit double-entry records. | **Pending Clarification** |
 | **Q5** | **How should shared expenses be allocated?** | Determines cost-allocation logic: are general business overhead expenses split equally (1/3 each), weighted by partner, or kept at an entity level? | **Pending Clarification** |
 | **Q6** | **What are the rules for final profit distribution?** | Dictates financial year-end or event-closeout calculations: how is net surplus distributed among the three partners? | **Pending Clarification** |

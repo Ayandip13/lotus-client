@@ -17,7 +17,10 @@ import {
   Terminal,
 } from 'lucide-react';
 
+import { useAuth } from '../features/auth/context/AuthContext';
+
 export const DashboardShellPage: React.FC = () => {
+  const { partner, user } = useAuth();
   const { data: healthResponse, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['system-health'],
     queryFn: checkSystemHealth,
@@ -30,11 +33,14 @@ export const DashboardShellPage: React.FC = () => {
       {/* Page Title & Status Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            System Foundation & Architecture
-          </h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Lotus Caterer Management
+            </h1>
+            <Badge variant="success">Phase 2 Active</Badge>
+          </div>
           <p className="mt-1 text-sm text-slate-500">
-            Phase 1 Foundation established for Lotus Caterer Management System.
+            Welcome back, <strong className="text-slate-800">{partner?.name || 'Partner'}</strong> ({user ? `@${user.username}` : ''}). Equal 3-partner management session active.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -47,16 +53,16 @@ export const DashboardShellPage: React.FC = () => {
           >
             Probe Health
           </Button>
-          <Badge variant="success">Phase 1 Active</Badge>
+          <Badge variant="outline">Equal Partner Access</Badge>
         </div>
       </div>
 
       {/* Operational Notice */}
       <Alert
         variant="info"
-        title="Phase 1 Scope Discipline"
+        title="Phase 2 Scope Discipline"
       >
-        In accordance with Phase 1 architectural specifications, no business calculations, unconfirmed accounting logic, or mock financial numbers are implemented. Feature modules will be introduced sequentially in upcoming phases following strict client clarification.
+        Authentication and equal partner authorization are fully implemented and verified. In accordance with strict project rules, booking management, event jobs, and financial accounting logic remain scheduled for subsequent phases.
       </Alert>
 
       {/* System Diagnostic Cards */}

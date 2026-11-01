@@ -8,9 +8,11 @@ import {
   PieChart,
   X,
   ShieldCheck,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Badge } from '../components/ui/Badge';
+import { useAuth } from '../features/auth/context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -29,8 +31,8 @@ const navItems = [
     name: 'Partner Accounts',
     href: '/partners',
     icon: Users,
-    badge: 'Phase 2',
-    badgeVariant: 'neutral' as const,
+    badge: 'Equal Access',
+    badgeVariant: 'success' as const,
   },
   {
     name: 'Bookings & Events',
@@ -56,6 +58,8 @@ const navItems = [
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { partner, user, logout } = useAuth();
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -140,15 +144,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           })}
         </div>
 
-        {/* Footer Info / Documentation Link */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-          <div className="flex items-center gap-2 text-xs text-slate-600">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-medium">Engineering Standards</span>
+        {/* Footer Info / Active Partner & Sign Out */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/50 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-slate-700">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold">{partner?.name || 'Partner Account'}</span>
+            </div>
+            {user && (
+              <span className="text-[10px] text-slate-400 font-mono">@{user.username}</span>
+            )}
           </div>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Phase 1 Foundation Active. All architecture rules strictly enforced.
-          </p>
+          <div className="text-[11px] text-slate-500">
+            Equal 3-Partner authorization active.
+          </div>
+          <button
+            onClick={() => {
+              onClose();
+              logout();
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
     </>

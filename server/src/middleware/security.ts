@@ -26,9 +26,15 @@ const corsOptions: CorsOptions = {
     }
 
     const cleanOrigin = origin.replace(/\/$/, '');
-    const isAllowed = allowedOrigins.some((allowed) => allowed === cleanOrigin);
+    const isExplicitlyAllowed = allowedOrigins.some((allowed) => allowed === cleanOrigin);
 
-    if (isAllowed || env.NODE_ENV !== 'production') {
+    if (
+      isExplicitlyAllowed ||
+      env.NODE_ENV !== 'production' ||
+      cleanOrigin.startsWith('http://localhost:') ||
+      cleanOrigin.startsWith('http://127.0.0.1:') ||
+      cleanOrigin.endsWith('.vercel.app')
+    ) {
       callback(null, true);
     } else {
       callback(new Error(`Origin ${origin} not allowed by CORS`));
