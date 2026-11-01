@@ -12,7 +12,9 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "seed:partners": "tsx src/scripts/seedPartners.ts",
-    "test": "tsx src/tests/auth.test.ts"
+    "test:auth": "tsx src/tests/auth.test.ts",
+    "test:events": "tsx src/tests/event.test.ts",
+    "test": "tsx src/tests/auth.test.ts && tsx src/tests/event.test.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

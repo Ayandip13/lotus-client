@@ -38,8 +38,8 @@ const navItems = [
     name: 'Bookings & Events',
     href: '/bookings',
     icon: CalendarDays,
-    badge: 'Phase 3',
-    badgeVariant: 'neutral' as const,
+    badge: 'Active',
+    badgeVariant: 'success' as const,
   },
   {
     name: 'Income & Expenses',

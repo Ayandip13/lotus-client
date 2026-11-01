@@ -37,7 +37,7 @@ export const DashboardShellPage: React.FC = () => {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               Lotus Caterer Management
             </h1>
-            <Badge variant="success">Phase 2 Active</Badge>
+            <Badge variant="success">Phase 3 Active</Badge>
           </div>
           <p className="mt-1 text-sm text-slate-500">
             Welcome back, <strong className="text-slate-800">{partner?.name || 'Partner'}</strong> ({user ? `@${user.username}` : ''}). Equal 3-partner management session active.
@@ -60,9 +60,9 @@ export const DashboardShellPage: React.FC = () => {
       {/* Operational Notice */}
       <Alert
         variant="info"
-        title="Phase 2 Scope Discipline"
+        title="Phase 3 Live: Booking, Guest & Event Management"
       >
-        Authentication and equal partner authorization are fully implemented and verified. In accordance with strict project rules, booking management, event jobs, and financial accounting logic remain scheduled for subsequent phases.
+        Independent catering job records and guest contact information are now live with full CRUD operations, pagination, search, and equal partner audit tracking. Financial transactions and balances remain scheduled for Phase 4 & 5.
       </Alert>
 
       {/* System Diagnostic Cards */}

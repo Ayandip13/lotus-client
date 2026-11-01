@@ -61,11 +61,16 @@ client/src/
 │   ├── DashboardShellPage.tsx # Overview dashboard landing view
 │   └── NotFoundPage.tsx       # 404 handler
 │
-├── features/             # Domain modules (to be implemented in subsequent phases)
-│   ├── partners/         # Partner accounts, balances, deposits
-│   ├── bookings/         # Booking management
-│   ├── events/           # Event tracking & event-specific ledgers
-│   └── transactions/     # Income, expense, and attachment management
+├── features/             # Domain modules
+│   ├── auth/             # Partner authentication & authorization (Phase 2)
+│   ├── bookings/         # Booking & Event management (Phase 3)
+│   │   ├── types/        # BookingEvent, BookingFormData, Query interfaces
+│   │   ├── schemas/      # Zod validation schema for booking forms
+│   │   ├── services/     # bookingService API consumer
+│   │   ├── components/   # BookingTable, BookingCard, BookingForm, DeleteBookingModal
+│   │   └── pages/        # BookingListPage, BookingCreatePage, Details, Edit
+│   ├── partners/         # Partner accounts, balances, deposits (Phase 5)
+│   └── transactions/     # Income, expense, and attachment management (Phase 4)
 │
 ├── services/             # HTTP clients and API integration functions
 │   └── api.ts            # Centralized Axios instance with interceptors and error normalization
@@ -103,9 +108,15 @@ server/src/
 │   └── requestLogger.ts  # Request logging utility
 │
 ├── modules/              # Modular domain features (controllers, routes, services)
-│   └── health/           # System health monitoring endpoint
-│       ├── health.controller.ts
-│       └── health.routes.ts
+│   ├── health/           # System health monitoring endpoint
+│   │   ├── health.controller.ts
+│   │   └── health.routes.ts
+│   ├── auth/             # Authentication & credentials (Phase 2)
+│   │   ├── user.model.ts, auth.service.ts, auth.controller.ts, auth.routes.ts
+│   ├── partners/         # Equal Partner domain model (Phase 2)
+│   │   └── partner.model.ts
+│   └── events/           # Catering Bookings & Events (Phase 3)
+│       ├── event.model.ts, event.schema.ts, event.service.ts, event.controller.ts, event.routes.ts
 │
 ├── services/             # Core shared application services
 │   └── storage/          # Storage abstraction for receipts and attachments

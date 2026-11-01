@@ -5,6 +5,10 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { PhasePlaceholder } from '../pages/PhasePlaceholder';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
+import { BookingListPage } from '../features/bookings/pages/BookingListPage';
+import { BookingCreatePage } from '../features/bookings/pages/BookingCreatePage';
+import { BookingDetailsPage } from '../features/bookings/pages/BookingDetailsPage';
+import { BookingEditPage } from '../features/bookings/pages/BookingEditPage';
 
 export const router = createBrowserRouter([
   {
@@ -38,17 +42,24 @@ export const router = createBrowserRouter([
           },
           {
             path: 'bookings',
-            element: (
-              <PhasePlaceholder
-                phase="Phase 3"
-                title="Bookings & Events Management"
-                description="Manage customer reservations, guest information, and scheduled catering jobs."
-                unresolvedQuestions={[
-                  'Are bookings and events separate entities? (Question Q1)',
-                  'Can one booking contain multiple events (e.g. multi-day weddings)? (Question Q2)',
-                ]}
-              />
-            ),
+            children: [
+              {
+                index: true,
+                element: <BookingListPage />,
+              },
+              {
+                path: 'new',
+                element: <BookingCreatePage />,
+              },
+              {
+                path: ':id',
+                element: <BookingDetailsPage />,
+              },
+              {
+                path: ':id/edit',
+                element: <BookingEditPage />,
+              },
+            ],
           },
           {
             path: 'transactions',

@@ -48,39 +48,27 @@ Maintains login authentication credentials mapped 1-to-1 with a partner.
 | `createdAt` | Date | Auto | No | Mongoose timestamp |
 | `updatedAt` | Date | Auto | No | Mongoose timestamp |
 
-### 3.2 Booking Entity (`bookings`)
-Maintains customer reservation records.
+### 3.3 Event / Booking Entity (`events`) — Implemented in Phase 3
+Unified catering job record combining booking specifications, event execution date, guest contact information, and partner audit tracking.
 
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | Yes | Unique booking identifier |
-| `guestName` | String | Yes | Name of primary guest/customer |
-| `guestPhone` | String | Yes | Contact number of guest |
-| `guestEmail` | String | No | Email address of guest |
-| `bookingDate` | Date | Yes | Date the booking was logged |
-| `notes` | String | No | Special client instructions |
-| `status` | String (Enum) | Yes | Proposed: `INQUIRY`, `CONFIRMED`, `CANCELLED`, `COMPLETED` |
-| `createdAt` | Date | Auto | Timestamp |
-| `updatedAt` | Date | Auto | Timestamp |
+| Field | Type | Required | Unique / Index | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique event/booking identifier |
+| `title` | String | Yes | No | Event / Booking name (min 2, max 200 chars) |
+| `eventDate` | Date | Yes | Yes (Index) | Scheduled date of the catering event |
+| `eventDetails` | String | No | No | Detailed menu specs, instructions, notes (max 2000 chars) |
+| `guestName` | String | Yes | Yes (Index) | Primary client or guest contact name (min 2, max 100 chars) |
+| `guestPhone` | String | Yes | Yes (Index) | Primary contact phone number (min 5, max 20 chars) |
+| `guestEmail` | String | No | No | Optional client contact email address |
+| `guestAddress` | String | No | No | Optional venue location or contact address (max 500 chars) |
+| `createdByPartner` | ObjectId (Ref) | Yes | Yes (Index) | Reference to creating `Partner` document |
+| `isDeleted` | Boolean | Yes | Yes (Index) | Soft delete flag (default: `false`) |
+| `deletedAt` | Date | No | No | Timestamp of soft deletion |
+| `deletedByPartner` | ObjectId (Ref) | No | No | Reference to partner who deleted the record |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
 
-### 3.3 Event / Job Entity (`events`)
-Maintains catering job execution details and event-specific financial aggregates.
-
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | Yes | Unique event identifier |
-| `bookingId` | ObjectId | Tentative | Reference to associated Booking (Subject to Q1/Q2 resolution) |
-| `title` | String | Yes | Event name (e.g., "Sharma Wedding Reception") |
-| `eventDate` | Date | Yes | Scheduled date of the event |
-| `venue` | String | No | Venue location or address |
-| `guestCount` | Number | No | Expected number of guests/plates |
-| `totalIncome` | Number | Yes | Total funds received for this event (computed/cached) |
-| `totalExpenses` | Number | Yes | Total expenditures incurred for this event (computed/cached) |
-| `status` | String (Enum) | Yes | Proposed: `UPCOMING`, `IN_PROGRESS`, `COMPLETED`, `SETTLED` |
-| `createdAt` | Date | Auto | Timestamp |
-| `updatedAt` | Date | Auto | Timestamp |
-
-### 3.4 Transaction Entity (`transactions`)
+### 3.4 Transaction Entity (`transactions`) — Scheduled for Phase 4
 Captures all money movements: partner deposits, personal business expenses, event income, and event expenses.
 
 | Field | Type | Required | Description |

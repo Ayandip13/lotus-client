@@ -4,6 +4,7 @@ import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
 import { healthRoutes } from './modules/health/health.routes';
 import { authRoutes } from './modules/auth/auth.routes';
+import { eventRoutes } from './modules/events/event.routes';
 import { NotFoundError } from './utils/appError';
 
 export const createApp = (): Application => {
@@ -25,10 +26,16 @@ export const createApp = (): Application => {
   // 4. Authentication Endpoints
   app.use('/api/auth', authRoutes);
 
-  // 5. API v1 Router Mount Point
+  // 5. Booking & Event Endpoints
+  app.use('/api/events', eventRoutes);
+  app.use('/api/bookings', eventRoutes);
+
+  // 6. API v1 Router Mount Point
   const apiV1Router = express.Router();
   apiV1Router.use('/health', healthRoutes);
   apiV1Router.use('/auth', authRoutes);
+  apiV1Router.use('/events', eventRoutes);
+  apiV1Router.use('/bookings', eventRoutes);
   app.use('/api/v1', apiV1Router);
 
   // 5. 404 Catch-All Route Handler

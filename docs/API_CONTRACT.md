@@ -165,3 +165,54 @@ The backend strictly uses standard HTTP status codes:
   }
 }
 ```
+
+### 5.3 Booking & Event Management Endpoints (Phase 3)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/events` | Create new independent booking / event record | Protected (Equal Partner) |
+| `GET` | `/api/v1/events` | List bookings with pagination, search, and sorting | Protected (Equal Partner) |
+| `GET` | `/api/v1/events/:id` | Retrieve single booking details with creator partner | Protected (Equal Partner) |
+| `PUT` | `/api/v1/events/:id` | Update an existing booking/event record | Protected (Equal Partner) |
+| `DELETE` | `/api/v1/events/:id` | Soft-delete a booking with partner audit stamp | Protected (Equal Partner) |
+
+*(Note: `/api/v1/bookings` is maintained as an active route alias to `/api/v1/events`)*
+
+#### Create Event Request Payload (`POST /api/v1/events`):
+```json
+{
+  "title": "Roy Wedding Reception",
+  "eventDate": "2026-12-25T18:00:00.000Z",
+  "eventDetails": "Dinner catering for 350 guests at Royal Palace",
+  "guestName": "Subhashish Roy",
+  "guestPhone": "+91 98300 12345",
+  "guestEmail": "subhash.roy@example.com",
+  "guestAddress": "Salt Lake Sector 5, Kolkata"
+}
+```
+
+#### Event Success Response:
+```json
+{
+  "success": true,
+  "message": "Booking/event created successfully",
+  "data": {
+    "_id": "6ae778ffb49a8de3c0fabc41",
+    "title": "Roy Wedding Reception",
+    "eventDate": "2026-12-25T18:00:00.000Z",
+    "eventDetails": "Dinner catering for 350 guests at Royal Palace",
+    "guestName": "Subhashish Roy",
+    "guestPhone": "+91 98300 12345",
+    "guestEmail": "subhash.roy@example.com",
+    "guestAddress": "Salt Lake Sector 5, Kolkata",
+    "createdByPartner": {
+      "_id": "6ae74e7f83df4e2c4c410093",
+      "name": "Partner 1",
+      "email": "partner1@lotuscaterer.internal",
+      "phone": "+91 98300 00001"
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-01T17:38:00.000Z",
+    "updatedAt": "2026-11-01T17:38:00.000Z"
+  }
+}
+```
