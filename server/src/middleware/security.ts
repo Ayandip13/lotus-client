@@ -8,17 +8,27 @@ export const securityHeaders: RequestHandler = helmet({
   crossOriginEmbedderPolicy: false,
 });
 
-const allowedOrigins = [
-  env.CLIENT_URL,
+const configuredOrigins = env.CLIENT_URL.split(',').map((u) => u.trim().replace(/\/$/, ''));
+
+const defaultOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
 ];
 
+const allowedOrigins = Array.from(new Set([...configuredOrigins, ...defaultOrigins]));
+
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests or matching origins
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow non-browser requests (Postman, curl, server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const cleanOrigin = origin.replace(/\/$/, '');
+    const isAllowed = allowedOrigins.some((allowed) => allowed === cleanOrigin);
+
+    if (isAllowed || env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       callback(new Error(`Origin ${origin} not allowed by CORS`));
