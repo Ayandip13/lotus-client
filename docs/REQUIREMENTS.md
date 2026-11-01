@@ -42,9 +42,20 @@ This document contains **only confirmed client requirements** and explicitly reg
   - Maintain partner-wise financial summaries.
   - Maintain event-wise financial summaries.
 
-### 1.7 Attachments & Proof of Transaction
-- **Bill & Receipt Attachments**: Income and expense transactions must support bill/receipt image attachments.
-- **Verification Access**: Images must remain accessible and viewable at any later date for verification and auditing.
+### 1.8 Centralized Financial Ledger & Accounting Model (Confirmed in Phase 4)
+- **Single Centralized Ledger**: All financial views (Common Business Account, Partner accounts, Event-wise accounts, and Date-wise history) derive from ONE centralized `Transaction` collection.
+- **Three Core Transaction Types**:
+  1. `BUSINESS_INCOME`: Money received by the catering business (customer payments, event advances). Attributed to `COMMON_BUSINESS` funds pool; optional catering event linkage.
+  2. `PARTNER_CONTRIBUTION`: Money personally injected by a partner into the common business pool. Increases available business funds but is strictly **NOT** business revenue.
+  3. `BUSINESS_EXPENSE`: Operational expenditures with two supported payment routes:
+     - `COMMON_BUSINESS`: Paid from common business funds; immediately deducted from common business cash balance.
+     - `PARTNER_PERSONAL`: Paid directly from a partner's personal pocket; includes the paying partner ID. Included in total business expenditure reporting, but does **NOT** reduce common business cash pool.
+- **Mathematical Balance Calculations (Paise Precision)**:
+  - `Common Business Balance = Total Business Income + Total Partner Contributions - Common Account Expenses`
+  - `Total Business Income = Sum(BUSINESS_INCOME)`
+  - `Total Business Expenses = Sum(BUSINESS_EXPENSE [COMMON_BUSINESS + PARTNER_PERSONAL])`
+- **Date-Wise Expense History**: Daily expenditure aggregation with Asia/Kolkata timezone normalization.
+- **Auditable Image Attachments**: Multi-image bill and receipt attachment capability for income, expenses, and contributions.
 
 ---
 
@@ -57,9 +68,9 @@ The following questions require formal client clarification before corresponding
 | **Q1** | **Are bookings and events separate entities?** | Dictates whether Booking and Event are distinct database models or synonyms. | **RESOLVED in Phase 3**: Unified data model (`Event` / `Booking`) adopted. Every catering job is an independent record combining booking information, guest contact details, and execution date without redundant table duplication. |
 | **Q2** | **Can one booking contain multiple events?** | Affects one-to-one vs. one-to-many relationship modeling between Bookings and Events. | **RESOLVED in Phase 3**: No parent-child nesting. Each job is an independent record. Architecture remains decoupled so separate sub-events can be introduced if contracted in future. |
 | **Q3** | **What exactly are the three user roles?** | **RESOLVED in Phase 2**: Confirmed equal 3-partner access model. Exactly three partners with individual credentials, shared internal visibility, equal administrative rights, and no Admin/Staff hierarchy. | **CONFIRMED & IMPLEMENTED** |
-| **Q4** | **Can partners transfer money between themselves?** | Affects the transaction model: determines if inter-partner balance adjustments/transfers need explicit double-entry records. | **Pending Clarification** |
-| **Q5** | **How should shared expenses be allocated?** | Determines cost-allocation logic: are general business overhead expenses split equally (1/3 each), weighted by partner, or kept at an entity level? | **Pending Clarification** |
-| **Q6** | **What are the rules for final profit distribution?** | Dictates financial year-end or event-closeout calculations: how is net surplus distributed among the three partners? | **Pending Clarification** |
+| **Q4** | **Can partners transfer money between themselves?** | Affects the transaction model: determines if inter-partner balance adjustments/transfers need explicit double-entry records. | **Pending Clarification (Provisional rule: No inter-partner transfers or personal wallet balance calculations implemented)** |
+| **Q5** | **How should shared expenses be allocated?** | Determines cost-allocation logic: are general business overhead expenses split equally (1/3 each), weighted by partner, or kept at an entity level? | **Pending Clarification (Provisional rule: Kept at business entity level; no speculative splits applied)** |
+| **Q6** | **What are the rules for final profit distribution?** | Dictates financial year-end or event-closeout calculations: how is net surplus distributed among the three partners? | **Pending Clarification (Provisional rule: Common business balance is NOT labeled or distributed as profit)** |
 
 ---
 

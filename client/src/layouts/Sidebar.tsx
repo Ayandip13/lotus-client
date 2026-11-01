@@ -45,15 +45,15 @@ const navItems = [
     name: 'Income & Expenses',
     href: '/transactions',
     icon: Receipt,
-    badge: 'Phase 4',
-    badgeVariant: 'neutral' as const,
+    badge: 'Active',
+    badgeVariant: 'success' as const,
   },
   {
     name: 'Financial Overview',
     href: '/overview',
     icon: PieChart,
-    badge: 'Phase 5',
-    badgeVariant: 'neutral' as const,
+    badge: 'Active',
+    badgeVariant: 'success' as const,
   },
 ];
 

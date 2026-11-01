@@ -9,8 +9,8 @@ This document tracks phase-by-phase implementation progress, completed milestone
 - [x] **Phase 1: Project Foundation, Architecture & Engineering Rules** (Completed)
 - [x] **Phase 2: Authentication, Partner Accounts & Authorization** (Completed)
 - [x] **Phase 3: Bookings, Events & Job Management** (Completed)
-- [ ] **Phase 4: Transactions (Income & Expense Ledger) & Image Storage**
-- [ ] **Phase 5: Financial Overviews, Partner Balances & Reporting**
+- [x] **Phase 4: Transactions (Income & Expense Ledger), Accounts & Attachments** (Completed)
+- [ ] **Phase 5: Financial Overviews, Settlement Formulas & Advanced Analytics**
 - [ ] **Phase 6: Verification, Polishing & Production Deployment Readiness**
 
 ---
@@ -73,14 +73,29 @@ This document tracks phase-by-phase implementation progress, completed milestone
 
 ---
 
-### Upcoming Phase 4: Transactions (Income & Expense Ledger) & Image Storage
-- Financial transaction ledger (Income, Expenses, Partner Deposits).
-- Reusable Storage Service implementation with Cloudinary integration.
-- Bill and receipt image upload, viewing, and audit verification.
-- Resolves questions Q4 & Q5 (Inter-partner transfers & shared expense allocation).
+## Phase 4 Breakdown: Centralized Financial Ledger, Accounts & Attachments
+### Phase Status: **PHASE 4 COMPLETE**
 
-### Upcoming Phase 5: Financial Overviews & Aggregations
-- Real-time partner balance computation (Deposits - Expenses + Received).
-- Event-wise financial summaries (Revenue vs. Cost).
-- Consolidated business overview (Total Received, Total Spent, Net Balance).
-- Resolves question Q6 (Profit distribution calculations).
+| Task ID | Item | Status | Notes |
+| :--- | :--- | :--- | :--- |
+| **P4-01** | Centralized `Transaction` Mongoose model | Completed | Single source of truth ledger with `amountPaise` integer precision, transactionType enum, paymentSource enum, partner and event references |
+| **P4-02** | Storage Service implementation & Cloudinary integration | Completed | `CloudinaryStorageService` (v2 SDK) + enhanced `LocalStorageService` with disk writes to `uploads/` directory |
+| **P4-03** | Multer file upload middleware | Completed | `uploadAttachments` memory storage validating image MIME types (JPEG, PNG, WebP) and 5MB size limit (max 5 files) |
+| **P4-04** | Fail-safe orphaned file cleanup | Completed | File upload error rollback automatically cleans up newly uploaded files if database write fails |
+| **P4-05** | Transaction service & Zod request validation | Completed | Full CRUD operations, multi-field filtering, search, pagination, creator partner session derivation, soft deletion |
+| **P4-06** | Centralized accounting service (`account.service.ts`) | Completed | Backend formulas for Common Business Balance, Total Business Income, Total Business Expenses, Partner Summaries, Date-wise history with Asia/Kolkata timezone support |
+| **P4-07** | Transaction & Account RESTful APIs | Completed | `/api/v1/transactions`, `/api/v1/accounts/summary`, `/api/v1/accounts/partners`, `/api/v1/accounts/date-wise` protected by equal partner auth |
+| **P4-08** | Automated test suite (`transaction.test.ts`) | Completed | 11/11 automated tests passing. Cumulative suite: 31/31 passed across Auth, Events, and Transactions |
+| **P4-09** | Frontend types, schemas, and API clients | Completed | `transaction.types.ts`, `transaction.schema.ts`, `transactionService.ts`, `accountService.ts` |
+| **P4-10** | Responsive transaction components | Completed | `TransactionTable` for desktop, `TransactionCard` for mobile, `TransactionDetailsModal`, `DeleteTransactionModal`, `AttachmentViewerModal` image lightbox |
+| **P4-11** | Reusable transaction form (`TransactionForm.tsx`) | Completed | Dynamic fields based on type/payment source, multi-file image picker with instant thumbnail previews |
+| **P4-12** | Core ledger pages | Completed | `TransactionListPage`, `TransactionCreatePage`, `TransactionEditPage` |
+| **P4-13** | Account pages | Completed | `FinancialOverviewPage` (balance metrics, formula disclosure, partner accounts), `DateWiseExpensePage` (daily expense breakdown) |
+| **P4-14** | Partner accounts page | Completed | `PartnerAccountsPage` showing individual partner contributions, personally paid expenses, and linked transaction histories |
+
+---
+
+### Upcoming Phase 5: Financial Overviews, Settlement Formulas & Advanced Analytics
+- Pending client clarification on Question Q6 (final profit distribution rules) and Question Q4/Q5 (partner reimbursement/settlement mechanisms).
+- Advanced financial analytics, category cost breakdown charts, event profitability reports.
+- PDF and CSV transaction export capabilities.

@@ -113,15 +113,34 @@ server/src/
 │   │   └── health.routes.ts
 │   ├── auth/             # Authentication & credentials (Phase 2)
 │   │   ├── user.model.ts, auth.service.ts, auth.controller.ts, auth.routes.ts
-│   ├── partners/         # Equal Partner domain model (Phase 2)
 │   │   └── partner.model.ts
-│   └── events/           # Catering Bookings & Events (Phase 3)
-│       ├── event.model.ts, event.schema.ts, event.service.ts, event.controller.ts, event.routes.ts
+│   ├── events/           # Catering Bookings & Events (Phase 3)
+│   │   ├── event.model.ts, event.schema.ts, event.service.ts, event.controller.ts, event.routes.ts
+│   ├── transactions/     # Centralized Financial Ledger (Phase 4)
+│   │   ├── transaction.model.ts   # Core ledger schema with amountPaise, type, source, audit stamps
+│   │   ├── transaction.schema.ts  # Zod validation for create, update, filter params
+│   │   ├── transaction.service.ts # Transaction CRUD, search, pagination, orphaned file cleanup
+│   │   ├── transaction.controller.ts
+│   │   └── transaction.routes.ts
+│   └── accounts/         # Accounting Calculations & Aggregations (Phase 4)
+│       ├── account.service.ts     # Common balance, revenue, expense, partner and date-wise math
+│       ├── account.controller.ts
+│       └── account.routes.ts
 │
 ├── services/             # Core shared application services
 │   └── storage/          # Storage abstraction for receipts and attachments
-│       ├── storage.interface.ts # Interface defining upload/delete/get URL contracts
-│       └── local.storage.ts     # Local filesystem implementation (Cloudinary to follow)
+│       ├── storage.interface.ts     # IStorageService contract
+│       ├── cloudinary.storage.ts    # Cloudinary v2 image uploader with credential validation
+│       ├── local.storage.ts         # Local disk storage fallback (uploads/ directory)
+│       └── index.ts                 # Dynamic factory resolving Cloudinary or Local
+│
+├── middleware/           # Reusable Express request middleware
+│   ├── auth.middleware.ts# requireAuth & requirePartner JWT validation
+│   ├── upload.middleware.ts # Multer memory storage validating image types & 5MB size limit
+│   ├── errorHandler.ts   # Centralized error handler converting errors to standard JSON
+│   ├── validateRequest.ts# Generic Zod validation middleware (body, params, query)
+│   ├── security.ts       # Helmet and CORS configuration
+│   └── requestLogger.ts  # Request logging utility
 │
 ├── utils/                # Helper utilities and standard response envelopes
 │   ├── apiResponse.ts    # Standardized JSON response formatting helpers
@@ -130,30 +149,33 @@ server/src/
 ├── types/                # Backend TypeScript types and Express augmentation
 │   └── api.types.ts
 │
-├── app.ts                # Express application setup, middleware registration
+├── app.ts                # Express application setup, route mounting (/uploads, /api/v1/...)
 └── index.ts              # HTTP server bootstrap, process lifecycle, signal handlers
 ```
 
 ---
 
-## 4. File Storage Architecture
+## 4. File Storage Architecture & Cloudinary Integration
 
-Transaction receipts and bills require persistent image storage. To prevent tight coupling to any third-party provider, an **Abstract Storage Service** is established:
+Transaction receipts and bills require persistent image storage. Built using an **Abstract Storage Service** interface (`IStorageService`):
 
 ```typescript
-export interface StorageService {
+export interface IStorageService {
   uploadFile(file: Express.Multer.File, folder?: string): Promise<{
     url: string;
     publicId: string;
     fileSize: number;
     mimeType: string;
+    originalName?: string;
   }>;
   deleteFile(publicId: string): Promise<boolean>;
 }
 ```
 
-- In Phase 1, the storage interface and a local stub/contract are established.
-- In later phases, a `CloudinaryStorageService` implementing this identical interface will be plugged in with zero refactoring required in controllers or models.
+- **Cloudinary Provider (`cloudinary.storage.ts`)**: Direct upload stream via Cloudinary SDK v2. Uses environment variables (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`).
+- **Local Fallback Provider (`local.storage.ts`)**: Saves files locally to `./uploads` and serves them statically via Express on `/uploads/:filename`.
+- **Validation**: Strict MIME validation (`image/jpeg`, `image/png`, `image/webp`), 5MB maximum file size limit, and maximum 5 files per transaction.
+- **Fail-safe Cleanup**: If a database write fails during transaction creation or update, newly uploaded attachments are automatically purged to prevent orphaned file leaks.
 
 ---
 

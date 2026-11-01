@@ -68,24 +68,29 @@ Unified catering job record combining booking specifications, event execution da
 | `createdAt` | Date | Auto | No | Mongoose timestamp |
 | `updatedAt` | Date | Auto | No | Mongoose timestamp |
 
-### 3.4 Transaction Entity (`transactions`) — Scheduled for Phase 4
-Captures all money movements: partner deposits, personal business expenses, event income, and event expenses.
+### 3.4 Centralized Transaction Ledger Entity (`transactions`) — Implemented in Phase 4
+Captures all business money movements: business income, partner contributions, common cash expenses, and partner personally paid expenses in ONE unified collection.
 
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `_id` | ObjectId | Yes | Unique transaction identifier |
-| `type` | String (Enum) | Yes | `INCOME` \| `EXPENSE` \| `PARTNER_DEPOSIT` |
-| `amount` | Number | Yes | Transaction value (always positive number) |
-| `partnerId` | ObjectId | Yes | Partner who received the income or incurred the expense |
-| `eventId` | ObjectId | No | Associated event (optional for general business overhead) |
-| `bookingId` | ObjectId | Tentative | Associated booking (if applicable) |
-| `sourceOrPayee`| String | Yes | Source of income or payee of expense |
-| `category` | String | Yes | Classification (e.g., "Groceries", "Advance", "Labor", "Crockery") |
-| `description` | String | No | Detailed transaction notes |
-| `date` | Date | Yes | Transaction occurrence date |
-| `attachments` | Array[Object] | No | Receipt/bill images: `[{ url, publicId, fileName }]` |
-| `createdAt` | Date | Auto | Timestamp |
-| `updatedAt` | Date | Auto | Timestamp |
+| Field | Type | Required | Unique / Index | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique transaction identifier |
+| `transactionType` | String (Enum) | Yes | Yes (Index) | `BUSINESS_INCOME` \| `PARTNER_CONTRIBUTION` \| `BUSINESS_EXPENSE` |
+| `amountPaise` | Number (Integer) | Yes | Yes (Index) | Monetary value in whole integer paise (prevents float rounding errors) |
+| `transactionDate` | Date | Yes | Yes (Index) | Business calendar date of transaction occurrence |
+| `description` | String | Yes | No | Detailed description or purpose (min 2, max 1000 chars) |
+| `paymentSource` | String (Enum) | Yes | Yes (Index) | `COMMON_BUSINESS` \| `PARTNER_PERSONAL` (default: `COMMON_BUSINESS`) |
+| `partner` | ObjectId (Ref) | Conditional | Yes (Index) | Ref to `Partner` (required for contributions & partner personal expenses) |
+| `relatedEvent` | ObjectId (Ref) | No | Yes (Index) | Optional Ref to `Event` (links expenditure or income to catering job) |
+| `attachments` | Array[Subdoc] | No | No | Attached bills/receipts: `[{ url, publicId, fileSize, mimeType, originalName, uploadedByPartner, uploadedAt }]` |
+| `createdByPartner` | ObjectId (Ref) | Yes | Yes (Index) | Reference to partner session who recorded the entry |
+| `isDeleted` | Boolean | Yes | Yes (Index) | Soft delete flag (default: `false`). Excluded from accounting calculations |
+| `deletedAt` | Date | No | No | Timestamp of soft deletion |
+| `deletedByPartner` | ObjectId (Ref) | No | No | Reference to partner who soft-deleted the record |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
+
+**Virtuals & Precision**:
+- `amount`: Virtual getter returns `amountPaise / 100` formatted as INR float, ensuring JavaScript floating point inaccuracies never corrupt stored database integers.
 
 ---
 

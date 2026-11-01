@@ -2,13 +2,18 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
 import { DashboardShellPage } from '../pages/DashboardShellPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { PhasePlaceholder } from '../pages/PhasePlaceholder';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
 import { BookingListPage } from '../features/bookings/pages/BookingListPage';
 import { BookingCreatePage } from '../features/bookings/pages/BookingCreatePage';
 import { BookingDetailsPage } from '../features/bookings/pages/BookingDetailsPage';
 import { BookingEditPage } from '../features/bookings/pages/BookingEditPage';
+import { PartnerAccountsPage } from '../features/partners/pages/PartnerAccountsPage';
+import { TransactionListPage } from '../features/transactions/pages/TransactionListPage';
+import { TransactionCreatePage } from '../features/transactions/pages/TransactionCreatePage';
+import { TransactionEditPage } from '../features/transactions/pages/TransactionEditPage';
+import { DateWiseExpensePage } from '../features/accounts/pages/DateWiseExpensePage';
+import { FinancialOverviewPage } from '../features/accounts/pages/FinancialOverviewPage';
 
 export const router = createBrowserRouter([
   {
@@ -28,17 +33,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'partners',
-            element: (
-              <PhasePlaceholder
-                phase="Phase 2 Completed"
-                title="Partner Accounts & Equal Access"
-                description="All three partners have equal administrative rights, individual credentials, and shared operational visibility."
-                unresolvedQuestions={[
-                  'Can partners transfer money directly between themselves? (Question Q4)',
-                  'How should shared overhead expenses be allocated among partners? (Question Q5)',
-                ]}
-              />
-            ),
+            element: <PartnerAccountsPage />,
           },
           {
             path: 'bookings',
@@ -63,30 +58,28 @@ export const router = createBrowserRouter([
           },
           {
             path: 'transactions',
-            element: (
-              <PhasePlaceholder
-                phase="Phase 4"
-                title="Income & Expense Ledger"
-                description="Record transactions, track event-specific expenditures, and attach receipt images."
-                unresolvedQuestions={[
-                  'Can partners transfer money directly between themselves? (Question Q4)',
-                  'How should shared overhead expenses be allocated among partners? (Question Q5)',
-                ]}
-              />
-            ),
+            children: [
+              {
+                index: true,
+                element: <TransactionListPage />,
+              },
+              {
+                path: 'new',
+                element: <TransactionCreatePage />,
+              },
+              {
+                path: 'date-wise',
+                element: <DateWiseExpensePage />,
+              },
+              {
+                path: ':id/edit',
+                element: <TransactionEditPage />,
+              },
+            ],
           },
           {
             path: 'overview',
-            element: (
-              <PhasePlaceholder
-                phase="Phase 5"
-                title="Financial Overview & Analytics"
-                description="Consolidated revenue, expense summaries, and partner fund balances."
-                unresolvedQuestions={[
-                  'What are the confirmed rules for final profit distribution? (Question Q6)',
-                ]}
-              />
-            ),
+            element: <FinancialOverviewPage />,
           },
         ],
       },

@@ -216,3 +216,52 @@ The backend strictly uses standard HTTP status codes:
   }
 }
 ```
+
+---
+
+### 5.4 Centralized Financial Ledger Endpoints (Phase 4)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/transactions` | Record new transaction (supports `multipart/form-data` with receipt files) | Protected (Equal Partner) |
+| `GET` | `/api/v1/transactions` | List transactions with multi-field filtering, search, pagination | Protected (Equal Partner) |
+| `GET` | `/api/v1/transactions/:id` | Retrieve single transaction details with attachments | Protected (Equal Partner) |
+| `PUT` | `/api/v1/transactions/:id` | Update transaction record and optionally attach additional receipts | Protected (Equal Partner) |
+| `DELETE` | `/api/v1/transactions/:id` | Soft-delete a transaction (immediately excluded from ledger balance) | Protected (Equal Partner) |
+
+#### Create Transaction Multipart Fields (`POST /api/v1/transactions`):
+```
+transactionType: "BUSINESS_EXPENSE" | "BUSINESS_INCOME" | "PARTNER_CONTRIBUTION"
+amount: 8500.50
+transactionDate: "2026-11-01T10:00:00.000Z"
+description: "Fresh fish and spices from Sealdah market"
+paymentSource: "COMMON_BUSINESS" | "PARTNER_PERSONAL"
+partner: "<PartnerObjectId>" (required for PARTNER_CONTRIBUTION or PARTNER_PERSONAL expense)
+relatedEvent: "<EventObjectId>" (optional)
+attachments: File[] (JPEG, PNG, WebP up to 5MB, max 5 files)
+```
+
+---
+
+### 5.5 Accounting & Financial Aggregation Endpoints (Phase 4)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/accounts/summary` | Consolidated financial summary (Common Balance, Income, Expenses, Contributions) | Protected (Equal Partner) |
+| `GET` | `/api/v1/accounts/partners` | Partner-wise financial summaries for all three active partners | Protected (Equal Partner) |
+| `GET` | `/api/v1/accounts/partners/:partnerId` | Detailed ledger history for a specific partner | Protected (Equal Partner) |
+| `GET` | `/api/v1/accounts/date-wise?date=YYYY-MM-DD` | Date-wise expenses, totals, paying partners, and event attributions | Protected (Equal Partner) |
+
+#### Overall Summary Success Response (`GET /api/v1/accounts/summary`):
+```json
+{
+  "success": true,
+  "data": {
+    "totalBusinessIncome": 150000.00,
+    "totalBusinessExpenses": 85000.00,
+    "totalPartnerContributions": 50000.00,
+    "commonBusinessBalance": 140000.00,
+    "commonAccountExpenses": 60000.00,
+    "partnerPersonallyPaidExpenses": 25000.00,
+    "currency": "INR"
+  }
+}
+```
