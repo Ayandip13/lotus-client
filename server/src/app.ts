@@ -17,7 +17,8 @@ export const createApp = (): Application => {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-  // 3. System Endpoints
+  // 3. System Endpoints (Root and /api/health)
+  app.use('/health', healthRoutes);
   app.use('/api/health', healthRoutes);
 
   // 4. API v1 Router Mount Point (Future phases will attach domain routers here)

@@ -1,7 +1,18 @@
 import axios, { AxiosError } from 'axios';
 import { ApiResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const getApiBaseUrl = (): string => {
+  const rawUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+  const cleanUrl = rawUrl.trim().replace(/\/+$/, '');
+  
+  if (cleanUrl === '' || cleanUrl === '/api') {
+    return '/api';
+  }
+  
+  return cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
