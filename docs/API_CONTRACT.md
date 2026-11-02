@@ -265,3 +265,120 @@ attachments: File[] (JPEG, PNG, WebP up to 5MB, max 5 files)
   }
 }
 ```
+
+---
+
+### 5.6 Billing, Invoices & Customer Dues Endpoints (Phase 5)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/invoices` | Create GST or Non-GST invoice with auto numbering (`LC-YYYY-XXXX`) | Protected (Equal Partner) |
+| `GET` | `/api/v1/invoices` | List invoices with filters (type, status, event, date, customer) | Protected (Equal Partner) |
+| `GET` | `/api/v1/invoices/dues` | Customer dues overview with KPI totals and status breakdown | Protected (Equal Partner) |
+| `GET` | `/api/v1/invoices/:id` | Retrieve invoice details with calculated taxes and payment history | Protected (Equal Partner) |
+| `POST` | `/api/v1/invoices/:id/payments` | Record customer payment (creates atomic `BUSINESS_INCOME` in ledger) | Protected (Equal Partner) |
+| `DELETE` | `/api/v1/invoices/:id` | Cancel invoice (soft deletion, preserving payment audit) | Protected (Equal Partner) |
+
+#### Record Customer Payment Request Payload:
+```json
+{
+  "amount": 25000.00,
+  "paymentMethod": "CASH",
+  "paymentDate": "2026-11-02T10:00:00.000Z",
+  "reference": "Cash received at venue",
+  "assignedToPartner": "6ae74e7f83df4e2c4c410093"
+}
+```
+
+---
+
+### 5.7 Vendor Directory & Payables Endpoints (Phase 5)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/vendors` | Create vendor in directory with category and bank details | Protected (Equal Partner) |
+| `GET` | `/api/v1/vendors` | List active vendors with search and category filtering | Protected (Equal Partner) |
+| `GET` | `/api/v1/vendors/:id` | Retrieve vendor profile details | Protected (Equal Partner) |
+| `POST` | `/api/v1/vendors/bills` | Record vendor payable bill (does NOT count as paid expense) | Protected (Equal Partner) |
+| `GET` | `/api/v1/vendors/bills` | List vendor payable bills with filters (vendor, event, status, date) | Protected (Equal Partner) |
+| `GET` | `/api/v1/vendors/dues` | Vendor dues overview with KPI totals and status breakdown | Protected (Equal Partner) |
+| `POST` | `/api/v1/vendors/bills/:id/payments` | Settle vendor payment (creates atomic `BUSINESS_EXPENSE` in ledger) | Protected (Equal Partner) |
+
+#### Record Vendor Payment Request Payload:
+```json
+{
+  "amount": 12000.00,
+  "paymentSource": "COMMON_BUSINESS",
+  "paymentDate": "2026-11-02T14:30:00.000Z",
+  "notes": "Paid by partner cash",
+  "deductFromPartnerCash": true,
+  "payingPartnerId": "6ae74e7f83df4e2c4c410093"
+}
+```
+
+---
+
+### 5.8 Cash Custody Endpoints (Phase 5)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/cash-custody/balances` | Current business cash held per partner, total physical cash, common bank balance | Protected (Equal Partner) |
+| `GET` | `/api/v1/cash-custody/movements` | List cash custody movements with filters and pagination | Protected (Equal Partner) |
+| `POST` | `/api/v1/cash-custody/movements` | Record cash movement (Handover, Bank Deposit, Bank Withdrawal, Cash Expense) | Protected (Equal Partner) |
+
+#### Partner Handover Request Payload:
+```json
+{
+  "movementType": "PARTNER_HANDOVER",
+  "amount": 10000.00,
+  "sourcePartner": "6ae74e7f83df4e2c4c410093",
+  "destinationPartner": "6ae74e7f83df4e2c4c410094",
+  "description": "Handed over cash for market purchases"
+}
+```
+
+---
+
+### 5.9 Dashboard Overview Endpoint (Phase 5)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/dashboard/overview` | Centralized executive metrics: Upcoming Events, 6 Financial KPIs, Partner Cash, Dues, Recent Activity | Protected (Equal Partner) |
+
+#### Dashboard Overview Response Payload:
+```json
+{
+  "success": true,
+  "data": {
+    "financialOverview": {
+      "totalBusinessIncome": 250000.00,
+      "totalBusinessExpenses": 140000.00,
+      "commonBusinessBankBalance": 80000.00,
+      "totalPartnerCashInHand": 30000.00,
+      "totalCustomerDue": 45000.00,
+      "totalVendorDue": 22000.00
+    },
+    "partnerCashOverview": {
+      "partners": [
+        { "partnerId": "...", "name": "Partner 1", "cashInHand": 10000.00 },
+        { "partnerId": "...", "name": "Partner 2", "cashInHand": 12000.00 },
+        { "partnerId": "...", "name": "Partner 3", "cashInHand": 8000.00 }
+      ],
+      "totalCashInHand": 30000.00,
+      "bankBalance": 80000.00
+    },
+    "duesOverview": {
+      "customerDue": 45000.00,
+      "customerOverdue": 15000.00,
+      "vendorDue": 22000.00,
+      "vendorOverdue": 5000.00
+    },
+    "upcomingEvents": [ ... ],
+    "recentTransactions": [ ... ]
+  }
+}
+```
+
+---
+
+### 5.10 Event Financial Hub Endpoint (Phase 5)
+| Method | Path | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/events/:id/financials` | 360-degree event financial breakdown (invoices, collections, expenses, vendor payables) | Protected (Equal Partner) |
+

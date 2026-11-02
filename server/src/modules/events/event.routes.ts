@@ -5,6 +5,7 @@ import {
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventFinancialOverview,
 } from './event.controller';
 import { validateRequest } from '../../middleware/validateRequest';
 import {
@@ -22,6 +23,7 @@ router.use(requireAuth, requirePartner);
 router.post('/', validateRequest({ body: createEventSchema }), createEvent);
 router.get('/', validateRequest({ query: queryEventsSchema }), getEvents);
 router.get('/:id', getEventById);
+router.get('/:id/financials', getEventFinancialOverview);
 router.put('/:id', validateRequest({ body: updateEventSchema }), updateEvent);
 router.delete('/:id', deleteEvent);
 

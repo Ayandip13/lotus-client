@@ -46,11 +46,11 @@ The frontend application utilizes a modular, feature-based architecture built wi
 client/src/
 ├── app/                  # Application root setup, routing table, and global providers
 │   ├── App.tsx           # Top-level application component
-│   ├── router.tsx        # React Router v6 route definitions
+│   ├── router.tsx        # React Router v6 route definitions (Invoices, Dues, Cash Custody)
 │   └── providers.tsx     # TanStack Query & Context providers
 │
 ├── components/           # Generic, presentation-only UI design system components
-│   └── ui/               # Button, Card, Input, Badge, Table, Alert, LoadingSpinner
+│   └── ui/               # Button, Card, Input, Badge, Table, Alert, FilterPanel, LoadingSpinner
 │
 ├── layouts/              # Shell layouts (Sidebar, Header, AppLayout)
 │   ├── AppLayout.tsx     # Master layout coordinating sidebar and main viewport
@@ -58,7 +58,7 @@ client/src/
 │   └── Sidebar.tsx       # Collapsible navigation drawer supporting desktop & mobile
 │
 ├── pages/                # Page-level containers mapped to routes
-│   ├── DashboardShellPage.tsx # Overview dashboard landing view
+│   ├── DashboardShellPage.tsx # Upgraded Phase 5 Dashboard (6 Financial KPIs, Events, Dues, Cash)
 │   └── NotFoundPage.tsx       # 404 handler
 │
 ├── features/             # Domain modules
@@ -67,9 +67,23 @@ client/src/
 │   │   ├── types/        # BookingEvent, BookingFormData, Query interfaces
 │   │   ├── schemas/      # Zod validation schema for booking forms
 │   │   ├── services/     # bookingService API consumer
-│   │   ├── components/   # BookingTable, BookingCard, BookingForm, DeleteBookingModal
+│   │   ├── components/   # BookingTable, BookingCard, BookingForm, EventFinancialHub
 │   │   └── pages/        # BookingListPage, BookingCreatePage, Details, Edit
-│   ├── partners/         # Partner accounts, balances, deposits (Phase 5)
+│   ├── dues/             # Customer & Vendor Dues Management (Phase 5)
+│   │   ├── types/        # CustomerDue, VendorDue, PaymentHistory interfaces
+│   │   ├── services/     # dueService API consumer
+│   │   ├── components/   # RecordCustomerPaymentModal, RecordVendorPaymentModal, CreateVendorBillModal, CreateVendorModal
+│   │   └── pages/        # CustomerDuesPage, VendorDuesPage
+│   ├── invoices/         # Billing & Invoicing Engine (Phase 5)
+│   │   ├── types/        # Invoice, InvoiceLineItem, InvoiceFormData, TaxDetails interfaces
+│   │   ├── services/     # invoiceService API consumer
+│   │   └── pages/        # InvoiceListPage, InvoiceCreatePage (GST/Non-GST), InvoiceDetailsPage (Print/PDF/WhatsApp)
+│   ├── cashCustody/      # Partner Physical Cash Custody (Phase 5)
+│   │   ├── types/        # CashBalance, CashMovement, PartnerCashSummary
+│   │   ├── services/     # cashCustodyService API consumer
+│   │   ├── components/   # RecordCashMovementModal
+│   │   └── pages/        # CashCustodyPage (Partner 1, 2, 3 Balances, Bank Balance, Movement Audit)
+│   ├── partners/         # Partner accounts, balances, deposits (Phase 4)
 │   └── transactions/     # Income, expense, and attachment management (Phase 4)
 │
 ├── services/             # HTTP clients and API integration functions
@@ -102,6 +116,8 @@ server/src/
 │   └── database.ts       # Mongoose connection lifecycle manager
 │
 ├── middleware/           # Reusable Express request middleware
+│   ├── auth.middleware.ts# requireAuth & requirePartner JWT validation
+│   ├── upload.middleware.ts # Multer memory storage validating image types & 5MB size limit
 │   ├── errorHandler.ts   # Centralized error handler converting errors to standard JSON
 │   ├── validateRequest.ts# Generic Zod validation middleware (body, params, query)
 │   ├── security.ts       # Helmet and CORS configuration
@@ -114,18 +130,41 @@ server/src/
 │   ├── auth/             # Authentication & credentials (Phase 2)
 │   │   ├── user.model.ts, auth.service.ts, auth.controller.ts, auth.routes.ts
 │   │   └── partner.model.ts
-│   ├── events/           # Catering Bookings & Events (Phase 3)
-│   │   ├── event.model.ts, event.schema.ts, event.service.ts, event.controller.ts, event.routes.ts
-│   ├── transactions/     # Centralized Financial Ledger (Phase 4)
-│   │   ├── transaction.model.ts   # Core ledger schema with amountPaise, type, source, audit stamps
+│   ├── events/           # Catering Bookings & Events (Phase 3 & Phase 5)
+│   │   ├── event.model.ts, event.schema.ts, event.service.ts (Event Financial Overview), event.controller.ts, event.routes.ts
+│   ├── transactions/     # Centralized Financial Ledger (Phase 4 & Phase 5)
+│   │   ├── transaction.model.ts   # Core ledger schema with amountPaise, type, source, audit stamps, invoice/bill/custody links
 │   │   ├── transaction.schema.ts  # Zod validation for create, update, filter params
 │   │   ├── transaction.service.ts # Transaction CRUD, search, pagination, orphaned file cleanup
 │   │   ├── transaction.controller.ts
 │   │   └── transaction.routes.ts
-│   └── accounts/         # Accounting Calculations & Aggregations (Phase 4)
-│       ├── account.service.ts     # Common balance, revenue, expense, partner and date-wise math
-│       ├── account.controller.ts
-│       └── account.routes.ts
+│   ├── accounts/         # Accounting Calculations & Aggregations (Phase 4)
+│   │   ├── account.service.ts     # Common balance, revenue, expense, partner and date-wise math
+│   │   ├── account.controller.ts
+│   │   └── account.routes.ts
+│   ├── invoices/         # Invoicing, Billing & Customer Dues (Phase 5)
+│   │   ├── invoice.model.ts       # Invoice schema with line items, paise precision, tax calculations, payment history
+│   │   ├── invoice.schema.ts      # Zod validation for invoice creation and payment
+│   │   ├── invoice.service.ts     # Sequence generation, GST/Non-GST calculation engine, payment ledger integration
+│   │   ├── invoice.controller.ts
+│   │   └── invoice.routes.ts
+│   ├── vendors/          # Vendor Directory & Payables Management (Phase 5)
+│   │   ├── vendor.model.ts        # Vendor schema with categories, contact, and banking details
+│   │   ├── vendorBill.model.ts    # Vendor bill schema with amountPaise, payment history, status
+│   │   ├── vendor.schema.ts       # Zod validation for vendor creation, bill creation, and vendor payments
+│   │   ├── vendor.service.ts      # Deferred expense recognition, payment ledger integration, vendor dues summary
+│   │   ├── vendor.controller.ts
+│   │   └── vendor.routes.ts
+│   ├── cashCustody/      # Partner Physical Cash Custody Tracking (Phase 5)
+│   │   ├── cashCustody.model.ts   # Cash movement schema supporting 6 movement types
+│   │   ├── cashCustody.schema.ts  # Zod validation for cash custody movements
+│   │   ├── cashCustody.service.ts # Partner-wise cash balance calculation, bank balance reconciliation, non-negative checks
+│   │   ├── cashCustody.controller.ts
+│   │   └── cashCustody.routes.ts
+│   └── dashboard/        # Centralized Operations & Financial Dashboard (Phase 5)
+│       ├── dashboard.service.ts   # Aggregation pipeline for upcoming events, 6 financial KPIs, partner cash, dues, recent activity
+│       ├── dashboard.controller.ts
+│       └── dashboard.routes.ts
 │
 ├── services/             # Core shared application services
 │   └── storage/          # Storage abstraction for receipts and attachments
@@ -133,14 +172,6 @@ server/src/
 │       ├── cloudinary.storage.ts    # Cloudinary v2 image uploader with credential validation
 │       ├── local.storage.ts         # Local disk storage fallback (uploads/ directory)
 │       └── index.ts                 # Dynamic factory resolving Cloudinary or Local
-│
-├── middleware/           # Reusable Express request middleware
-│   ├── auth.middleware.ts# requireAuth & requirePartner JWT validation
-│   ├── upload.middleware.ts # Multer memory storage validating image types & 5MB size limit
-│   ├── errorHandler.ts   # Centralized error handler converting errors to standard JSON
-│   ├── validateRequest.ts# Generic Zod validation middleware (body, params, query)
-│   ├── security.ts       # Helmet and CORS configuration
-│   └── requestLogger.ts  # Request logging utility
 │
 ├── utils/                # Helper utilities and standard response envelopes
 │   ├── apiResponse.ts    # Standardized JSON response formatting helpers
@@ -214,3 +245,70 @@ Every incoming request flows through a strict, predictable pipeline:
 - **Equal Partner Policy**: All three partners share the exact same permissions. There is no hierarchical privilege escalation or Admin/Staff segregation.
 - **Identity Integrity**: Authenticated partner identity is derived directly from the verified token in `requireAuth` / `requirePartner` middleware; client-supplied partner IDs are never trusted blindly.
 - **Idempotent Provisioning**: Partner accounts are seeded using a dedicated script without public signup exposure or credential overwrites.
+
+---
+
+## 7. Advanced Accounts, Due Management, Cash Custody & Billing Architecture (Phase 5)
+
+Phase 5 extends the centralized ledger foundation with rigorous accounting controls, multi-channel cash custody, customer and vendor due lifecycles, and professional GST/Non-GST invoice generation.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                             LOTUS CATERER MANAGEMENT SYSTEM                      │
+│                                                                                  │
+│   ┌────────────────────┐     ┌─────────────────────┐     ┌───────────────────┐   │
+│   │   CUSTOMER DUES    │     │    CASH CUSTODY     │     │    VENDOR DUES    │   │
+│   │  - Event Invoices  │     │  - Physical Cash    │     │  - Vendor Bills   │   │
+│   │  - Partial Pay/Adv │     │  - P2P Handovers    │     │  - Deferred Exp   │   │
+│   │  - Overdue Alerts  │     │  - Bank Deposits    │     │  - Settle Paymnts │   │
+│   └─────────┬──────────┘     └──────────┬──────────┘     └─────────┬─────────┘   │
+│             │                           │                          │             │
+│             │ Customer Payment          │ Physical Cash Spent      │ Vendor Paid │
+│             │ (Creates Income)          │ (Decreases Custody)      │ (Creates Exp│
+│             ▼                           ▼                          ▼             │
+│   ┌──────────────────────────────────────────────────────────────────────────┐   │
+│   │                    CENTRALIZED TRANSACTION LEDGER                        │   │
+│   │        - Single Source of Truth for all Revenues and Expenses            │   │
+│   │        - Explicit links: relatedInvoice, relatedVendorBill, CashMovements│   │
+│   │        - No Duplicate Revenue; No Premature Expense Recognition          │   │
+│   └─────────────────────────────────────┬────────────────────────────────────┘   │
+│                                         │                                        │
+│                                         ▼                                        │
+│   ┌──────────────────────────────────────────────────────────────────────────┐   │
+│   │             UNIFIED FINANCIAL OVERVIEWS & RECONCILIATIONS                │   │
+│   │     Common Balance = Total Physical Cash Held + Common Bank Balance      │   │
+│   └──────────────────────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 7.1 Single Ledger Integration & Accounting Correctness
+1. **No Duplicate Revenue Recognition**:
+   - Creating an invoice records an accounts receivable (`Customer Due`).
+   - Only when actual customer payments (advance or subsequent) are recorded does the system create an atomic `BUSINESS_INCOME` transaction in the ledger referencing `relatedInvoice` and `relatedEvent`.
+2. **Deferred Expense Recognition for Vendor Payables**:
+   - Creating a vendor bill records an accounts payable (`Vendor Due`). It does **not** count as a paid business expense.
+   - When a payment is recorded against the vendor bill, the system creates a `BUSINESS_EXPENSE` transaction in the ledger referencing `relatedVendorBill` and `relatedEvent`.
+3. **Physical Cash Custody Separation**:
+   - Partner physical cash custody strictly tracks business banknotes held by each partner.
+   - Handover movements (`PARTNER_HANDOVER`) decrement the sender's custody and increment the recipient's custody by the exact same amount. Total physical cash remains conserved.
+   - Depositing cash to the bank (`BANK_DEPOSIT`) decrements physical cash custody and increments common bank balance; it never creates fictitious income or expense.
+   - Cash expenses paid out of partner custody decrement that partner's custody balance while creating a ledger expense.
+   - Non-negative balance validation ensures partners cannot transfer or deposit money they do not hold.
+
+### 7.2 Invoicing Engine Pipeline
+1. **Sequential Invoice Numbering**: Automated atomic sequence formatting: `LC-YYYY-XXXX` (e.g., `LC-2026-0001`).
+2. **Configurable Tax Calculation**:
+   - **GST Invoice**: Computes line item taxable values (`qty * rate`), subtracts discounts, and applies configurable item-level GST rates (0%, 5%, 12%, 18%, 28%). Intra-state splits into equal CGST and SGST; inter-state maps to IGST.
+   - **Non-GST Invoice**: Clean total with subtotal and optional discounts without tax fields.
+3. **Print, PDF & WhatsApp Sharing**:
+   - Standard browser print stylesheet (`@media print`) rendering a clean, pixel-perfect printable invoice bill without navigation chrome.
+   - Native Web Share API integration on supported mobile devices to share PDF/invoice summary directly to WhatsApp.
+   - Instant WhatsApp Web/App prefilled message fallback with structured invoice details, customer name, date, total, and balance due.
+
+### 7.3 Event Financial Hub
+Every catering event features a dedicated 360-degree financial overview:
+- **Total Invoiced & Collected**: Summarizes all event invoices, advances, and outstanding customer dues.
+- **Total Expenses & Payables**: Real-time aggregation of direct event expenses plus unpaid vendor payables.
+- **Cash Flow vs. Accounting Position**: Explicitly isolates net cash collected from unpaid liabilities.
+- **Quick Action Links**: Allows directly recording event income, booking expenses, issuing invoices, and generating vendor bills pre-linked to the active event.
+

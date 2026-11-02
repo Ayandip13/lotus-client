@@ -8,6 +8,10 @@ import { authRoutes } from './modules/auth/auth.routes';
 import { eventRoutes } from './modules/events/event.routes';
 import { transactionRoutes } from './modules/transactions/transaction.routes';
 import { accountRoutes } from './modules/accounts/account.routes';
+import { invoiceRoutes } from './modules/invoices/invoice.routes';
+import { vendorRoutes } from './modules/vendors/vendor.routes';
+import { cashCustodyRoutes } from './modules/cashCustody/cashCustody.routes';
+import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { NotFoundError } from './utils/appError';
 
 export const createApp = (): Application => {
@@ -40,7 +44,13 @@ export const createApp = (): Application => {
   app.use('/api/transactions', transactionRoutes);
   app.use('/api/accounts', accountRoutes);
 
-  // 8. API v1 Router Mount Point
+  // 8. Phase 5 Advanced Modules (Invoices, Vendors, Cash Custody, Dashboard)
+  app.use('/api/invoices', invoiceRoutes);
+  app.use('/api/vendors', vendorRoutes);
+  app.use('/api/cash-custody', cashCustodyRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
+
+  // 9. API v1 Router Mount Point
   const apiV1Router = express.Router();
   apiV1Router.use('/health', healthRoutes);
   apiV1Router.use('/auth', authRoutes);
@@ -48,6 +58,10 @@ export const createApp = (): Application => {
   apiV1Router.use('/bookings', eventRoutes);
   apiV1Router.use('/transactions', transactionRoutes);
   apiV1Router.use('/accounts', accountRoutes);
+  apiV1Router.use('/invoices', invoiceRoutes);
+  apiV1Router.use('/vendors', vendorRoutes);
+  apiV1Router.use('/cash-custody', cashCustodyRoutes);
+  apiV1Router.use('/dashboard', dashboardRoutes);
   app.use('/api/v1', apiV1Router);
 
   // 5. 404 Catch-All Route Handler

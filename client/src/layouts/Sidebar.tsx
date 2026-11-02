@@ -9,6 +9,10 @@ import {
   X,
   ShieldCheck,
   LogOut,
+  Wallet,
+  Clock,
+  Truck,
+  FileText,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Badge } from '../components/ui/Badge';
@@ -21,17 +25,10 @@ interface SidebarProps {
 
 const navItems = [
   {
-    name: 'Foundation & Status',
+    name: 'Executive Dashboard',
     href: '/',
     icon: LayoutDashboard,
-    badge: 'Phase 1',
-    badgeVariant: 'success' as const,
-  },
-  {
-    name: 'Partner Accounts',
-    href: '/partners',
-    icon: Users,
-    badge: 'Equal Access',
+    badge: 'Hub',
     badgeVariant: 'success' as const,
   },
   {
@@ -42,17 +39,52 @@ const navItems = [
     badgeVariant: 'success' as const,
   },
   {
-    name: 'Income & Expenses',
+    name: 'Customer Dues',
+    href: '/dues/customers',
+    icon: Clock,
+    badge: 'Receivables',
+    badgeVariant: 'warning' as const,
+  },
+  {
+    name: 'Vendor Dues',
+    href: '/dues/vendors',
+    icon: Truck,
+    badge: 'Payables',
+    badgeVariant: 'warning' as const,
+  },
+  {
+    name: 'Invoices & Billing',
+    href: '/invoices',
+    icon: FileText,
+    badge: 'GST/Non-GST',
+    badgeVariant: 'success' as const,
+  },
+  {
+    name: 'Cash Custody',
+    href: '/cash-custody',
+    icon: Wallet,
+    badge: 'Cash-in-Hand',
+    badgeVariant: 'success' as const,
+  },
+  {
+    name: 'Transactions Ledger',
     href: '/transactions',
     icon: Receipt,
     badge: 'Active',
     badgeVariant: 'success' as const,
   },
   {
+    name: 'Partner Accounts',
+    href: '/partners',
+    icon: Users,
+    badge: 'Equal Access',
+    badgeVariant: 'success' as const,
+  },
+  {
     name: 'Financial Overview',
     href: '/overview',
     icon: PieChart,
-    badge: 'Active',
+    badge: 'Reports',
     badgeVariant: 'success' as const,
   },
 ];

@@ -24,6 +24,9 @@ export interface ITransaction extends Document {
   paymentSource: PaymentSource;
   partner?: Types.ObjectId | IPartner; // Contributing or paying partner
   relatedEvent?: Types.ObjectId | IEvent; // Linked catering assignment
+  relatedInvoice?: Types.ObjectId; // Optional link to customer invoice
+  relatedVendorBill?: Types.ObjectId; // Optional link to vendor bill
+  relatedCashMovement?: Types.ObjectId; // Optional link to cash custody movement
   attachments: ITransactionAttachment[];
   createdByPartner: Types.ObjectId | IPartner;
   isDeleted: boolean;
@@ -124,6 +127,24 @@ const transactionSchema = new Schema<ITransaction>(
     relatedEvent: {
       type: Schema.Types.ObjectId,
       ref: 'Event',
+      default: undefined,
+      index: true,
+    },
+    relatedInvoice: {
+      type: Schema.Types.ObjectId,
+      ref: 'Invoice',
+      default: undefined,
+      index: true,
+    },
+    relatedVendorBill: {
+      type: Schema.Types.ObjectId,
+      ref: 'VendorBill',
+      default: undefined,
+      index: true,
+    },
+    relatedCashMovement: {
+      type: Schema.Types.ObjectId,
+      ref: 'CashMovement',
       default: undefined,
       index: true,
     },

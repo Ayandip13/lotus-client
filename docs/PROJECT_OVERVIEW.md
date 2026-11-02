@@ -52,6 +52,14 @@ The confirmed scope encompasses the following functional domains:
 - Partner summary: Financial breakdown per partner.
 - Event summary: Financial breakdown per event.
 
+### F. Phase 5 Advanced Accounts, Billing & Due Management
+- **Customer Due Tracking**: Outstanding invoices, partial payments, payment history, overdue monitoring.
+- **Vendor Due & Payables**: Supplier bills, liability tracking without premature expense recognition, partial settlements.
+- **Partner Business Cash Custody**: Physical cash-in-hand per partner, partner-to-partner handovers, bank deposits/withdrawals, strict separation from personal funds.
+- **GST & Non-GST Invoicing**: Configurable line-item taxes, auto-calculations, printable layout, WhatsApp sharing.
+- **Event Financial Hub**: Event-level collections, expenses, invoices, vendor dues, and net cashflow.
+- **Executive Dashboard**: Consolidated financial cards, partner cash custody, upcoming events, and due alerts.
+
 ---
 
 ## 4. Architectural Boundaries

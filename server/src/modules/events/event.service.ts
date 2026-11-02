@@ -150,6 +150,91 @@ export class EventService {
 
     await event.save();
   }
+
+  /**
+   * Retrieves comprehensive event-wise financial overview, collections, expenses, invoices, and vendor dues.
+   */
+  async getEventFinancialOverview(eventId: string) {
+    if (!mongoose.Types.ObjectId.isValid(eventId)) {
+      throw new BadRequestError('Invalid event ID format');
+    }
+
+    const event = await Event.findOne({ _id: eventId, isDeleted: false }).populate(
+      'createdByPartner',
+      'name email phone'
+    );
+    if (!event) {
+      throw new NotFoundError('Booking/event not found');
+    }
+
+    const { Transaction } = await import('../transactions/transaction.model');
+    const { Invoice } = await import('../invoices/invoice.model');
+    const { VendorBill } = await import('../vendors/vendorBill.model');
+
+    const [transactions, invoices, vendorBills] = await Promise.all([
+      Transaction.find({ relatedEvent: event._id, isDeleted: false })
+        .populate('partner', 'name email phone')
+        .populate('createdByPartner', 'name')
+        .sort({ transactionDate: -1 })
+        .lean(),
+      Invoice.find({ relatedEvent: event._id, isDeleted: false })
+        .populate('createdByPartner', 'name')
+        .populate('payments.receivedByPartner', 'name')
+        .sort({ invoiceDate: -1 })
+        .lean(),
+      VendorBill.find({ relatedEvent: event._id, isDeleted: false })
+        .populate('vendor', 'name phone category')
+        .populate('createdByPartner', 'name')
+        .populate('paymentHistory.paidByPartner', 'name')
+        .sort({ billDate: -1 })
+        .lean(),
+    ]);
+
+    let totalCollectedPaise = 0;
+    let totalExpensesPaise = 0;
+    let totalInvoicedPaise = 0;
+    let totalCustomerDuePaise = 0;
+    let totalVendorDuePaise = 0;
+
+    const collections = transactions.filter((t: any) => t.transactionType === 'BUSINESS_INCOME');
+    const expenses = transactions.filter((t: any) => t.transactionType === 'BUSINESS_EXPENSE');
+    const contributions = transactions.filter((t: any) => t.transactionType === 'PARTNER_CONTRIBUTION');
+
+    for (const c of collections) {
+      totalCollectedPaise += c.amountPaise || Math.round(c.amount * 100);
+    }
+
+    for (const e of expenses) {
+      totalExpensesPaise += e.amountPaise || Math.round(e.amount * 100);
+    }
+
+    for (const inv of invoices) {
+      totalInvoicedPaise += inv.grandTotalPaise || Math.round(inv.grandTotal * 100);
+      totalCustomerDuePaise += inv.remainingDuePaise || Math.round(inv.remainingDue * 100);
+    }
+
+    for (const vb of vendorBills) {
+      totalVendorDuePaise += vb.remainingAmountPaise || Math.round(vb.remainingAmount * 100);
+    }
+
+    return {
+      event,
+      summary: {
+        totalInvoiced: Math.round((totalInvoicedPaise / 100) * 100) / 100,
+        totalAmountCollected: Math.round((totalCollectedPaise / 100) * 100) / 100,
+        remainingCustomerDue: Math.round((totalCustomerDuePaise / 100) * 100) / 100,
+        totalExpenses: Math.round((totalExpensesPaise / 100) * 100) / 100,
+        totalVendorDue: Math.round((totalVendorDuePaise / 100) * 100) / 100,
+        netCashflow: Math.round(((totalCollectedPaise - totalExpensesPaise) / 100) * 100) / 100,
+      },
+      collections,
+      expenses,
+      contributions,
+      invoices,
+      vendorBills,
+    };
+  }
 }
 
 export const eventService = new EventService();
+

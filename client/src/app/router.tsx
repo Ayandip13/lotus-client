@@ -14,6 +14,12 @@ import { TransactionCreatePage } from '../features/transactions/pages/Transactio
 import { TransactionEditPage } from '../features/transactions/pages/TransactionEditPage';
 import { DateWiseExpensePage } from '../features/accounts/pages/DateWiseExpensePage';
 import { FinancialOverviewPage } from '../features/accounts/pages/FinancialOverviewPage';
+import { CustomerDuesPage } from '../features/dues/pages/CustomerDuesPage';
+import { VendorDuesPage } from '../features/dues/pages/VendorDuesPage';
+import { InvoiceListPage } from '../features/invoices/pages/InvoiceListPage';
+import { InvoiceCreatePage } from '../features/invoices/pages/InvoiceCreatePage';
+import { InvoiceDetailsPage } from '../features/invoices/pages/InvoiceDetailsPage';
+import { CashCustodyPage } from '../features/cashCustody/pages/CashCustodyPage';
 
 export const router = createBrowserRouter([
   {
@@ -80,6 +86,41 @@ export const router = createBrowserRouter([
           {
             path: 'overview',
             element: <FinancialOverviewPage />,
+          },
+          // Phase 5 Routes
+          {
+            path: 'dues',
+            children: [
+              {
+                path: 'customers',
+                element: <CustomerDuesPage />,
+              },
+              {
+                path: 'vendors',
+                element: <VendorDuesPage />,
+              },
+            ],
+          },
+          {
+            path: 'invoices',
+            children: [
+              {
+                index: true,
+                element: <InvoiceListPage />,
+              },
+              {
+                path: 'new',
+                element: <InvoiceCreatePage />,
+              },
+              {
+                path: ':id',
+                element: <InvoiceDetailsPage />,
+              },
+            ],
+          },
+          {
+            path: 'cash-custody',
+            element: <CashCustodyPage />,
           },
         ],
       },

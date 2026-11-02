@@ -15,7 +15,8 @@
     "test:auth": "tsx src/tests/auth.test.ts",
     "test:events": "tsx src/tests/event.test.ts",
     "test:transactions": "tsx src/tests/transaction.test.ts",
-    "test": "tsx src/tests/auth.test.ts && tsx src/tests/event.test.ts && tsx src/tests/transaction.test.ts"
+    "test:phase5": "tsx src/tests/phase5.test.ts",
+    "test": "tsx src/tests/auth.test.ts && tsx src/tests/event.test.ts && tsx src/tests/transaction.test.ts && tsx src/tests/phase5.test.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",

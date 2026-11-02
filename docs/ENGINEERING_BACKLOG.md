@@ -10,7 +10,7 @@ This document tracks phase-by-phase implementation progress, completed milestone
 - [x] **Phase 2: Authentication, Partner Accounts & Authorization** (Completed)
 - [x] **Phase 3: Bookings, Events & Job Management** (Completed)
 - [x] **Phase 4: Transactions (Income & Expense Ledger), Accounts & Attachments** (Completed)
-- [ ] **Phase 5: Financial Overviews, Settlement Formulas & Advanced Analytics**
+- [x] **Phase 5: Advanced Accounts, Due Management, Cash Custody, Billing & Dashboard** (Completed)
 - [ ] **Phase 6: Verification, Polishing & Production Deployment Readiness**
 
 ---
@@ -95,7 +95,30 @@ This document tracks phase-by-phase implementation progress, completed milestone
 
 ---
 
-### Upcoming Phase 5: Financial Overviews, Settlement Formulas & Advanced Analytics
-- Pending client clarification on Question Q6 (final profit distribution rules) and Question Q4/Q5 (partner reimbursement/settlement mechanisms).
-- Advanced financial analytics, category cost breakdown charts, event profitability reports.
-- PDF and CSV transaction export capabilities.
+## Phase 5 Breakdown: Advanced Accounts, Due Management, Cash Custody, Billing & Dashboard
+### Phase Status: **PHASE 5 COMPLETE**
+
+| Task ID | Item | Status | Notes |
+| :--- | :--- | :--- | :--- |
+| **P5-01** | Backend Models & Schemas | Completed | `Invoice`, `Vendor`, `VendorBill`, `CashMovement` models with integer `amountPaise` precision, audit stamps, and references in `Transaction` |
+| **P5-02** | Billing & Invoicing Service & APIs | Completed | Auto sequential invoice numbers (`LC-YYYY-XXXX`), GST (CGST/SGST vs IGST) and Non-GST line-item calculation engines, customer dues aggregation |
+| **P5-03** | Customer Dues & Payment Lifecycle | Completed | Partial/advance customer payments atomically recorded as `BUSINESS_INCOME` in the centralized ledger, preventing double-counting |
+| **P5-04** | Vendor Directory & Payables Service | Completed | Vendor directory CRUD, bill creation without premature expense recognition, bill settlement atomically recorded as `BUSINESS_EXPENSE` |
+| **P5-05** | Physical Cash Custody Architecture | Completed | Partner 1, 2, 3 physical banknote balances, P2P handovers, bank deposits/withdrawals, cash expenses, non-negative balance checks |
+| **P5-06** | Centralized Dashboard Aggregations | Completed | 6 distinct financial KPI cards, chronological upcoming events, partner cash custody, customer/vendor dues breakdown, recent ledger activity |
+| **P5-07** | Event Financial Hub | Completed | Dedicated 360-degree event financial breakdown (`GET /api/v1/events/:id/financials`) embedded in Event Details page |
+| **P5-08** | Automated Backend Test Suite | Completed | 17/17 tests passing in `phase5.test.ts`. Full system regression: 48/48 tests passing (Auth: 8, Events: 12, Transactions: 11, Phase 5: 17) |
+| **P5-09** | Reusable Frontend Filtering System | Completed | Responsive `FilterPanel` component with mobile drawer, active badge counter, multi-filter support, and reset functionality |
+| **P5-10** | Customer & Vendor Dues Frontend | Completed | `CustomerDuesPage` and `VendorDuesPage` with KPI summary cards, responsive tables, and payment modals with cash custody assignment |
+| **P5-11** | Customer Invoicing & Billing Frontend | Completed | `InvoiceListPage`, `InvoiceCreatePage` (GST/Non-GST toggle, dynamic line items, real-time calculations), `InvoiceDetailsPage` (Print/PDF, WhatsApp sharing) |
+| **P5-12** | Cash Custody Management Frontend | Completed | `CashCustodyPage` with partner physical cash cards, common bank balance card, movement audit trail, and `RecordCashMovementModal` |
+| **P5-13** | Dashboard Overhaul Frontend | Completed | `DashboardShellPage` fully upgraded with 6 distinct financial KPI cards, upcoming events, partner cash balances, and customer/vendor dues |
+| **P5-14** | Documentation & Architecture Sync | Completed | Updated `PROJECT_OVERVIEW.md`, `REQUIREMENTS.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `API_CONTRACT.md`, and `ENGINEERING_BACKLOG.md` |
+
+---
+
+### Upcoming Phase 6: Verification, Polishing & Production Deployment Readiness
+- Cross-browser and end-to-end user experience audit.
+- Production environment configurations and CI/CD validation.
+- Long-term audit trail archiving and performance optimization.
+

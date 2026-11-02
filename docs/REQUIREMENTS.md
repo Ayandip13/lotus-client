@@ -57,6 +57,35 @@ This document contains **only confirmed client requirements** and explicitly reg
 - **Date-Wise Expense History**: Daily expenditure aggregation with Asia/Kolkata timezone normalization.
 - **Auditable Image Attachments**: Multi-image bill and receipt attachment capability for income, expenses, and contributions.
 
+### 1.9 Phase 5 Advanced Accounts, Cash Custody, Due Management & Invoicing
+- **Customer Due Management**:
+  - Track customer receivables against invoices with payment histories.
+  - Automatic balance updates (`remainingDue = grandTotal - amountPaid`).
+  - Overpayment prevention (`amount <= remainingDue`).
+  - No double counting of income (customer payments emit a single `BUSINESS_INCOME` ledger transaction).
+  - Status progression: `UNPAID` -> `PARTIALLY_PAID` -> `PAID` (or `OVERDUE` if past due date).
+- **Vendor Due Management**:
+  - Track supplier payables without prematurely recognizing unpaid bills as business cash expenses.
+  - Recording vendor payment emits a `BUSINESS_EXPENSE` ledger transaction.
+  - Overpayment prevention (`amount <= remainingAmount`).
+  - Status progression: `UNPAID` -> `PARTIALLY_PAID` -> `PAID` / `OVERDUE`.
+- **Partner Business Cash Custody**:
+  - Strictly physical cash custody held by partners, distinct from personal money.
+  - 6 movement types: `CASH_INCOME_ASSIGNED`, `PARTNER_HANDOVER`, `BANK_DEPOSIT`, `BANK_WITHDRAWAL`, `CASH_EXPENSE`, `OPENING_BALANCE`.
+  - Non-negative balance validation: partners cannot transfer or spend more cash than their current physical custody.
+  - Cash-to-bank and handover movements shift custody channels without creating duplicate income/expense.
+  - Reconciled against total business liquid assets (`Common Business Balance = Total Physical Cash in Hand + Common Bank Balance`).
+- **Billing & Invoice Module**:
+  - Unique invoice sequence generation (`LC-YYYY-XXXX`).
+  - Support for both GST Tax Invoices and Non-GST Bills of Supply.
+  - Configurable line-item tax rates (0%, 5%, 12%, 18%, 28%) and intra/inter-state tax splitting (CGST/SGST vs IGST).
+  - Printable layout (`@media print`) and WhatsApp sharing with native share fallback.
+- **Dedicated Event Financial Hub**:
+  - Consolidated event overview showing invoiced amount, collections, expenses, vendor dues, and net cashflow.
+- **Executive Dashboard**:
+  - Six independent financial metrics (no misleading single combined balance).
+  - Partner cash-in-hand cards, overdue due alerts, upcoming events in chronological order, and recent ledger activity.
+
 ---
 
 ## 2. Unresolved Business Questions

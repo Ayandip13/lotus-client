@@ -21,6 +21,7 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/Card';
 import { Alert } from '../../../components/ui/Alert';
+import { EventFinancialHub } from '../components/EventFinancialHub';
 
 export const BookingDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -276,6 +277,9 @@ export const BookingDetailsPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Dedicated Event Financial Hub */}
+      <EventFinancialHub eventId={booking._id} />
 
       {/* Delete Confirmation Modal */}
       <DeleteBookingModal

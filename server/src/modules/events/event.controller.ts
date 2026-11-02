@@ -69,3 +69,17 @@ export const deleteEvent = async (
     next(error);
   }
 };
+
+export const getEventFinancialOverview = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const data = await eventService.getEventFinancialOverview(req.params.id);
+    sendSuccess(res, data, 'Event financial overview retrieved successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+

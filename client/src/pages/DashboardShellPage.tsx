@@ -1,301 +1,457 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { checkSystemHealth } from '../services/api';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
-import { Alert } from '../components/ui/Alert';
-import { Button } from '../components/ui/Button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Server,
-  Database,
-  Layers,
-  ShieldAlert,
-  HardDrive,
-  RefreshCw,
+  CalendarDays,
+  TrendingUp,
+  TrendingDown,
+  Building,
+  Wallet,
+  AlertTriangle,
+  Truck,
+  ArrowRight,
   Clock,
-  Terminal,
+  Phone,
+  Receipt,
+  User,
+  Plus,
 } from 'lucide-react';
-
+import { Button } from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { useAuth } from '../features/auth/context/AuthContext';
+import { apiClient } from '../services/api';
+
+interface DashboardData {
+  upcomingEvents: any[];
+  financialOverview: {
+    totalBusinessIncome: number;
+    totalBusinessExpenses: number;
+    commonBusinessBankBalance: number;
+    totalBusinessCashInHand: number;
+    totalCustomerDue: number;
+    totalVendorDue: number;
+  };
+  partnerCashOverview: {
+    partners: Array<{
+      partnerId: string;
+      partnerName: string;
+      partnerPhone?: string;
+      cashInHand: number;
+    }>;
+    totalBusinessCashInHand: number;
+    commonBusinessBankBalance: number;
+  };
+  dueOverview: {
+    customerDue: {
+      totalDue: number;
+      overdueCount: number;
+      overdueAmount: number;
+    };
+    vendorDue: {
+      totalDue: number;
+      overdueCount: number;
+      overdueAmount: number;
+    };
+  };
+  recentActivity: any[];
+}
 
 export const DashboardShellPage: React.FC = () => {
   const { partner, user } = useAuth();
-  const { data: healthResponse, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['system-health'],
-    queryFn: checkSystemHealth,
-  });
+  const navigate = useNavigate();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const health = healthResponse?.data;
+  const loadDashboard = async () => {
+    setLoading(true);
+    try {
+      const res = await apiClient.get('/dashboard');
+      setData(res.data.data);
+    } catch (err) {
+      console.error('Failed to load dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-16 flex flex-col justify-center items-center gap-3">
+        <LoadingSpinner size="lg" />
+        <p className="text-xs text-slate-400 font-medium">Loading executive dashboard...</p>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const { financialOverview, upcomingEvents, partnerCashOverview, dueOverview, recentActivity } = data;
 
   return (
-    <div className="space-y-6">
-      {/* Page Title & Status Header */}
+    <div className="space-y-8 pb-12">
+      {/* Executive Welcome & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
         <div>
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Lotus Caterer Management
+              Lotus Caterer Management Hub
             </h1>
-            <Badge variant="success">Phase 3 Active</Badge>
+            <Badge variant="success">Phase 5 Operational</Badge>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Welcome back, <strong className="text-slate-800">{partner?.name || 'Partner'}</strong> ({user ? `@${user.username}` : ''}). Equal 3-partner management session active.
+            Welcome back, <strong className="text-slate-800">{partner?.name || 'Partner'}</strong> ({user ? `@${user.username}` : ''}). Equal 3-partner financial custody session active.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
             size="sm"
-            onClick={() => refetch()}
-            isLoading={isFetching}
-            leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+            variant="outline"
+            className="text-xs gap-1.5"
+            onClick={() => navigate('/invoices/new')}
           >
-            Probe Health
+            <Plus className="w-3.5 h-3.5" /> New Invoice
           </Button>
-          <Badge variant="outline">Equal Partner Access</Badge>
+          <Button
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => navigate('/transactions/new')}
+          >
+            <Plus className="w-3.5 h-3.5" /> Record Transaction
+          </Button>
         </div>
       </div>
 
-      {/* Operational Notice */}
-      <Alert
-        variant="info"
-        title="Phase 3 Live: Booking, Guest & Event Management"
-      >
-        Independent catering job records and guest contact information are now live with full CRUD operations, pagination, search, and equal partner audit tracking. Financial transactions and balances remain scheduled for Phase 4 & 5.
-      </Alert>
+      {/* SECTION B: FINANCIAL OVERVIEW (6 Independent Financial Cards - No misleading combination) */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            Executive Financial Overview
+          </h2>
+          <span className="text-[11px] text-slate-400 font-medium">Distinct Account Balances</span>
+        </div>
 
-      {/* System Diagnostic Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Backend API Server Status */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Express API
-            </CardTitle>
-            <Server className="w-4 h-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-slate-900">
-                {isLoading ? 'Probing...' : isError ? 'Offline' : 'Operational'}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+          {/* 1. Total Business Income */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Total Income
               </span>
-              <Badge variant={isError ? 'danger' : 'success'}>
-                {isLoading ? 'Checking' : isError ? 'Error' : 'HTTP 200'}
-              </Badge>
+              <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
+                <TrendingUp className="w-4 h-4" />
+              </div>
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              {health?.version ? `API v${health.version}` : 'Node.js Express Server'}
+            <p className="text-xl font-black text-emerald-700">
+              ₹{financialOverview.totalBusinessIncome.toLocaleString()}
             </p>
-          </CardContent>
-        </Card>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Total business revenue</span>
+          </div>
 
-        {/* Database Status */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              MongoDB / Mongoose
-            </CardTitle>
-            <Database className="w-4 h-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-slate-900">
-                {isLoading
-                  ? 'Probing...'
-                  : health?.database?.connected
-                  ? 'Connected'
-                  : 'Configured'}
+          {/* 2. Total Business Expenses */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Total Expenses
               </span>
-              <Badge variant={health?.database?.connected ? 'success' : 'neutral'}>
-                {health?.database?.status || 'Lifecycle Ready'}
-              </Badge>
+              <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+                <TrendingDown className="w-4 h-4" />
+              </div>
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Graceful fallback handling enabled
+            <p className="text-xl font-black text-rose-600">
+              ₹{financialOverview.totalBusinessExpenses.toLocaleString()}
             </p>
-          </CardContent>
-        </Card>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">All business outflows</span>
+          </div>
 
-        {/* Storage Service Adapter */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Storage Adapter
-            </CardTitle>
-            <HardDrive className="w-4 h-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-slate-900">Prepared</span>
-              <Badge variant="outline">Interface Ready</Badge>
-            </div>
-            <p className="mt-1 text-xs text-slate-500">
-              Cloudinary integration ready for Phase 4
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* System Uptime */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-              Server Uptime
-            </CardTitle>
-            <Clock className="w-4 h-4 text-slate-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-slate-900">
-                {health?.uptime !== undefined ? `${health.uptime}s` : 'N/A'}
+          {/* 3. Bank Account Balance */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Bank Balance
               </span>
-              <Badge variant="neutral">{health?.environment || 'development'}</Badge>
+              <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                <Building className="w-4 h-4" />
+              </div>
             </div>
-            <p className="mt-1 text-xs text-slate-500">
-              {health?.timestamp ? new Date(health.timestamp).toLocaleTimeString() : 'Live probe ready'}
+            <p className="text-xl font-black text-blue-700">
+              ₹{financialOverview.commonBusinessBankBalance.toLocaleString()}
             </p>
-          </CardContent>
-        </Card>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Common bank account</span>
+          </div>
+
+          {/* 4. Physical Cash Held */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition" onClick={() => navigate('/cash-custody')}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Physical Cash
+              </span>
+              <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                <Wallet className="w-4 h-4" />
+              </div>
+            </div>
+            <p className="text-xl font-black text-amber-700">
+              ₹{financialOverview.totalBusinessCashInHand.toLocaleString()}
+            </p>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Held across 3 partners</span>
+          </div>
+
+          {/* 5. Customer Outstanding Due */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition" onClick={() => navigate('/dues/customers')}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Customer Due
+              </span>
+              <div className="p-1.5 rounded-lg bg-purple-50 text-purple-600">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+            </div>
+            <p className="text-xl font-black text-purple-700">
+              ₹{financialOverview.totalCustomerDue.toLocaleString()}
+            </p>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Receivable from clients</span>
+          </div>
+
+          {/* 6. Vendor Outstanding Due */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition" onClick={() => navigate('/dues/vendors')}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Vendor Due
+              </span>
+              <div className="p-1.5 rounded-lg bg-orange-50 text-orange-600">
+                <Truck className="w-4 h-4" />
+              </div>
+            </div>
+            <p className="text-xl font-black text-orange-700">
+              ₹{financialOverview.totalVendorDue.toLocaleString()}
+            </p>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Payable to suppliers</span>
+          </div>
+        </div>
       </div>
 
-      {/* Backend Health Diagnostics Detail */}
-      {isError && (
-        <Alert variant="warning" title="Backend Connection Notice">
-          {error instanceof Error ? error.message : 'Could not reach backend health endpoint at /api/health.'}
-          <div className="mt-1 text-xs text-slate-600">
-            Ensure the Express server is running on port 5000 (`npm run dev:server`).
-          </div>
-        </Alert>
-      )}
-
-      {/* Architectural Modules Matrix */}
+      {/* SECTION C & D: PARTNER CASH CUSTODY & DUE OVERVIEWS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Foundation Deliverables */}
-        <Card>
-          <CardHeader>
+        {/* Section C: Partner Cash Custody Overview */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-slate-700" />
-              <CardTitle>Established Architecture Pillars</CardTitle>
+              <Wallet className="w-4 h-4 text-slate-700" />
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                Partner Physical Cash Custody
+              </h2>
             </div>
-            <CardDescription>
-              Verified standards, security layers, and contracts implemented in Phase 1.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pillar</TableHead>
-                  <TableHead>Technology</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell className="font-medium text-slate-900">Frontend Client</TableCell>
-                  <TableCell>React + Vite + TypeScript + Tailwind</TableCell>
-                  <TableCell><Badge variant="success">Active</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium text-slate-900">State & HTTP</TableCell>
-                  <TableCell>TanStack Query v5 + Axios Client</TableCell>
-                  <TableCell><Badge variant="success">Active</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium text-slate-900">Backend Server</TableCell>
-                  <TableCell>Express.js + TypeScript (Modular)</TableCell>
-                  <TableCell><Badge variant="success">Active</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium text-slate-900">Validation & Errors</TableCell>
-                  <TableCell>Zod + Centralized Error Pipeline</TableCell>
-                  <TableCell><Badge variant="success">Active</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium text-slate-900">Storage Service</TableCell>
-                  <TableCell>IStorageService Abstract Contract</TableCell>
-                  <TableCell><Badge variant="outline">Prepared</Badge></TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+            <button
+              onClick={() => navigate('/cash-custody')}
+              className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+            >
+              Manage Cash <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-        {/* Roadmap & Unresolved Clarifications */}
-        <Card>
-          <CardHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {partnerCashOverview.partners.map((p, idx) => (
+              <div key={p.partnerId} className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Partner {idx + 1}
+                </span>
+                <p className="font-bold text-slate-900 text-sm truncate">{p.partnerName}</p>
+                <p className="text-lg font-black text-slate-900 mt-2">
+                  ₹{p.cashInHand.toLocaleString()}
+                </p>
+                <span className="text-[10px] text-slate-500 block mt-0.5">Physical Cash</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-3 bg-slate-900 text-white rounded-xl text-xs flex items-center justify-between">
+            <span className="text-slate-300">Total Business Cash Custody:</span>
+            <span className="font-bold text-amber-300 text-sm">
+              ₹{partnerCashOverview.totalBusinessCashInHand.toLocaleString()}
+            </span>
+          </div>
+        </div>
+
+        {/* Section D: Due Management Overview */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <CardTitle>Unresolved Questions Registry</CardTitle>
+              <Clock className="w-4 h-4 text-slate-700" />
+              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                Outstanding Due Overview
+              </h2>
             </div>
-            <CardDescription>
-              Items logged in docs/REQUIREMENTS.md requiring confirmation before Phase 2-5 implementation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-900">Q1 & Q2: Booking vs. Event Entity Model</span>
-                <Badge variant="warning">Awaiting Clarification</Badge>
+            <span className="text-xs text-slate-400 font-medium">Customer & Vendor Dues</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Customer Due Card */}
+            <div
+              className="p-4 bg-purple-50/50 border border-purple-200/70 rounded-xl cursor-pointer hover:bg-purple-50 transition"
+              onClick={() => navigate('/dues/customers')}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-purple-900">Customer Dues</span>
+                <ArrowRight className="w-4 h-4 text-purple-600" />
               </div>
-              <p className="text-xs text-slate-500">
-                Are bookings and events separate entities or synonymous? Can one booking have multiple events?
+              <p className="text-2xl font-black text-purple-800">
+                ₹{dueOverview.customerDue.totalDue.toLocaleString()}
               </p>
+              <div className="flex items-center gap-1.5 mt-2 text-xs text-purple-700">
+                <span className="px-1.5 py-0.5 bg-purple-100 rounded font-semibold text-[10px]">
+                  {dueOverview.customerDue.overdueCount} Overdue
+                </span>
+                <span>(₹{dueOverview.customerDue.overdueAmount.toLocaleString()})</span>
+              </div>
             </div>
 
-            <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-900">Q3: Partner Role Hierarchy</span>
-                <Badge variant="warning">Awaiting Clarification</Badge>
+            {/* Vendor Due Card */}
+            <div
+              className="p-4 bg-orange-50/50 border border-orange-200/70 rounded-xl cursor-pointer hover:bg-orange-50 transition"
+              onClick={() => navigate('/dues/vendors')}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-orange-900">Vendor Dues</span>
+                <ArrowRight className="w-4 h-4 text-orange-600" />
               </div>
-              <p className="text-xs text-slate-500">
-                Do the 3 user accounts have equal partner privileges or distinct hierarchical roles?
+              <p className="text-2xl font-black text-orange-800">
+                ₹{dueOverview.vendorDue.totalDue.toLocaleString()}
               </p>
+              <div className="flex items-center gap-1.5 mt-2 text-xs text-orange-700">
+                <span className="px-1.5 py-0.5 bg-orange-100 rounded font-semibold text-[10px]">
+                  {dueOverview.vendorDue.overdueCount} Overdue
+                </span>
+                <span>(₹{dueOverview.vendorDue.overdueAmount.toLocaleString()})</span>
+              </div>
             </div>
+          </div>
 
-            <div className="p-3 rounded-lg border border-slate-200/80 bg-slate-50/50 space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-900">Q4-Q6: Accounting & Distribution Rules</span>
-                <Badge variant="warning">Awaiting Clarification</Badge>
-              </div>
-              <p className="text-xs text-slate-500">
-                Can partners transfer money between themselves? How are shared expenses and profits allocated?
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          <p className="text-[11px] text-slate-500 italic">
+            Click on any card to view detailed payment histories, filter by partner or event, and record partial settlements.
+          </p>
+        </div>
       </div>
 
-      {/* Quick Developer Command Reference */}
-      <Card>
-        <CardHeader>
+      {/* SECTION A: UPCOMING EVENTS (Chronological Order) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-slate-700" />
-            <CardTitle>Developer Execution Cheatsheet</CardTitle>
+            <CalendarDays className="w-4 h-4 text-slate-700" />
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              Upcoming Catering Events ({upcomingEvents.length})
+            </h2>
           </div>
-          <CardDescription>
-            Standard npm scripts for building and operating this monorepo workspace.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
-            <div className="p-3 rounded-lg bg-slate-900 text-slate-100 space-y-1">
-              <div className="text-slate-400"># Start both in dev</div>
-              <div>npm run dev:server</div>
-              <div>npm run dev:client</div>
-            </div>
-            <div className="p-3 rounded-lg bg-slate-900 text-slate-100 space-y-1">
-              <div className="text-slate-400"># Typecheck</div>
-              <div>npm --prefix server run typecheck</div>
-              <div>npm --prefix client run typecheck</div>
-            </div>
-            <div className="p-3 rounded-lg bg-slate-900 text-slate-100 space-y-1">
-              <div className="text-slate-400"># Production build</div>
-              <div>npm run build</div>
-            </div>
+          <button
+            onClick={() => navigate('/bookings')}
+            className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+          >
+            All Bookings <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {upcomingEvents.length === 0 ? (
+          <p className="text-xs text-slate-500 py-6 text-center">
+            No upcoming events found on or after today.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingEvents.map((ev) => (
+              <div
+                key={ev._id}
+                onClick={() => navigate(`/bookings/${ev._id}`)}
+                className="p-4 bg-slate-50/70 border border-slate-200/80 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-slate-900 text-sm">{ev.title}</h3>
+                  <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full shrink-0">
+                    {new Date(ev.eventDate).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div className="text-xs text-slate-600 space-y-1">
+                  <p className="flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{ev.guestName || ev.clientName || 'Guest'}</span>
+                  </p>
+                  {(ev.guestPhone || ev.clientPhone) && (
+                    <p className="flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{ev.guestPhone || ev.clientPhone}</span>
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-medium">Open Financial Hub</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                </div>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </div>
+
+      {/* SECTION E: RECENT ACTIVITY (Ledger Transactions & Records) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Receipt className="w-4 h-4 text-slate-700" />
+            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              Recent Financial Transactions & Activity
+            </h2>
+          </div>
+          <button
+            onClick={() => navigate('/transactions')}
+            className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+          >
+            All Ledger Records <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {recentActivity.length === 0 ? (
+          <p className="text-xs text-slate-500 py-6 text-center">No recent financial transactions found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th className="py-2.5 px-3">Date</th>
+                  <th className="py-2.5 px-3">Type</th>
+                  <th className="py-2.5 px-3">Description</th>
+                  <th className="py-2.5 px-3">Partner</th>
+                  <th className="py-2.5 px-3 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recentActivity.map((t: any) => (
+                  <tr key={t._id} className="hover:bg-slate-50/60 transition">
+                    <td className="py-2.5 px-3 text-slate-500">
+                      {new Date(t.transactionDate).toLocaleDateString()}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {t.transactionType === 'BUSINESS_INCOME' ? (
+                        <Badge variant="success">INCOME</Badge>
+                      ) : t.transactionType === 'BUSINESS_EXPENSE' ? (
+                        <Badge variant="danger">EXPENSE</Badge>
+                      ) : (
+                        <Badge variant="outline">CONTRIBUTION</Badge>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3 font-medium text-slate-800">{t.description}</td>
+                    <td className="py-2.5 px-3 text-slate-600">{t.partner?.name || 'Common'}</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-slate-900">
+                      ₹{t.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

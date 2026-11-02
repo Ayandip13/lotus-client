@@ -68,7 +68,7 @@ Unified catering job record combining booking specifications, event execution da
 | `createdAt` | Date | Auto | No | Mongoose timestamp |
 | `updatedAt` | Date | Auto | No | Mongoose timestamp |
 
-### 3.4 Centralized Transaction Ledger Entity (`transactions`) — Implemented in Phase 4
+### 3.4 Centralized Transaction Ledger Entity (`transactions`) — Implemented in Phase 4 & Extended in Phase 5
 Captures all business money movements: business income, partner contributions, common cash expenses, and partner personally paid expenses in ONE unified collection.
 
 | Field | Type | Required | Unique / Index | Description |
@@ -81,6 +81,9 @@ Captures all business money movements: business income, partner contributions, c
 | `paymentSource` | String (Enum) | Yes | Yes (Index) | `COMMON_BUSINESS` \| `PARTNER_PERSONAL` (default: `COMMON_BUSINESS`) |
 | `partner` | ObjectId (Ref) | Conditional | Yes (Index) | Ref to `Partner` (required for contributions & partner personal expenses) |
 | `relatedEvent` | ObjectId (Ref) | No | Yes (Index) | Optional Ref to `Event` (links expenditure or income to catering job) |
+| `relatedInvoice` | ObjectId (Ref) | No | Yes (Index) | Optional Ref to `Invoice` (links payment to customer invoice) |
+| `relatedVendorBill`| ObjectId (Ref) | No | Yes (Index) | Optional Ref to `VendorBill` (links payment to vendor payable) |
+| `relatedCashMovement`| ObjectId (Ref)| No | Yes (Index) | Optional Ref to `CashMovement` (links cash expense to custody deduction) |
 | `attachments` | Array[Subdoc] | No | No | Attached bills/receipts: `[{ url, publicId, fileSize, mimeType, originalName, uploadedByPartner, uploadedAt }]` |
 | `createdByPartner` | ObjectId (Ref) | Yes | Yes (Index) | Reference to partner session who recorded the entry |
 | `isDeleted` | Boolean | Yes | Yes (Index) | Soft delete flag (default: `false`). Excluded from accounting calculations |
@@ -94,37 +97,141 @@ Captures all business money movements: business income, partner contributions, c
 
 ---
 
-## 4. Unresolved Schema Relationships
+### 3.5 Customer Invoice Entity (`invoices`) — Implemented in Phase 5
+Maintains professional customer billing documents, GST and Non-GST line items, payment tracking, and accounts receivable.
 
-The following entity relationships are marked as **TENTATIVE** and must not be implemented in code until the corresponding questions are answered:
+| Field | Type | Required | Unique / Index | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique invoice identifier |
+| `invoiceNumber` | String | Yes | Unique Index | Formatted sequential number: `LC-YYYY-XXXX` |
+| `invoiceDate` | Date | Yes | Yes (Index) | Issue date of invoice |
+| `invoiceType` | String (Enum) | Yes | Yes (Index) | `GST` \| `NON_GST` |
+| `relatedEvent` | ObjectId (Ref) | Yes | Yes (Index) | Reference to catering `Event` |
+| `customerName` | String | Yes | Yes (Index) | Client or customer name |
+| `customerPhone` | String | Yes | Yes (Index) | Contact phone number |
+| `customerEmail` | String | No | No | Contact email address |
+| `customerAddress` | String | No | No | Billing address |
+| `customerGstin` | String | No | No | Client GST Identification Number (for GST invoices) |
+| `businessDetails` | Subdoc | Yes | No | Snapshot: `{ legalName, tradeName, address, gstin, phone, email }` |
+| `items` | Array[Subdoc] | Yes | No | Line items: `{ description, quantity, unitRatePaise, amountPaise, gstRate, cgstAmountPaise, sgstAmountPaise, igstAmountPaise, totalAmountPaise }` |
+| `isInterState` | Boolean | Yes | No | Flag indicating IGST vs (CGST + SGST) |
+| `subtotalPaise` | Number (Integer) | Yes | No | Pre-tax line items sum in paise |
+| `discountPaise` | Number (Integer) | Yes | No | Overall discount applied in paise |
+| `totalTaxPaise` | Number (Integer) | Yes | No | Total accumulated taxes in paise |
+| `grandTotalPaise`| Number (Integer) | Yes | No | Final invoice payable amount in paise |
+| `paidAmountPaise`| Number (Integer) | Yes | No | Total collected payments in paise |
+| `remainingAmountPaise` | Number (Integer) | Yes | Yes (Index) | Outstanding balance in paise |
+| `status` | String (Enum) | Yes | Yes (Index) | `UNPAID` \| `PARTIALLY_PAID` \| `PAID` \| `OVERDUE` \| `CANCELLED` |
+| `dueDate` | Date | No | Yes (Index) | Optional payment deadline |
+| `paymentHistory` | Array[Subdoc] | No | No | Recorded payments: `[{ paymentDate, amountPaise, paymentMethod, reference, recordedByPartner, transactionId }]` |
+| `notes` | String | No | No | Payment instructions, bank details or terms |
+| `createdByPartner`| ObjectId (Ref) | Yes | Yes (Index) | Reference to partner session who generated invoice |
+| `isDeleted` | Boolean | Yes | Yes (Index) | Soft delete flag (default: `false`) |
+| `deletedAt` | Date | No | No | Timestamp of cancellation |
+| `deletedByPartner`| ObjectId (Ref) | No | No | Reference to partner who cancelled the invoice |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
+
+---
+
+### 3.6 Vendor Directory Entity (`vendors`) — Implemented in Phase 5
+Maintains external supplier and contractor profiles with category classification and banking credentials.
+
+| Field | Type | Required | Unique / Index | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique vendor identifier |
+| `name` | String | Yes | Yes (Index) | Vendor / Agency name |
+| `contactPerson` | String | No | No | Contact person's name |
+| `phone` | String | Yes | Unique Index | Primary contact phone |
+| `email` | String | No | No | Contact email |
+| `category` | String (Enum) | Yes | Yes (Index) | `RAW_MATERIALS` \| `VEGETABLES` \| `FISH_MEAT` \| `GROCERY` \| `SWEETS_BAKERY` \| `DECORATION` \| `CROCKERY` \| `TRANSPORT` \| `LABOUR` \| `OTHER` |
+| `address` | String | No | No | Vendor physical address |
+| `gstin` | String | No | No | Vendor GSTIN |
+| `bankDetails` | Subdoc | No | No | `{ accountName, accountNumber, ifscCode, bankName, upiId }` |
+| `status` | String (Enum) | Yes | Yes (Index) | `ACTIVE` \| `INACTIVE` (default: `ACTIVE`) |
+| `notes` | String | No | No | Internal remarks |
+| `createdByPartner` | ObjectId (Ref) | Yes | Yes (Index) | Creating partner |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
+
+---
+
+### 3.7 Vendor Payable Bill Entity (`vendor_bills`) — Implemented in Phase 5
+Tracks outstanding liabilities owed to vendors. Creating a bill registers an accounts payable liability without early cash expense recognition.
+
+| Field | Type | Required | Unique / Index | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique vendor bill identifier |
+| `billNumber` | String | No | Yes (Index) | Vendor invoice / bill number |
+| `vendor` | ObjectId (Ref) | Yes | Yes (Index) | Reference to `Vendor` document |
+| `relatedEvent` | ObjectId (Ref) | No | Yes (Index) | Optional catering `Event` linkage |
+| `billDate` | Date | Yes | Yes (Index) | Date of invoice |
+| `dueDate` | Date | No | Yes (Index) | Expected payment date |
+| `description` | String | Yes | No | Description of materials/services supplied |
+| `category` | String (Enum) | Yes | Yes (Index) | Same categorization as `Vendor` |
+| `totalAmountPaise` | Number (Integer) | Yes | No | Total billed amount in paise |
+| `paidAmountPaise` | Number (Integer) | Yes | No | Total settled payments in paise |
+| `remainingAmountPaise`| Number (Integer) | Yes | Yes (Index) | Outstanding payable balance in paise |
+| `status` | String (Enum) | Yes | Yes (Index) | `UNPAID` \| `PARTIALLY_PAID` \| `PAID` \| `OVERDUE` \| `CANCELLED` |
+| `paymentHistory` | Array[Subdoc] | No | No | Settlements: `[{ paymentDate, amountPaise, paymentSource, partner, transactionId, recordedByPartner, notes }]` |
+| `attachments` | Array[Subdoc] | No | No | Scanned receipts/bills |
+| `notes` | String | No | No | Operational remarks |
+| `createdByPartner` | ObjectId (Ref) | Yes | Yes (Index) | Recording partner |
+| `isDeleted` | Boolean | Yes | Yes (Index) | Soft delete flag (default: `false`) |
+| `deletedAt` | Date | No | No | Timestamp of cancellation |
+| `deletedByPartner` | ObjectId (Ref) | No | No | Cancelling partner |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
+
+---
+
+### 3.8 Physical Cash Movement Entity (`cash_movements`) — Implemented in Phase 5
+Maintains an immutable audit ledger of physical banknote custody held by partners, handovers, and bank deposits.
+
+| Field | Type | Required | Unique / Index | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `_id` | ObjectId | Yes | Yes | Unique movement identifier |
+| `movementType` | String (Enum) | Yes | Yes (Index) | `CASH_INCOME_ASSIGNED` \| `PARTNER_HANDOVER` \| `BANK_DEPOSIT` \| `BANK_WITHDRAWAL` \| `CASH_EXPENSE` \| `OPENING_BALANCE` |
+| `amountPaise` | Number (Integer) | Yes | Yes (Index) | Monetary value in whole integer paise |
+| `movementDate` | Date | Yes | Yes (Index) | Calendar timestamp of cash handover/movement |
+| `sourcePartner` | ObjectId (Ref) | Conditional | Yes (Index) | Partner giving cash (required for handover, bank deposit, cash expense) |
+| `destinationPartner` | ObjectId (Ref)| Conditional | Yes (Index) | Partner receiving cash (required for income assign, handover, bank withdrawal) |
+| `channel` | String (Enum) | Yes | No | `PARTNER_CUSTODY` \| `BANK_ACCOUNT` \| `EXTERNAL_CUSTOMER` \| `EXTERNAL_VENDOR` \| `INITIAL_SETUP` |
+| `relatedEvent` | ObjectId (Ref) | No | Yes (Index) | Optional reference to `Event` |
+| `relatedTransaction`| ObjectId (Ref)| No | Yes (Index) | Optional reference to corresponding `Transaction` in ledger |
+| `description` | String | Yes | No | Purpose or explanation of cash movement |
+| `recordedByPartner` | ObjectId (Ref) | Yes | Yes (Index) | Partner session who logged the movement |
+| `createdAt` | Date | Auto | No | Mongoose timestamp |
+| `updatedAt` | Date | Auto | No | Mongoose timestamp |
+
+---
+
+## 4. Entity Relationships & Integration Summary
 
 ```
-               ┌───────────────────────┐
-               │        Booking        │
-               └───────────┬───────────┘
-                           │
-                 [ 1:1 OR 1:N ? ]   <--- UNRESOLVED (Questions Q1 & Q2)
-                           │
-                           ▼
-               ┌───────────────────────┐
-               │      Event / Job      │
-               └───────────┬───────────┘
-                           │
-                           │ 1:N
-                           ▼
-               ┌───────────────────────┐           ┌──────────────────────┐
-               │      Transaction      │──────────▶│    Partner Account   │
-               └───────────────────────┘           └──────────────────────┘
-                           │
-                           ▼
-               ┌───────────────────────┐
-               │  Receipt Attachments  │
-               └───────────────────────┘
+   ┌──────────────────────────────────────────────────────────────┐
+   │                         Event / Job                          │
+   │               (Central operational anchor)                   │
+   └───────▲──────────────────────▲──────────────────────▲────────┘
+           │ 1:N                  │ 1:N                  │ 1:N
+           │                      │                      │
+   ┌───────┴──────────┐   ┌───────┴──────────┐   ┌───────┴──────────┐
+   │ Customer Invoice │   │   Transaction    │   │   Vendor Bill    │
+   │ (invoices)       │   │  (transactions)  │   │  (vendor_bills)  │
+   └───────┬──────────┘   └───────▲──────────┘   └───────▲──────────┘
+           │                      │                      │
+           │ Payment recorded     │                      │ Payment settled
+           └──────────────────────┼──────────────────────┘
+                                  │
+                                  │ Cash movement linkage
+                          ┌───────┴──────────┐
+                          │  Cash Movement   │
+                          │ (cash_movements) │
+                          └──────────────────┘
 ```
 
-1. **Booking vs. Event Coupling**:
-   - If Bookings and Events are 1-to-1, `bookingId` can be embedded or linked via a single foreign key.
-   - If a Booking can contain multiple Events (e.g., Haldi, Sangeet, Reception), `events` will reference `bookingId` with a 1-to-many relationship.
-   - If Bookings and Events are determined to be synonymous, they will be unified into a single schema.
-2. **Inter-Partner Transfer Entity**:
-   - If partners can transfer money directly between themselves, a `Transfer` entity or `PARTNER_TRANSFER` transaction type with `fromPartnerId` and `toPartnerId` will be required.
+1. **Bookings & Events**: Resolved as unified independent records in Phase 3.
+2. **Customer Dues**: Derived from `Invoice` remaining balances. Customer payments atomically create `BUSINESS_INCOME` ledger transactions.
+3. **Vendor Dues**: Derived from `VendorBill` remaining balances. Bill settlements atomically create `BUSINESS_EXPENSE` ledger transactions.
+4. **Partner Cash Custody**: Managed via `CashMovement` audit log. Conserved across handovers and reconciled with common bank balances.
+
