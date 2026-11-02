@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -29,6 +29,30 @@ export const RecordCustomerPaymentModal: React.FC<RecordCustomerPaymentModalProp
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Function to generate a new cryptographic or timestamped UUID
+  const createNewIdempotencyKey = () =>
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `idemp-cust-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+  // Stable idempotency key across retries for the active payment session
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(createNewIdempotencyKey);
+
+  // Regenerate a brand new idempotency key whenever a new payment operation is started or invoice changes
+  useEffect(() => {
+    if (dueItem) {
+      setIdempotencyKey(createNewIdempotencyKey());
+      setAmount(dueItem.remainingDue.toString());
+      setError(null);
+      setLoading(false);
+    }
+  }, [dueItem?.invoiceId]);
+
+  const handleClose = () => {
+    setIdempotencyKey(createNewIdempotencyKey());
+    onClose();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
@@ -53,10 +77,13 @@ export const RecordCustomerPaymentModal: React.FC<RecordCustomerPaymentModalProp
         paymentDate: new Date(paymentDate).toISOString(),
         notes: notes.trim() || undefined,
         assignCashToPartner: paymentMethod === 'CASH' ? assignCashToPartner : undefined,
+        idempotencyKey,
       });
+      setIdempotencyKey(createNewIdempotencyKey());
       onSuccess();
       onClose();
     } catch (err: any) {
+      // Keep the same idempotencyKey so that retrying resubmits the same logical payment
       setError(err.message || 'Failed to record customer payment');
     } finally {
       setLoading(false);
@@ -75,7 +102,7 @@ export const RecordCustomerPaymentModal: React.FC<RecordCustomerPaymentModalProp
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
             <X className="w-5 h-5" />
@@ -181,7 +208,7 @@ export const RecordCustomerPaymentModal: React.FC<RecordCustomerPaymentModalProp
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="gap-2">

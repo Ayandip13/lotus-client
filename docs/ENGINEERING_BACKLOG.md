@@ -114,6 +114,8 @@ This document tracks phase-by-phase implementation progress, completed milestone
 | **P5-12** | Cash Custody Management Frontend | Completed | `CashCustodyPage` with partner physical cash cards, common bank balance card, movement audit trail, and `RecordCashMovementModal` |
 | **P5-13** | Dashboard Overhaul Frontend | Completed | `DashboardShellPage` fully upgraded with 6 distinct financial KPI cards, upcoming events, partner cash balances, and customer/vendor dues |
 | **P5-14** | Documentation & Architecture Sync | Completed | Updated `PROJECT_OVERVIEW.md`, `REQUIREMENTS.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `API_CONTRACT.md`, and `ENGINEERING_BACKLOG.md` |
+| **P5-15** | Post-Implementation Comprehensive Audit | Completed | Rigorous audit across 8 functional areas. Fixed bank balance calculation inversion via direct cash expense ledger integration, duplicate payment debouncing, deletion locks on invoice/bill-linked transactions, print/PDF CSS layout isolation, elimination of misleading fallback bank details, and query parameter pre-selection for event invoices/ledger entries. 14/14 audit tests passing. |
+| **P5-16** | Final Accounting Consistency & Risk Check | Completed | Rigorous accounting risk audit. Verified single customer payment creates exactly 1 income entry (eliminated duplicate income emission on cash assignment). Corrected opening cash classification as baseline physical cash rather than artificial partner contribution or revenue. Replaced naive debounce with standard Idempotency-Key support across invoices and vendor bills (with backward compatibility). Verified and stress-tested compensating rollback reliability on write failures. 17/17 audit tests passing; full regression suite 65/65 tests passing. |
 
 ---
 
@@ -121,4 +123,5 @@ This document tracks phase-by-phase implementation progress, completed milestone
 - Cross-browser and end-to-end user experience audit.
 - Production environment configurations and CI/CD validation.
 - Long-term audit trail archiving and performance optimization.
+
 

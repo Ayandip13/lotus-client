@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
@@ -25,6 +25,9 @@ interface LineItemForm {
 
 export const InvoiceCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const eventIdParam = searchParams.get('eventId');
+
   const [events, setEvents] = useState<Array<{ id: string; title: string; clientName?: string; clientPhone?: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export const InvoiceCreatePage: React.FC = () => {
   const [businessName, setBusinessName] = useState('Lotus Caterer');
   const [businessAddress, setBusinessAddress] = useState('Kolkata, West Bengal');
   const [businessPhone, setBusinessPhone] = useState('+91 98300 00000');
-  const [businessGstin, setBusinessGstin] = useState('19AAAAA0000A1Z5');
+  const [businessGstin, setBusinessGstin] = useState('');
 
   // Items
   const [items, setItems] = useState<LineItemForm[]>([
@@ -67,14 +70,16 @@ export const InvoiceCreatePage: React.FC = () => {
           }));
           setEvents(list);
           if (list.length > 0) {
-            setRelatedEvent(list[0].id);
-            if (list[0].clientName) setCustomerName(list[0].clientName);
-            if (list[0].clientPhone) setCustomerPhone(list[0].clientPhone);
+            const preselected = eventIdParam ? list.find((e: any) => e.id === eventIdParam) : null;
+            const target = preselected || list[0];
+            setRelatedEvent(target.id);
+            if (target.clientName) setCustomerName(target.clientName);
+            if (target.clientPhone) setCustomerPhone(target.clientPhone);
           }
         }
       })
       .catch((err) => console.error('Failed to load events:', err));
-  }, []);
+  }, [eventIdParam]);
 
   const handleEventChange = (eventId: string) => {
     setRelatedEvent(eventId);

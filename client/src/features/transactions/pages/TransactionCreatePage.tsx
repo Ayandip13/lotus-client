@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { transactionService } from '../services/transactionService';
 import { TransactionForm } from '../components/TransactionForm';
@@ -7,6 +7,8 @@ import { Alert } from '../../../components/ui/Alert';
 
 export const TransactionCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const eventId = searchParams.get('eventId');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -62,6 +64,7 @@ export const TransactionCreatePage: React.FC = () => {
 
       {/* Reusable Form Component */}
       <TransactionForm
+        initialData={eventId ? { relatedEvent: eventId } : undefined}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
         submitLabel="Record In Ledger"

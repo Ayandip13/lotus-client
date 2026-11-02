@@ -17,7 +17,9 @@ export class InvoiceController {
     try {
       const partnerId = req.partner!._id;
       const invoiceId = req.params.id;
-      const invoice = await invoiceService.recordPayment(invoiceId, partnerId, req.body);
+      const idempotencyKey = (req.headers['idempotency-key'] || req.headers['x-idempotency-key'] || req.body.idempotencyKey) as string | undefined;
+      const paymentData = idempotencyKey ? { ...req.body, idempotencyKey } : req.body;
+      const invoice = await invoiceService.recordPayment(invoiceId, partnerId, paymentData);
       sendSuccess(res, invoice, 'Customer payment recorded successfully', 200);
     } catch (error) {
       next(error);

@@ -62,6 +62,7 @@ export const recordVendorPaymentSchema = z.object({
   paymentSource: z.enum(['COMMON_BUSINESS', 'PARTNER_PERSONAL']).optional().default('COMMON_BUSINESS'),
   paidByPartner: z.string().regex(objectIdRegex, 'Invalid partner ID format').optional(),
   notes: z.string().trim().optional(),
+  idempotencyKey: z.string().trim().min(1).max(100).optional(),
   deductFromPartnerCash: z.boolean().optional(),
 });
 

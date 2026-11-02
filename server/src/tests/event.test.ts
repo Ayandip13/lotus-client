@@ -32,6 +32,8 @@ const runEventTests = async () => {
     }
   };
 
+  let createdEventId: string = '';
+
   try {
     await connectDatabase();
 
@@ -48,8 +50,6 @@ const runEventTests = async () => {
     const partner1 = partners[0];
     const partner2 = partners[1];
     const partner3 = partners[2];
-
-    let createdEventId: string;
 
     // --- 1. Create Booking / Event ---
     await test('Create Event: successfully creates booking with complete guest contact details', async () => {
@@ -308,6 +308,9 @@ const runEventTests = async () => {
     });
 
   } finally {
+    if (createdEventId) {
+      await Event.findByIdAndDelete(createdEventId);
+    }
     await disconnectDatabase();
   }
 

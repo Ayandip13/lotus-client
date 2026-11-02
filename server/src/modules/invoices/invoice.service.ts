@@ -43,9 +43,20 @@ export class InvoiceService {
    */
   private async generateInvoiceNumber(): Promise<string> {
     const currentYear = new Date().getFullYear();
-    const count = await Invoice.countDocuments();
-    const sequence = String(count + 1).padStart(4, '0');
-    return `LC-${currentYear}-${sequence}`;
+    const prefix = `LC-${currentYear}-`;
+    const lastInvoice = await Invoice.findOne({ invoiceNumber: new RegExp(`^${prefix}`) })
+      .sort({ invoiceNumber: -1 })
+      .select('invoiceNumber')
+      .lean();
+
+    let nextSeq = 1;
+    if (lastInvoice && lastInvoice.invoiceNumber) {
+      const match = lastInvoice.invoiceNumber.match(/^LC-\d{4}-(\d+)$/);
+      if (match && match[1]) {
+        nextSeq = parseInt(match[1], 10) + 1;
+      }
+    }
+    return `LC-${currentYear}-${String(nextSeq).padStart(4, '0')}`;
   }
 
   /**
@@ -56,8 +67,6 @@ export class InvoiceService {
     if (!event) {
       throw new BadRequestError('Referenced event was not found or is deleted');
     }
-
-    const invoiceNumber = await this.generateInvoiceNumber();
 
     let subtotal = 0;
     let subtotalPaise = 0;
@@ -121,73 +130,99 @@ export class InvoiceService {
     const grandTotal = Math.round((subtotal - discount + totalTax) * 100) / 100;
     const grandTotalPaise = Math.round(grandTotal * 100);
 
+    // Business details: use provided input or configured env vars; do not inject fake bank details
     const defaultBusinessDetails: IBusinessSnapshot = {
-      legalName: data.businessDetails?.legalName || 'Lotus Caterer',
-      address: data.businessDetails?.address || 'Kolkata, West Bengal',
-      phone: data.businessDetails?.phone || '+91 98300 00000',
-      email: data.businessDetails?.email || 'contact@lotuscaterer.com',
-      gstin: data.businessDetails?.gstin || '',
-      pan: data.businessDetails?.pan || '',
-      bankName: data.businessDetails?.bankName || 'State Bank of India',
-      bankAccountNumber: data.businessDetails?.bankAccountNumber || '38920194821',
-      bankIfsc: data.businessDetails?.bankIfsc || 'SBIN0001234',
-      bankBranch: data.businessDetails?.bankBranch || 'Kolkata Main Branch',
+      legalName: data.businessDetails?.legalName || process.env.BUSINESS_LEGAL_NAME || 'Lotus Caterer',
+      address: data.businessDetails?.address || process.env.BUSINESS_ADDRESS || 'Kolkata, West Bengal',
+      phone: data.businessDetails?.phone || process.env.BUSINESS_PHONE || '+91 98300 00000',
+      email: data.businessDetails?.email || process.env.BUSINESS_EMAIL || 'contact@lotuscaterer.com',
+      gstin: data.businessDetails?.gstin || process.env.BUSINESS_GSTIN || '',
+      pan: data.businessDetails?.pan || process.env.BUSINESS_PAN || '',
+      bankName: data.businessDetails?.bankName || process.env.BUSINESS_BANK_NAME || '',
+      bankAccountNumber: data.businessDetails?.bankAccountNumber || process.env.BUSINESS_BANK_ACCOUNT || '',
+      bankIfsc: data.businessDetails?.bankIfsc || process.env.BUSINESS_BANK_IFSC || '',
+      bankBranch: data.businessDetails?.bankBranch || process.env.BUSINESS_BANK_BRANCH || '',
     };
 
-    const invoice = new Invoice({
-      invoiceNumber,
-      invoiceType: data.invoiceType,
-      invoiceDate: new Date(data.invoiceDate),
-      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-      customerName: data.customerName,
-      customerPhone: data.customerPhone,
-      customerEmail: data.customerEmail || undefined,
-      customerAddress: data.customerAddress || undefined,
-      customerGstin: data.customerGstin || undefined,
-      relatedEvent: event._id,
-      items: computedItems,
-      subtotal,
-      subtotalPaise,
-      discount,
-      discountPaise,
-      taxDetails:
-        data.invoiceType === 'GST'
-          ? {
-              isInterState: !!data.isInterState,
-              totalCgst,
-              totalSgst,
-              totalIgst,
-              totalTax,
-              totalTaxPaise,
-            }
-          : undefined,
-      grandTotal,
-      grandTotalPaise,
-      amountPaid: 0,
-      amountPaidPaise: 0,
-      remainingDue: grandTotal,
-      remainingDuePaise: grandTotalPaise,
-      paymentStatus: 'UNPAID',
-      payments: [],
-      businessDetails: defaultBusinessDetails,
-      notes: data.notes,
-      createdByPartner: partnerId,
-      isDeleted: false,
-    });
+    let invoice: IInvoice | null = null;
+    let attempts = 0;
 
-    await invoice.save();
+    while (attempts < 5) {
+      attempts++;
+      const invoiceNumber = await this.generateInvoiceNumber();
+
+      try {
+        invoice = new Invoice({
+          invoiceNumber,
+          invoiceType: data.invoiceType,
+          invoiceDate: new Date(data.invoiceDate),
+          dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+          customerName: data.customerName,
+          customerPhone: data.customerPhone,
+          customerEmail: data.customerEmail || undefined,
+          customerAddress: data.customerAddress || undefined,
+          customerGstin: data.customerGstin || undefined,
+          relatedEvent: event._id,
+          items: computedItems,
+          subtotal,
+          subtotalPaise,
+          discount,
+          discountPaise,
+          taxDetails:
+            data.invoiceType === 'GST'
+              ? {
+                  isInterState: !!data.isInterState,
+                  totalCgst,
+                  totalSgst,
+                  totalIgst,
+                  totalTax,
+                  totalTaxPaise,
+                }
+              : undefined,
+          grandTotal,
+          grandTotalPaise,
+          amountPaid: 0,
+          amountPaidPaise: 0,
+          remainingDue: grandTotal,
+          remainingDuePaise: grandTotalPaise,
+          paymentStatus: 'UNPAID',
+          payments: [],
+          businessDetails: defaultBusinessDetails,
+          notes: data.notes,
+          createdByPartner: partnerId,
+          isDeleted: false,
+        });
+
+        await invoice.save();
+        break;
+      } catch (err: any) {
+        if (err.code === 11000 && err.keyPattern?.invoiceNumber && attempts < 5) {
+          continue; // Retry with next sequence number on concurrency collision
+        }
+        throw err;
+      }
+    }
+
+    if (!invoice) {
+      throw new BadRequestError('Failed to generate unique invoice sequence');
+    }
+
     return invoice;
   }
 
   /**
    * Records a payment received from customer against an invoice.
-   * Atomically connects to centralized financial ledger as BUSINESS_INCOME.
+   * Atomically connects to centralized financial ledger as BUSINESS_INCOME with compensating rollback.
    */
   async recordPayment(
     invoiceId: string,
     partnerId: string | Types.ObjectId,
     data: RecordInvoicePaymentInput
   ): Promise<IInvoice> {
+    if (!Types.ObjectId.isValid(invoiceId)) {
+      throw new BadRequestError('Invalid invoice ID format');
+    }
+
     const invoice = await Invoice.findOne({ _id: invoiceId, isDeleted: false });
     if (!invoice) {
       throw new NotFoundError('Invoice not found or has been deleted');
@@ -202,6 +237,14 @@ export class InvoiceService {
       );
     }
 
+    // 1. Idempotency Key check: if an idempotency key was supplied and was already processed, return existing invoice
+    if (data.idempotencyKey) {
+      const existingPayment = invoice.payments.find((p) => p.idempotencyKey === data.idempotencyKey);
+      if (existingPayment) {
+        return invoice;
+      }
+    }
+
     // Verify cash assignment partner if cash payment
     let assignedPartnerId: Types.ObjectId | undefined;
     if (data.paymentMethod === 'CASH') {
@@ -213,82 +256,97 @@ export class InvoiceService {
       assignedPartnerId = partnerDoc._id as Types.ObjectId;
     }
 
-    // 1. Create centralized financial transaction as BUSINESS_INCOME
-    const transaction = new Transaction({
-      transactionType: 'BUSINESS_INCOME',
-      amount: data.amount,
-      amountPaise: paymentPaise,
-      transactionDate: new Date(data.paymentDate || Date.now()),
-      description: `Customer payment received for ${invoice.invoiceNumber} (${invoice.customerName})`,
-      paymentSource: 'COMMON_BUSINESS',
-      relatedEvent: invoice.relatedEvent,
-      relatedInvoice: invoice._id,
-      partner: assignedPartnerId || partnerId,
-      createdByPartner: partnerId,
-      attachments: [],
-      isDeleted: false,
-    });
-    await transaction.save();
+    let createdTransaction: any = null;
+    let createdCashMovement: any = null;
 
-    // 2. If cash payment, record cash custody movement
-    if (data.paymentMethod === 'CASH' && assignedPartnerId) {
-      const cashMovement = new CashMovement({
-        movementType: 'CASH_INCOME_ASSIGNED',
+    try {
+      // 1. Create centralized financial transaction as BUSINESS_INCOME
+      createdTransaction = new Transaction({
+        transactionType: 'BUSINESS_INCOME',
         amount: data.amount,
         amountPaise: paymentPaise,
-        movementDate: new Date(data.paymentDate || Date.now()),
-        toPartner: assignedPartnerId,
-        sourceAccount: 'CUSTOMER',
-        destinationAccount: 'PARTNER_CUSTODY',
-        description: `Cash received from customer for invoice ${invoice.invoiceNumber}`,
+        transactionDate: new Date(data.paymentDate || Date.now()),
+        description: `Customer payment received for ${invoice.invoiceNumber} (${invoice.customerName})`,
+        paymentSource: 'COMMON_BUSINESS',
         relatedEvent: invoice.relatedEvent,
-        relatedTransaction: transaction._id,
+        relatedInvoice: invoice._id,
+        partner: assignedPartnerId || partnerId,
         createdByPartner: partnerId,
+        attachments: [],
         isDeleted: false,
       });
-      await cashMovement.save();
+      await createdTransaction.save();
 
-      transaction.relatedCashMovement = cashMovement._id as any;
-      await transaction.save();
+      // 2. If cash payment, record cash custody movement
+      if (data.paymentMethod === 'CASH' && assignedPartnerId) {
+        createdCashMovement = new CashMovement({
+          movementType: 'CASH_INCOME_ASSIGNED',
+          amount: data.amount,
+          amountPaise: paymentPaise,
+          movementDate: new Date(data.paymentDate || Date.now()),
+          toPartner: assignedPartnerId,
+          sourceAccount: 'CUSTOMER',
+          destinationAccount: 'PARTNER_CUSTODY',
+          description: `Cash received from customer for invoice ${invoice.invoiceNumber}`,
+          relatedEvent: invoice.relatedEvent,
+          relatedTransaction: createdTransaction._id,
+          createdByPartner: partnerId,
+          isDeleted: false,
+        });
+        await createdCashMovement.save();
+
+        createdTransaction.relatedCashMovement = createdCashMovement._id;
+        await createdTransaction.save();
+      }
+
+      // 3. Update invoice payment records and balances
+      const paymentRecord: IInvoicePaymentRecord = {
+        amount: data.amount,
+        amountPaise: paymentPaise,
+        paymentDate: new Date(data.paymentDate || Date.now()),
+        paymentMethod: data.paymentMethod,
+        transactionRef: createdTransaction._id,
+        notes: data.notes,
+        idempotencyKey: data.idempotencyKey,
+        receivedByPartner: (assignedPartnerId || partnerId) as any,
+        recordedAt: new Date(),
+      };
+
+      invoice.payments.push(paymentRecord);
+      invoice.amountPaidPaise += paymentPaise;
+      invoice.amountPaid = Math.round((invoice.amountPaidPaise / 100) * 100) / 100;
+      invoice.remainingDuePaise = Math.max(0, invoice.grandTotalPaise - invoice.amountPaidPaise);
+      invoice.remainingDue = Math.round((invoice.remainingDuePaise / 100) * 100) / 100;
+
+      if (invoice.remainingDuePaise === 0) {
+        invoice.paymentStatus = 'PAID';
+      } else if (invoice.amountPaidPaise > 0) {
+        invoice.paymentStatus = 'PARTIALLY_PAID';
+      } else {
+        invoice.paymentStatus = 'UNPAID';
+      }
+
+      // Check overdue condition
+      if (
+        invoice.remainingDuePaise > 0 &&
+        invoice.dueDate &&
+        new Date(invoice.dueDate).getTime() < Date.now()
+      ) {
+        invoice.paymentStatus = 'OVERDUE';
+      }
+
+      await invoice.save();
+      return invoice;
+    } catch (saveError) {
+      // Compensating rollback on failure
+      if (createdCashMovement) {
+        await CashMovement.findByIdAndDelete(createdCashMovement._id);
+      }
+      if (createdTransaction) {
+        await Transaction.findByIdAndDelete(createdTransaction._id);
+      }
+      throw saveError;
     }
-
-    // 3. Update invoice payment records and balances
-    const paymentRecord: IInvoicePaymentRecord = {
-      amount: data.amount,
-      amountPaise: paymentPaise,
-      paymentDate: new Date(data.paymentDate || Date.now()),
-      paymentMethod: data.paymentMethod,
-      transactionRef: transaction._id as any,
-      notes: data.notes,
-      receivedByPartner: (assignedPartnerId || partnerId) as any,
-      recordedAt: new Date(),
-    };
-
-    invoice.payments.push(paymentRecord);
-    invoice.amountPaidPaise += paymentPaise;
-    invoice.amountPaid = Math.round(invoice.amountPaidPaise / 100 * 100) / 100;
-    invoice.remainingDuePaise = Math.max(0, invoice.grandTotalPaise - invoice.amountPaidPaise);
-    invoice.remainingDue = Math.round(invoice.remainingDuePaise / 100 * 100) / 100;
-
-    if (invoice.remainingDuePaise === 0) {
-      invoice.paymentStatus = 'PAID';
-    } else if (invoice.amountPaidPaise > 0) {
-      invoice.paymentStatus = 'PARTIALLY_PAID';
-    } else {
-      invoice.paymentStatus = 'UNPAID';
-    }
-
-    // Check overdue condition
-    if (
-      invoice.remainingDuePaise > 0 &&
-      invoice.dueDate &&
-      new Date(invoice.dueDate).getTime() < Date.now()
-    ) {
-      invoice.paymentStatus = 'OVERDUE';
-    }
-
-    await invoice.save();
-    return invoice;
   }
 
   /**
@@ -371,6 +429,10 @@ export class InvoiceService {
    * Retrieves single invoice by ID with fully populated relations.
    */
   async getInvoiceById(id: string): Promise<IInvoice> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestError('Invalid invoice ID format');
+    }
+
     const invoice = await Invoice.findOne({ _id: id, isDeleted: false })
       .populate('relatedEvent', 'title eventDate eventType guestCount location clientName clientPhone clientEmail')
       .populate('createdByPartner', 'name email phone')
@@ -460,6 +522,10 @@ export class InvoiceService {
    * Soft-deletes an invoice.
    */
   async deleteInvoice(id: string, partnerId: string | Types.ObjectId): Promise<void> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestError('Invalid invoice ID format');
+    }
+
     const invoice = await Invoice.findOne({ _id: id, isDeleted: false });
     if (!invoice) {
       throw new NotFoundError('Invoice not found or has already been deleted');

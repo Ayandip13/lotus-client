@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { CashMovement, ICashMovement, CashMovementType, AccountChannel } from './cashCustody.model';
 import { Partner } from '../partners/partner.model';
 import { Event } from '../events/event.model';
+import { Transaction } from '../transactions/transaction.model';
 import { CreateCashMovementInput, QueryCashMovementsInput } from './cashCustody.schema';
 import { AccountService } from '../accounts/account.service';
 import { BadRequestError, NotFoundError } from '../../utils/appError';
@@ -173,6 +174,34 @@ export class CashCustodyService {
     });
 
     await movement.save();
+
+    // Synchronize ledger for direct cash expenses that reduce common business funds
+    try {
+      if (data.movementType === 'CASH_EXPENSE') {
+        const transaction = new Transaction({
+          transactionType: 'BUSINESS_EXPENSE',
+          amount: data.amount,
+          amountPaise,
+          transactionDate: new Date(data.movementDate || Date.now()),
+          description: data.description,
+          paymentSource: 'COMMON_BUSINESS',
+          partner: data.fromPartner ? new Types.ObjectId(data.fromPartner) : undefined,
+          relatedEvent: data.relatedEvent ? new Types.ObjectId(data.relatedEvent) : undefined,
+          relatedCashMovement: movement._id,
+          createdByPartner: creatorPartnerId,
+          attachments: [],
+          isDeleted: false,
+        });
+        await transaction.save();
+        movement.relatedTransaction = transaction._id as any;
+        await movement.save();
+      }
+    } catch (txError) {
+      // Compensating rollback: delete created movement if transaction creation fails
+      await CashMovement.findByIdAndDelete(movement._id);
+      throw txError;
+    }
+
     return movement;
   }
 
@@ -199,14 +228,35 @@ export class CashCustodyService {
       });
     }
 
-    // Fetch overall business funds from central accounting service
+    // Aggregate total baseline opening physical cash across all non-deleted OPENING_BALANCE movements
+    const openingResult = await CashMovement.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+          movementType: 'OPENING_BALANCE',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalOpeningPaise: { $sum: '$amountPaise' },
+        },
+      },
+    ]);
+    const totalOpeningCashPaise = openingResult[0]?.totalOpeningPaise || 0;
+
+    // Fetch operational ledger net from central accounting service (Income + Contributions - Expenses)
     const overallSummary = await this.accountService.getOverallFinancialSummary();
-    const commonBusinessTotalBalance = overallSummary.commonBusinessBalance;
+    const operationalLedgerBalancePaise = Math.round(overallSummary.commonBusinessBalance * 100);
+
+    // Total Business Liquid Funds = Baseline Opening Cash + Operational Ledger Net
+    const commonBusinessTotalBalancePaise = totalOpeningCashPaise + operationalLedgerBalancePaise;
+    const commonBusinessTotalBalance = Math.round((commonBusinessTotalBalancePaise / 100) * 100) / 100;
     const totalBusinessCashInHand = Math.round((totalPhysicalCashPaise / 100) * 100) / 100;
 
-    // Common Bank Balance = Common Business Total Balance - Total Cash in Hand
+    // Common Bank Balance = Total Business Liquid Funds - Total Physical Cash in Hand
     const commonBusinessBankBalance =
-      Math.round((commonBusinessTotalBalance - totalBusinessCashInHand) * 100) / 100;
+      Math.round(((commonBusinessTotalBalancePaise - totalPhysicalCashPaise) / 100) * 100) / 100;
 
     return {
       partners: partnerBalances,

@@ -15,6 +15,7 @@ export interface IVendorPaymentRecord {
   paidByPartner: Types.ObjectId | IPartner;
   transactionRef?: Types.ObjectId | ITransaction;
   notes?: string;
+  idempotencyKey?: string;
   recordedAt: Date;
 }
 
@@ -56,6 +57,7 @@ const vendorPaymentSchema = new Schema<IVendorPaymentRecord>(
     paidByPartner: { type: Schema.Types.ObjectId, ref: 'Partner', required: true },
     transactionRef: { type: Schema.Types.ObjectId, ref: 'Transaction', default: undefined },
     notes: { type: String, trim: true },
+    idempotencyKey: { type: String, trim: true, default: undefined },
     recordedAt: { type: Date, default: Date.now },
   },
   { _id: true }

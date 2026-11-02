@@ -2,6 +2,7 @@ import mongoose, { Types } from 'mongoose';
 import { Transaction, ITransaction, ITransactionAttachment } from './transaction.model';
 import { Partner } from '../partners/partner.model';
 import { Event } from '../events/event.model';
+import { CashMovement } from '../cashCustody/cashCustody.model';
 import { CreateTransactionInput, UpdateTransactionInput, QueryTransactionsInput } from './transaction.schema';
 import { storageService, StorageFilePayload } from '../../services/storage';
 import { BadRequestError, NotFoundError } from '../../utils/appError';
@@ -320,11 +321,32 @@ export class TransactionService {
       throw new NotFoundError('Transaction record not found');
     }
 
+    if (transaction.relatedInvoice) {
+      throw new BadRequestError(
+        'Cannot delete this transaction directly because it is tied to an Invoice payment. Please manage or cancel the payment through the Invoicing module.'
+      );
+    }
+
+    if (transaction.relatedVendorBill) {
+      throw new BadRequestError(
+        'Cannot delete this transaction directly because it is tied to a Vendor Bill payment. Please manage or cancel the payment through the Vendor Payables module.'
+      );
+    }
+
     transaction.isDeleted = true;
     transaction.deletedAt = new Date();
     transaction.deletedByPartner = deletingPartnerId as any;
 
     await transaction.save();
+
+    // If transaction had a linked direct cash movement, cascade soft delete
+    if (transaction.relatedCashMovement) {
+      await CashMovement.findByIdAndUpdate(transaction.relatedCashMovement, {
+        isDeleted: true,
+        deletedAt: new Date(),
+        deletedByPartner: deletingPartnerId as any,
+      });
+    }
   }
 }
 

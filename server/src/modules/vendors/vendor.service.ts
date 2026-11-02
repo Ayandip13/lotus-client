@@ -193,7 +193,11 @@ export class VendorService {
     billId: string,
     recordedByPartnerId: string | Types.ObjectId,
     data: RecordVendorPaymentInput
-  ): Promise<IVendorBill> {
+  ) {
+    if (!Types.ObjectId.isValid(billId)) {
+      throw new BadRequestError('Invalid vendor bill ID format');
+    }
+
     const bill = await VendorBill.findOne({ _id: billId, isDeleted: false }).populate('vendor', 'name');
     if (!bill) {
       throw new NotFoundError('Vendor bill not found or is deleted');
@@ -208,6 +212,14 @@ export class VendorService {
       );
     }
 
+    // 1. Idempotency Key check: if an idempotency key was supplied and was already processed, return existing bill
+    if (data.idempotencyKey) {
+      const existingPayment = bill.paymentHistory.find((p) => p.idempotencyKey === data.idempotencyKey);
+      if (existingPayment) {
+        return bill;
+      }
+    }
+
     const payingPartnerId = data.paidByPartner || recordedByPartnerId;
     const partner = await Partner.findById(payingPartnerId);
     if (!partner || partner.status !== 'ACTIVE') {
@@ -216,81 +228,95 @@ export class VendorService {
 
     const vendorName = (bill.vendor as any)?.name || 'Vendor';
 
-    // 1. Centralized financial ledger integration: record BUSINESS_EXPENSE
-    const transaction = new Transaction({
-      transactionType: 'BUSINESS_EXPENSE',
-      amount: data.amount,
-      amountPaise: paymentPaise,
-      transactionDate: new Date(data.paymentDate || Date.now()),
-      description: `Vendor payment: ${vendorName} - ${bill.description}`,
-      paymentSource: data.paymentSource,
-      partner: partner._id,
-      relatedEvent: bill.relatedEvent,
-      relatedVendorBill: bill._id,
-      createdByPartner: recordedByPartnerId,
-      attachments: [],
-      isDeleted: false,
-    });
-    await transaction.save();
+    let createdTransaction: any = null;
+    let createdCashMovement: any = null;
 
-    // 2. If paid using physical cash held by partner, log cash custody movement
-    if (data.deductFromPartnerCash) {
-      const cashMovement = new CashMovement({
-        movementType: 'CASH_EXPENSE',
+    try {
+      // 1. Centralized financial ledger integration: record BUSINESS_EXPENSE
+      createdTransaction = new Transaction({
+        transactionType: 'BUSINESS_EXPENSE',
         amount: data.amount,
         amountPaise: paymentPaise,
-        movementDate: new Date(data.paymentDate || Date.now()),
-        fromPartner: partner._id,
-        sourceAccount: 'PARTNER_CUSTODY',
-        destinationAccount: 'EXPENSE',
-        description: `Cash paid to vendor ${vendorName} for bill`,
+        transactionDate: new Date(data.paymentDate || Date.now()),
+        description: `Vendor payment: ${vendorName} - ${bill.description}`,
+        paymentSource: data.paymentSource,
+        partner: partner._id,
         relatedEvent: bill.relatedEvent,
-        relatedTransaction: transaction._id,
+        relatedVendorBill: bill._id,
         createdByPartner: recordedByPartnerId,
+        attachments: [],
         isDeleted: false,
       });
-      await cashMovement.save();
+      await createdTransaction.save();
 
-      transaction.relatedCashMovement = cashMovement._id as any;
-      await transaction.save();
+      // 2. If paid using physical cash held by partner, log cash custody movement
+      if (data.deductFromPartnerCash) {
+        createdCashMovement = new CashMovement({
+          movementType: 'CASH_EXPENSE',
+          amount: data.amount,
+          amountPaise: paymentPaise,
+          movementDate: new Date(data.paymentDate || Date.now()),
+          fromPartner: partner._id,
+          sourceAccount: 'PARTNER_CUSTODY',
+          destinationAccount: 'EXPENSE',
+          description: `Cash paid to vendor ${vendorName} for bill`,
+          relatedEvent: bill.relatedEvent,
+          relatedTransaction: createdTransaction._id,
+          createdByPartner: recordedByPartnerId,
+          isDeleted: false,
+        });
+        await createdCashMovement.save();
+
+        createdTransaction.relatedCashMovement = createdCashMovement._id;
+        await createdTransaction.save();
+      }
+
+      // 3. Update VendorBill balances and payment history
+      const paymentRecord: IVendorPaymentRecord = {
+        amount: data.amount,
+        amountPaise: paymentPaise,
+        paymentDate: new Date(data.paymentDate || Date.now()),
+        paymentSource: data.paymentSource,
+        paidByPartner: partner._id as any,
+        transactionRef: createdTransaction._id,
+        notes: data.notes,
+        idempotencyKey: data.idempotencyKey,
+        recordedAt: new Date(),
+      };
+
+      bill.paymentHistory.push(paymentRecord);
+      bill.paidAmountPaise += paymentPaise;
+      bill.paidAmount = Math.round((bill.paidAmountPaise / 100) * 100) / 100;
+      bill.remainingAmountPaise = Math.max(0, bill.totalAmountPaise - bill.paidAmountPaise);
+      bill.remainingAmount = Math.round((bill.remainingAmountPaise / 100) * 100) / 100;
+
+      if (bill.remainingAmountPaise === 0) {
+        bill.status = 'PAID';
+      } else if (bill.paidAmountPaise > 0) {
+        bill.status = 'PARTIALLY_PAID';
+      } else {
+        bill.status = 'UNPAID';
+      }
+
+      if (
+        bill.remainingAmountPaise > 0 &&
+        bill.dueDate &&
+        new Date(bill.dueDate).getTime() < Date.now()
+      ) {
+        bill.status = 'OVERDUE';
+      }
+
+      await bill.save();
+      return bill;
+    } catch (saveError) {
+      if (createdCashMovement) {
+        await CashMovement.findByIdAndDelete(createdCashMovement._id);
+      }
+      if (createdTransaction) {
+        await Transaction.findByIdAndDelete(createdTransaction._id);
+      }
+      throw saveError;
     }
-
-    // 3. Update VendorBill balances and payment history
-    const paymentRecord: IVendorPaymentRecord = {
-      amount: data.amount,
-      amountPaise: paymentPaise,
-      paymentDate: new Date(data.paymentDate || Date.now()),
-      paymentSource: data.paymentSource,
-      paidByPartner: partner._id as any,
-      transactionRef: transaction._id as any,
-      notes: data.notes,
-      recordedAt: new Date(),
-    };
-
-    bill.paymentHistory.push(paymentRecord);
-    bill.paidAmountPaise += paymentPaise;
-    bill.paidAmount = Math.round(bill.paidAmountPaise / 100 * 100) / 100;
-    bill.remainingAmountPaise = Math.max(0, bill.totalAmountPaise - bill.paidAmountPaise);
-    bill.remainingAmount = Math.round(bill.remainingAmountPaise / 100 * 100) / 100;
-
-    if (bill.remainingAmountPaise === 0) {
-      bill.status = 'PAID';
-    } else if (bill.paidAmountPaise > 0) {
-      bill.status = 'PARTIALLY_PAID';
-    } else {
-      bill.status = 'UNPAID';
-    }
-
-    if (
-      bill.remainingAmountPaise > 0 &&
-      bill.dueDate &&
-      new Date(bill.dueDate).getTime() < Date.now()
-    ) {
-      bill.status = 'OVERDUE';
-    }
-
-    await bill.save();
-    return bill;
   }
 
   /**

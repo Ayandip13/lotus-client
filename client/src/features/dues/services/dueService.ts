@@ -16,9 +16,20 @@ export const dueService = {
       paymentDate?: string;
       notes?: string;
       assignCashToPartner?: string;
+      idempotencyKey?: string;
     }
   ) => {
-    const res = await apiClient.post(`/invoices/${invoiceId}/payments`, payload);
+    const key =
+      payload.idempotencyKey ||
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idemp-cust-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+
+    const res = await apiClient.post(
+      `/invoices/${invoiceId}/payments`,
+      { ...payload, idempotencyKey: key },
+      { headers: { 'Idempotency-Key': key } }
+    );
     return res.data.data;
   },
 
@@ -67,9 +78,20 @@ export const dueService = {
       paymentDate?: string;
       notes?: string;
       deductFromPartnerCash?: boolean;
+      idempotencyKey?: string;
     }
   ) => {
-    const res = await apiClient.post(`/vendors/bills/${billId}/payments`, payload);
+    const key =
+      payload.idempotencyKey ||
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idemp-vend-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+
+    const res = await apiClient.post(
+      `/vendors/bills/${billId}/payments`,
+      { ...payload, idempotencyKey: key },
+      { headers: { 'Idempotency-Key': key } }
+    );
     return res.data.data;
   },
 

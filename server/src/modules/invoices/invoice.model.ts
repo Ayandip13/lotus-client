@@ -28,6 +28,7 @@ export interface IInvoicePaymentRecord {
   paymentMethod: PaymentMethod;
   transactionRef?: Types.ObjectId | ITransaction;
   notes?: string;
+  idempotencyKey?: string;
   receivedByPartner: Types.ObjectId | IPartner;
   recordedAt: Date;
 }
@@ -117,6 +118,7 @@ const paymentRecordSchema = new Schema<IInvoicePaymentRecord>(
     },
     transactionRef: { type: Schema.Types.ObjectId, ref: 'Transaction', default: undefined },
     notes: { type: String, trim: true },
+    idempotencyKey: { type: String, trim: true, default: undefined },
     receivedByPartner: { type: Schema.Types.ObjectId, ref: 'Partner', required: true },
     recordedAt: { type: Date, default: Date.now },
   },

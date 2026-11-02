@@ -84,7 +84,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
             size="sm"
             variant="outline"
             className="text-xs"
-            onClick={() => navigate('/invoices/new')}
+            onClick={() => navigate(`/invoices/new?eventId=${eventId}`)}
           >
             + Create Invoice
           </Button>
@@ -92,7 +92,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
             size="sm"
             variant="outline"
             className="text-xs"
-            onClick={() => navigate(`/transactions/new`)}
+            onClick={() => navigate(`/transactions/new?eventId=${eventId}`)}
           >
             + Record Ledger Entry
           </Button>

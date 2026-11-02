@@ -284,10 +284,12 @@ attachments: File[] (JPEG, PNG, WebP up to 5MB, max 5 files)
   "amount": 25000.00,
   "paymentMethod": "CASH",
   "paymentDate": "2026-11-02T10:00:00.000Z",
-  "reference": "Cash received at venue",
-  "assignedToPartner": "6ae74e7f83df4e2c4c410093"
+  "notes": "Cash received at venue",
+  "assignCashToPartner": "6ae74e7f83df4e2c4c410093",
+  "idempotencyKey": "opt-uuid-or-unique-key"
 }
 ```
+*Note: Clients can pass `Idempotency-Key` or `X-Idempotency-Key` HTTP header or body property to ensure retry safety.*
 
 ---
 

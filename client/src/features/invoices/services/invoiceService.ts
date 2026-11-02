@@ -72,9 +72,20 @@ export const invoiceService = {
       paymentDate?: string;
       notes?: string;
       assignCashToPartner?: string;
+      idempotencyKey?: string;
     }
   ): Promise<InvoiceItem> => {
-    const res = await apiClient.post(`/invoices/${id}/payments`, payload);
+    const key =
+      payload.idempotencyKey ||
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `idemp-inv-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+
+    const res = await apiClient.post(
+      `/invoices/${id}/payments`,
+      { ...payload, idempotencyKey: key },
+      { headers: { 'Idempotency-Key': key } }
+    );
     return res.data.data;
   },
 

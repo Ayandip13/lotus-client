@@ -33,6 +33,9 @@ const runTransactionTests = async () => {
     }
   };
 
+  let testEvent: any;
+  const createdTxIds: string[] = [];
+
   try {
     await connectDatabase();
 
@@ -50,15 +53,13 @@ const runTransactionTests = async () => {
     const partner3 = partners[2];
 
     // Create a test event for transaction association
-    const testEvent = await Event.create({
+    testEvent = await Event.create({
       title: 'Ledger Test Event Banquet',
       eventDate: new Date('2026-12-31'),
       guestName: 'Somnath Sen',
       guestPhone: '9830099999',
       createdByPartner: partner1._id,
     });
-
-    const createdTxIds: string[] = [];
 
     // --- 1. Business Income Creation ---
     await test('Create Transaction: records BUSINESS_INCOME with common business destination', async () => {
@@ -282,13 +283,18 @@ const runTransactionTests = async () => {
       await Transaction.findByIdAndDelete(txToDelete._id);
     });
 
-    // Clean up test event and transactions
-    for (const id of createdTxIds) {
-      await Transaction.findByIdAndDelete(id);
-    }
-    await Event.findByIdAndDelete(testEvent._id);
-
   } finally {
+    try {
+      for (const id of createdTxIds) {
+        await Transaction.findByIdAndDelete(id);
+      }
+      if (testEvent) {
+        await Transaction.deleteMany({ relatedEvent: testEvent._id });
+        await Event.findByIdAndDelete(testEvent._id);
+      }
+    } catch (cleanupErr) {
+      console.warn('Transaction test cleanup notice:', cleanupErr);
+    }
     await disconnectDatabase();
   }
 

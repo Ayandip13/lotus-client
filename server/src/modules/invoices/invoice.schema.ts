@@ -61,6 +61,7 @@ export const recordInvoicePaymentSchema = z.object({
     required_error: 'Payment method is required',
   }),
   notes: z.string().trim().optional(),
+  idempotencyKey: z.string().trim().min(1).max(100).optional(),
   assignCashToPartner: z.string().regex(objectIdRegex, 'Invalid partner ID format').optional(),
 });
 

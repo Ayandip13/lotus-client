@@ -34,6 +34,9 @@ const runPhase5Tests = async () => {
     }
   };
 
+  let testEvent: any;
+  let testVendor: any;
+
   try {
     await connectDatabase();
 
@@ -52,7 +55,7 @@ const runPhase5Tests = async () => {
     const partner3 = partners[2];
 
     // Create a test event for billing & dues
-    const testEvent = await Event.create({
+    testEvent = await Event.create({
       title: 'Phase 5 Grand Gala Reception',
       eventDate: new Date(Date.now() + 86400000 * 5), // 5 days in future
       guestName: 'Ananya Roy',
@@ -182,7 +185,7 @@ const runPhase5Tests = async () => {
     // SECTION 2: VENDOR DIRECTORY, BILLS & PAYABLES TESTS
     // ------------------------------------------------------------------------
 
-    let testVendor: any;
+    // testVendor declared in outer scope
     await test('Vendors: Create vendor in directory', async () => {
       const vendorPhone = `9830${Math.floor(100000 + Math.random() * 900000)}`;
       testVendor = await vendorService.createVendor(partner1._id, {
@@ -322,13 +325,15 @@ const runPhase5Tests = async () => {
 
     await test('Cash Custody: Prevent negative cash balances on unauthorized withdrawal/handover', async () => {
       let threw = false;
+      const p3BalancePaise = await cashCustodyService.getPartnerCashBalancePaise(partner3._id);
+      const excessiveAmount = Math.max(5000, p3BalancePaise / 100 + 5000);
       try {
         await cashCustodyService.recordCashMovement(partner3._id, {
           movementType: 'PARTNER_HANDOVER',
-          amount: 5000,
-          fromPartner: partner3._id.toString(), // Partner 3 holds 0
+          amount: excessiveAmount,
+          fromPartner: partner3._id.toString(),
           toPartner: partner1._id.toString(),
-          description: 'Invalid handover with 0 balance',
+          description: 'Invalid handover exceeding cash custody',
         });
       } catch (err: any) {
         threw = true;
@@ -373,6 +378,45 @@ const runPhase5Tests = async () => {
     console.error('Test execution failed:', error);
     process.exit(1);
   } finally {
+    try {
+      if (testEvent) {
+        const testInvoices = await Invoice.find({ relatedEvent: testEvent._id });
+        const invoiceIds = testInvoices.map((i) => i._id);
+        const testBills = await VendorBill.find({ relatedEvent: testEvent._id });
+        const billIds = testBills.map((b) => b._id);
+
+        await Transaction.deleteMany({
+          $or: [
+            { relatedEvent: testEvent._id },
+            { relatedInvoice: { $in: invoiceIds } },
+            { relatedVendorBill: { $in: billIds } },
+          ],
+        });
+        await CashMovement.deleteMany({
+          $or: [
+            { relatedEvent: testEvent._id },
+            { relatedInvoice: { $in: invoiceIds } },
+          ],
+        });
+        await Invoice.deleteMany({ relatedEvent: testEvent._id });
+        await VendorBill.deleteMany({ relatedEvent: testEvent._id });
+        await Event.findByIdAndDelete(testEvent._id);
+      }
+      if (testVendor) {
+        await Vendor.findByIdAndDelete(testVendor._id);
+      }
+      await CashMovement.deleteMany({
+        description: {
+          $in: [
+            'Opening physical business cash in hand',
+            'Handover for market purchases',
+            'Deposited surplus event cash to SBI current account',
+          ],
+        },
+      });
+    } catch (cleanupError) {
+      console.warn('Phase 5 test cleanup notice:', cleanupError);
+    }
     await disconnectDatabase();
   }
 };

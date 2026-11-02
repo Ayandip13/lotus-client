@@ -70,7 +70,7 @@ export const InvoiceDetailsPage: React.FC = () => {
       `*Amount Paid:* ₹${invoice.amountPaid.toLocaleString()}\n` +
       `*Remaining Due:* ₹${invoice.remainingDue.toLocaleString()}\n` +
       `*Status:* ${invoice.paymentStatus}\n\n` +
-      `Thank you for choosing Lotus Caterer! For queries, please contact us at +91 98300 00000.`;
+      `Thank you for choosing Lotus Caterer! For queries, please contact us${invoice.businessDetails?.phone ? ` at ${invoice.businessDetails.phone}` : ''}.`;
 
     // 1. Try Native Web Share API if supported
     if (navigator.share) {
@@ -303,9 +303,18 @@ export const InvoiceDetailsPage: React.FC = () => {
               </div>
             )}
             <div className="text-slate-500 space-y-1">
-              <p>Bank: {invoice.businessDetails?.bankName || 'State Bank of India'}</p>
-              <p>A/C No: {invoice.businessDetails?.bankAccountNumber || '38920194821'}</p>
-              <p>IFSC: {invoice.businessDetails?.bankIfsc || 'SBIN0001234'}</p>
+              <span className="font-bold text-slate-700 block mb-1">Bank Payment Details:</span>
+              {invoice.businessDetails?.bankAccountNumber ? (
+                <>
+                  <p>Bank: {invoice.businessDetails.bankName || 'N/A'}</p>
+                  <p>A/C No: {invoice.businessDetails.bankAccountNumber}</p>
+                  <p>IFSC: {invoice.businessDetails.bankIfsc || 'N/A'}</p>
+                </>
+              ) : (
+                <p className="text-xs italic text-slate-400">
+                  (Bank account details not yet configured in business profile)
+                </p>
+              )}
             </div>
           </div>
 

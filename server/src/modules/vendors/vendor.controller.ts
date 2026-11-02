@@ -82,7 +82,9 @@ export class VendorController {
   recordBillPayment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const partnerId = req.partner!._id;
-      const bill = await vendorService.recordBillPayment(req.params.id, partnerId, req.body);
+      const idempotencyKey = (req.headers['idempotency-key'] || req.headers['x-idempotency-key'] || req.body.idempotencyKey) as string | undefined;
+      const paymentData = idempotencyKey ? { ...req.body, idempotencyKey } : req.body;
+      const bill = await vendorService.recordBillPayment(req.params.id, partnerId, paymentData);
       sendSuccess(res, bill, 'Vendor payment recorded successfully', 200);
     } catch (error) {
       next(error);
