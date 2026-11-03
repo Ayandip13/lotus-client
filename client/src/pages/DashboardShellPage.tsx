@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { Alert } from '../components/ui/Alert';
 import { Skeleton, SkeletonStatCard } from '../components/ui/Skeleton';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { apiClient } from '../services/api';
@@ -61,14 +62,17 @@ export const DashboardShellPage: React.FC = () => {
   const navigate = useNavigate();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadDashboard = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await apiClient.get('/dashboard');
       setData(res.data.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load dashboard:', err);
+      setError(err?.message || 'Failed to connect to executive dashboard service.');
     } finally {
       setLoading(false);
     }
@@ -162,9 +166,40 @@ export const DashboardShellPage: React.FC = () => {
     );
   }
 
-  if (!data) return null;
+  if (error || !data) {
+    return (
+      <div className="space-y-6 max-w-2xl mx-auto py-12">
+        <Alert variant="error" title="Dashboard Data Unavailable">
+          <p className="text-sm">
+            {error || 'Unable to retrieve dashboard figures. The backend service may be restarting or unreachable.'}
+          </p>
+          <div className="mt-4">
+            <Button size="sm" onClick={loadDashboard}>
+              Retry Connection
+            </Button>
+          </div>
+        </Alert>
+      </div>
+    );
+  }
 
-  const { financialOverview, upcomingEvents, partnerCashOverview, dueOverview, recentActivity } = data;
+  const {
+    financialOverview = {
+      totalBusinessIncome: 0,
+      totalBusinessExpenses: 0,
+      commonBusinessBankBalance: 0,
+      totalBusinessCashInHand: 0,
+      totalCustomerDue: 0,
+      totalVendorDue: 0,
+    },
+    upcomingEvents = [],
+    partnerCashOverview = { partners: [], totalBusinessCashInHand: 0, commonBusinessBankBalance: 0 },
+    dueOverview = {
+      customerDue: { totalDue: 0, overdueCount: 0, overdueAmount: 0 },
+      vendorDue: { totalDue: 0, overdueCount: 0, overdueAmount: 0 },
+    },
+    recentActivity = [],
+  } = data;
 
   return (
     <div className="space-y-8 pb-12">
@@ -328,7 +363,7 @@ export const DashboardShellPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {partnerCashOverview.partners.map((p, idx) => (
+            {(partnerCashOverview?.partners || []).map((p, idx) => (
               <div key={p.partnerId} className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                   Partner {idx + 1}
@@ -345,7 +380,7 @@ export const DashboardShellPage: React.FC = () => {
           <div className="p-3 bg-slate-900 text-white rounded-xl text-xs flex items-center justify-between">
             <span className="text-slate-300">Total Business Cash Custody:</span>
             <span className="font-bold text-amber-300 text-sm">
-              ₹{partnerCashOverview.totalBusinessCashInHand.toLocaleString()}
+              ₹{(partnerCashOverview?.totalBusinessCashInHand ?? 0).toLocaleString()}
             </span>
           </div>
         </div>
@@ -373,13 +408,13 @@ export const DashboardShellPage: React.FC = () => {
                 <ArrowRight className="w-4 h-4 text-purple-600" />
               </div>
               <p className="text-2xl font-black text-purple-800">
-                ₹{dueOverview.customerDue.totalDue.toLocaleString()}
+                ₹{(dueOverview?.customerDue?.totalDue ?? 0).toLocaleString()}
               </p>
               <div className="flex items-center gap-1.5 mt-2 text-xs text-purple-700">
                 <span className="px-1.5 py-0.5 bg-purple-100 rounded font-semibold text-[10px]">
-                  {dueOverview.customerDue.overdueCount} Overdue
+                  {dueOverview?.customerDue?.overdueCount ?? 0} Overdue
                 </span>
-                <span>(₹{dueOverview.customerDue.overdueAmount.toLocaleString()})</span>
+                <span>(₹{(dueOverview?.customerDue?.overdueAmount ?? 0).toLocaleString()})</span>
               </div>
             </div>
 
@@ -393,13 +428,13 @@ export const DashboardShellPage: React.FC = () => {
                 <ArrowRight className="w-4 h-4 text-orange-600" />
               </div>
               <p className="text-2xl font-black text-orange-800">
-                ₹{dueOverview.vendorDue.totalDue.toLocaleString()}
+                ₹{(dueOverview?.vendorDue?.totalDue ?? 0).toLocaleString()}
               </p>
               <div className="flex items-center gap-1.5 mt-2 text-xs text-orange-700">
                 <span className="px-1.5 py-0.5 bg-orange-100 rounded font-semibold text-[10px]">
-                  {dueOverview.vendorDue.overdueCount} Overdue
+                  {dueOverview?.vendorDue?.overdueCount ?? 0} Overdue
                 </span>
-                <span>(₹{dueOverview.vendorDue.overdueAmount.toLocaleString()})</span>
+                <span>(₹{(dueOverview?.vendorDue?.overdueAmount ?? 0).toLocaleString()})</span>
               </div>
             </div>
           </div>
@@ -427,13 +462,13 @@ export const DashboardShellPage: React.FC = () => {
           </button>
         </div>
 
-        {upcomingEvents.length === 0 ? (
+        {(!upcomingEvents || upcomingEvents.length === 0) ? (
           <p className="text-xs text-slate-500 py-6 text-center">
             No upcoming events found on or after today.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {upcomingEvents.map((ev) => (
+            {(upcomingEvents || []).map((ev) => (
               <div
                 key={ev._id}
                 onClick={() => navigate(`/bookings/${ev._id}`)}
@@ -486,7 +521,7 @@ export const DashboardShellPage: React.FC = () => {
           </button>
         </div>
 
-        {recentActivity.length === 0 ? (
+        {(!recentActivity || recentActivity.length === 0) ? (
           <p className="text-xs text-slate-500 py-6 text-center">No recent financial transactions found.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -501,7 +536,7 @@ export const DashboardShellPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {recentActivity.map((t: any) => (
+                {(recentActivity || []).map((t: any) => (
                   <tr key={t._id} className="hover:bg-slate-50/60 transition">
                     <td className="py-2.5 px-3 text-slate-500">
                       {new Date(t.transactionDate).toLocaleDateString()}
