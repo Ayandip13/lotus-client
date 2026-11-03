@@ -105,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar Container */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white border-r border-slate-200/80 shadow-sm transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 print:hidden',
+          'fixed inset-y-0 left-0 z-50 flex w-72 sm:w-76 lg:w-76 xl:w-80 shrink-0 flex-col bg-white border-r border-slate-200/80 shadow-sm transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 print:hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -130,7 +130,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-1">
+        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-1.5">
           <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             System Modules
           </div>
@@ -143,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 onClick={() => onClose()}
                 className={({ isActive }) =>
                   cn(
-                    'group flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    'group flex items-center justify-between gap-2.5 px-3 h-10 rounded-lg text-sm font-medium transition-colors',
                     isActive
                       ? 'bg-slate-900 text-white shadow-sm'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -152,19 +152,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               >
                 {({ isActive }) => (
                   <>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
                       <Icon
                         className={cn(
                           'w-4 h-4 shrink-0 transition-colors',
                           isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'
                         )}
                       />
-                      <span>{item.name}</span>
+                      <span className="truncate">{item.name}</span>
                     </div>
                     {item.badge && (
                       <Badge
                         variant={isActive ? 'default' : item.badgeVariant}
-                        className={isActive ? 'bg-slate-800 text-white border-0' : ''}
+                        className={cn(
+                          'h-5 px-2 text-[10px] font-semibold tracking-wide rounded-full inline-flex items-center justify-center whitespace-nowrap shrink-0 ml-auto',
+                          isActive ? 'bg-slate-800 text-white border-0' : ''
+                        )}
                       >
                         {item.badge}
                       </Badge>
