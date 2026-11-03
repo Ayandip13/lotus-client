@@ -83,7 +83,7 @@ export const PartnerAccountsPage: React.FC = () => {
         </div>
 
         <Link to="/transactions/new">
-          <Button size="sm" variant="primary" leftIcon={<Plus className="w-4 h-4" />}>
+          <Button size="md" variant="primary" leftIcon={<Plus className="w-4 h-4" />} className="shadow-sm">
             Record Contribution / Expense
           </Button>
         </Link>

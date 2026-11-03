@@ -150,33 +150,36 @@ export const InvoiceDetailsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
           {invoice.remainingDue > 0 && (
             <Button
               size="sm"
-              className="text-xs gap-1.5"
+              leftIcon={<CreditCard className="w-4 h-4" />}
+              className="text-xs shadow-sm"
               onClick={() => setIsPaymentModalOpen(true)}
             >
-              <CreditCard className="w-4 h-4" /> Record Payment
+              Record Payment
             </Button>
           )}
 
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50"
+            leftIcon={<Share2 className="w-4 h-4 text-emerald-600" />}
+            className="text-xs text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 shadow-sm"
             onClick={handleWhatsAppShare}
           >
-            <Share2 className="w-4 h-4" /> WhatsApp
+            WhatsApp
           </Button>
 
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5"
+            leftIcon={<Printer className="w-4 h-4" />}
+            className="text-xs shadow-sm"
             onClick={handlePrint}
           >
-            <Printer className="w-4 h-4" /> Print / PDF
+            Print / PDF
           </Button>
         </div>
       </div>

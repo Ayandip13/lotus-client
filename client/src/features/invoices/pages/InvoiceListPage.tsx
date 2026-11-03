@@ -162,19 +162,23 @@ export const InvoiceListPage: React.FC = () => {
             Generate and manage customer-facing GST and Non-GST catering invoices
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
           <Button
             variant="outline"
-            className="text-xs"
+            size="md"
+            leftIcon={<Clock className="w-4 h-4 text-amber-600" />}
+            className="flex-1 sm:flex-initial justify-center shadow-sm"
             onClick={() => navigate('/dues/customers')}
           >
-            <Clock className="w-4 h-4 mr-1.5" /> Customer Dues
+            Customer Dues
           </Button>
           <Button
-            className="text-xs gap-1.5"
+            size="md"
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="flex-1 sm:flex-initial justify-center shadow-sm"
             onClick={() => navigate('/invoices/new')}
           >
-            <Plus className="w-4 h-4" /> Create New Invoice
+            Create New Invoice
           </Button>
         </div>
       </div>

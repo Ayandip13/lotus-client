@@ -8,6 +8,7 @@ import {
   CreditCard,
   Eye,
   Phone,
+  Plus,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
@@ -129,19 +130,23 @@ export const CustomerDuesPage: React.FC = () => {
             Track outstanding event balances, customer receivables, and payment histories
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
           <Button
             variant="outline"
-            className="text-xs"
+            size="md"
+            leftIcon={<Receipt className="w-4 h-4 text-slate-600" />}
+            className="flex-1 sm:flex-initial justify-center shadow-sm"
             onClick={() => navigate('/invoices')}
           >
-            <Receipt className="w-4 h-4 mr-1.5" /> View Invoices
+            View Invoices
           </Button>
           <Button
-            className="text-xs"
+            size="md"
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="flex-1 sm:flex-initial justify-center shadow-sm"
             onClick={() => navigate('/invoices/new')}
           >
-            + Create New Invoice
+            Create New Invoice
           </Button>
         </div>
       </div>

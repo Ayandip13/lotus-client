@@ -154,8 +154,13 @@ export const CashCustodyPage: React.FC = () => {
             Track physical business cash-in-hand held by each partner, handovers, and bank reconciliation
           </p>
         </div>
-        <Button className="text-xs gap-1.5" onClick={() => setIsModalOpen(true)}>
-          <Plus className="w-4 h-4" /> Record Cash Movement
+        <Button
+          size="md"
+          leftIcon={<Plus className="w-4 h-4" />}
+          className="w-full sm:w-auto shadow-sm"
+          onClick={() => setIsModalOpen(true)}
+        >
+          Record Cash Movement
         </Button>
       </div>
 
