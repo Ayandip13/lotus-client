@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { transactionService } from '../services/transactionService';
 import { TransactionForm } from '../components/TransactionForm';
@@ -7,6 +8,7 @@ import { Alert } from '../../../components/ui/Alert';
 
 export const TransactionCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const eventId = searchParams.get('eventId');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,11 +20,18 @@ export const TransactionCreatePage: React.FC = () => {
       setIsSubmitting(true);
       setErrorMessage(null);
       await transactionService.createTransaction(formData);
+
+      // Invalidate relevant queries so ledger and balances update automatically
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['financial-summary'] });
+      await queryClient.invalidateQueries({ queryKey: ['partner-financial-summaries'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
       setSuccessMessage('Financial transaction recorded successfully!');
 
       setTimeout(() => {
         navigate('/transactions');
-      }, 600);
+      }, 500);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to record transaction. Please verify entries.');
       setIsSubmitting(false);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { bookingService } from '../services/bookingService';
 import { BookingFormData } from '../types/booking.types';
@@ -8,6 +9,7 @@ import { Alert } from '../../../components/ui/Alert';
 
 export const BookingCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -16,13 +18,18 @@ export const BookingCreatePage: React.FC = () => {
     try {
       setIsSubmitting(true);
       setErrorMessage(null);
-      const created = await bookingService.createBooking(data);
+      await bookingService.createBooking(data);
+
+      // Invalidate queries so Bookings list and Dashboard update immediately without manual refresh
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+
       setSuccessMessage('Booking / Event created successfully!');
 
-      // Short delay for user visual feedback before navigating
+      // Short delay for user visual feedback before navigating back to the event page
       setTimeout(() => {
-        navigate(`/bookings/${created._id}`);
-      }, 600);
+        navigate('/bookings');
+      }, 500);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to create booking / event. Please check inputs.');
       setIsSubmitting(false);

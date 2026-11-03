@@ -46,6 +46,8 @@ export const BookingListPage: React.FC = () => {
         sortBy: 'eventDate',
         sortOrder: 'desc',
       }),
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   // Delete mutation

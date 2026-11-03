@@ -87,6 +87,8 @@ export const TransactionListPage: React.FC = () => {
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['transactions', queryParams],
     queryFn: () => transactionService.getTransactions(queryParams),
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   // Delete mutation
