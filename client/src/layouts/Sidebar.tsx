@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Receipt,
   PieChart,
-  X,
   ShieldCheck,
   LogOut,
   Wallet,
@@ -19,8 +18,8 @@ import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../features/auth/context/AuthContext';
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const navItems = [
@@ -89,24 +88,15 @@ const navItems = [
   },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { partner, user, logout } = useAuth();
 
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm lg:hidden transition-opacity print:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar Container */}
+      {/* Sidebar Container - Visible only on desktop (lg+ screens) */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 sm:w-76 lg:w-76 xl:w-80 shrink-0 flex-col bg-white border-r border-slate-200/80 shadow-sm transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 print:hidden',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          'hidden lg:flex lg:static lg:translate-x-0 w-72 sm:w-76 lg:w-76 xl:w-80 shrink-0 flex-col bg-white border-r border-slate-200/80 shadow-sm print:hidden'
         )}
       >
         {/* Brand Header */}
@@ -120,13 +110,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <p className="text-[11px] font-medium text-slate-500">Management System</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg lg:hidden"
-            aria-label="Close sidebar"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Navigation Items */}
@@ -140,7 +123,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <NavLink
                 key={item.name}
                 to={item.href}
-                onClick={() => onClose()}
+                onClick={() => onClose?.()}
                 className={({ isActive }) =>
                   cn(
                     'group flex items-center justify-between gap-2.5 px-3 h-10 rounded-lg text-sm font-medium transition-colors',
@@ -195,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
           <button
             onClick={() => {
-              onClose();
+              onClose?.();
               logout();
             }}
             className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
