@@ -216,21 +216,23 @@ export const DashboardShellPage: React.FC = () => {
             Welcome back, <strong className="text-slate-800">{partner?.name || 'Partner'}</strong> ({user ? `@${user.username}` : ''}). Equal 3-partner financial custody session active.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 sm:shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
           <Button
-            size="sm"
+            size="md"
             variant="outline"
-            className="text-xs gap-1.5"
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="flex-1 sm:flex-initial justify-center shadow-sm font-medium"
             onClick={() => navigate('/invoices/new')}
           >
-            <Plus className="w-3.5 h-3.5" /> New Invoice
+            New Invoice
           </Button>
           <Button
-            size="sm"
-            className="text-xs gap-1.5"
+            size="md"
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="flex-1 sm:flex-initial justify-center shadow-sm font-medium"
             onClick={() => navigate('/transactions/new')}
           >
-            <Plus className="w-3.5 h-3.5" /> Record Transaction
+            Record Transaction
           </Button>
         </div>
       </div>
