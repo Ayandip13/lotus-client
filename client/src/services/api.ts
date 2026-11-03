@@ -34,10 +34,31 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Normalize responses and extract errors
+// Response Interceptor: Normalize responses, handle local fallback, and extract errors
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiResponse>) => {
+  async (error: AxiosError<ApiResponse>) => {
+    const config = error.config as any;
+
+    // Resilient local fallback: if remote API returns 404 (e.g. pending deploy on Render)
+    // while the developer is testing in browser, retry seamlessly against local backend
+    if (
+      error.response?.status === 404 &&
+      config &&
+      !config._retriedLocal &&
+      typeof window !== 'undefined' &&
+      window.location.hostname === 'localhost' &&
+      !config.baseURL?.includes('localhost:5000')
+    ) {
+      config._retriedLocal = true;
+      config.baseURL = 'http://localhost:5000/api';
+      try {
+        return await axios.request(config);
+      } catch (retryError) {
+        // Continue to standard error handling if local backend is also unavailable
+      }
+    }
+
     const errorData = error.response?.data;
     const errorMessage =
       errorData?.message ||
