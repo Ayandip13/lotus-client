@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Badge } from '../../../components/ui/Badge';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { formatINR, formatDate } from '../../transactions/components/TransactionTable';
 import { TransactionDetailsModal } from '../../transactions/components/TransactionDetailsModal';
 import { AttachmentViewerModal } from '../../transactions/components/AttachmentViewerModal';
@@ -95,9 +96,25 @@ export const PartnerAccountsPage: React.FC = () => {
 
       {/* 3. Partner Cards Overview Grid */}
       {isSummaryLoading ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
-          <RefreshCw className="w-6 h-6 animate-spin text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">Retrieving partner accounts from ledger...</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <div className="space-y-3 pt-2">
+                <div className="p-3 bg-slate-50 rounded-lg space-y-1.5">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+                <div className="p-3 bg-slate-50 rounded-lg space-y-1.5">
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : isSummaryError ? (
         <Alert variant="error" title="Error loading partner accounts">
@@ -202,9 +219,16 @@ export const PartnerAccountsPage: React.FC = () => {
 
           <CardContent className="p-0">
             {isDetailsLoading ? (
-              <div className="p-12 text-center">
-                <RefreshCw className="w-6 h-6 animate-spin text-slate-400 mx-auto mb-2" />
-                <p className="text-sm text-slate-500">Loading partner financial history...</p>
+              <div className="p-6 space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                    <Skeleton className="h-5 w-24" />
+                  </div>
+                ))}
               </div>
             ) : isDetailsError ? (
               <div className="p-6">

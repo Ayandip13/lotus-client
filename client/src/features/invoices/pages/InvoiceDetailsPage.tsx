@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
+import { SkeletonDetails } from '../../../components/ui/Skeleton';
 import { invoiceService } from '../services/invoiceService';
 import { InvoiceItem } from '../types/invoice.types';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
@@ -99,8 +99,8 @@ export const InvoiceDetailsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-12 flex justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="max-w-4xl mx-auto py-6">
+        <SkeletonDetails />
       </div>
     );
   }

@@ -19,6 +19,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Badge } from '../../../components/ui/Badge';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
+import { Skeleton, SkeletonStatCard } from '../../../components/ui/Skeleton';
 import { formatINR } from '../../transactions/components/TransactionTable';
 
 export const FinancialOverviewPage: React.FC = () => {
@@ -142,9 +143,24 @@ export const FinancialOverviewPage: React.FC = () => {
 
       {/* 4. Primary Financial Metrics Cards */}
       {isSummaryLoading ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
-          <RefreshCw className="w-6 h-6 animate-spin text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">Calculating financial totals from ledger...</p>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonStatCard key={i} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                <Skeleton className="h-5 w-44" />
+                <Skeleton className="h-3.5 w-72" />
+                <div className="space-y-3 pt-2">
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : isSummaryError || !summary ? (
         <Alert variant="error" title="Error loading financial summary">

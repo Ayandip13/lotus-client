@@ -29,6 +29,7 @@ import { AttachmentViewerModal } from '../components/AttachmentViewerModal';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Alert } from '../../../components/ui/Alert';
+import { SkeletonTable } from '../../../components/ui/Skeleton';
 
 export const TransactionListPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -301,10 +302,7 @@ export const TransactionListPage: React.FC = () => {
 
       {/* 5. Transactions Listing: Desktop Table & Mobile Cards */}
       {isLoading ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
-          <RefreshCw className="w-6 h-6 animate-spin text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">Querying centralized financial ledger...</p>
-        </div>
+        <SkeletonTable rows={6} columns={6} />
       ) : (
         <>
           {/* Desktop Table View */}

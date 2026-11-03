@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
+import { Skeleton, SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
 import { dueService } from '../services/dueService';
 import { CustomerDuesSummary, CustomerDueItem } from '../types/due.types';
@@ -157,9 +157,13 @@ export const CustomerDuesPage: React.FC = () => {
               <AlertTriangle className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-rose-600">
-            ₹{summary ? summary.totalCustomerDue.toLocaleString() : '0'}
-          </p>
+          {loading ? (
+            <Skeleton className="h-8 w-28 my-1" />
+          ) : (
+            <p className="text-2xl font-extrabold text-rose-600">
+              ₹{summary ? summary.totalCustomerDue.toLocaleString() : '0'}
+            </p>
+          )}
           <span className="text-xs text-slate-500 mt-1 block">Awaiting customer clearance</span>
         </div>
 
@@ -172,11 +176,15 @@ export const CustomerDuesPage: React.FC = () => {
               <Clock className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-amber-700">
-            ₹{summary ? summary.overdueAmount.toLocaleString() : '0'}
-          </p>
+          {loading ? (
+            <Skeleton className="h-8 w-28 my-1" />
+          ) : (
+            <p className="text-2xl font-extrabold text-amber-700">
+              ₹{summary ? summary.overdueAmount.toLocaleString() : '0'}
+            </p>
+          )}
           <span className="text-xs text-amber-600 font-medium mt-1 block">
-            {summary?.overdueCount || 0} overdue invoices
+            {loading ? <Skeleton className="h-3 w-24 inline-block" /> : `${summary?.overdueCount || 0} overdue invoices`}
           </span>
         </div>
 
@@ -189,9 +197,13 @@ export const CustomerDuesPage: React.FC = () => {
               <Receipt className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-slate-900">
-            ₹{summary ? summary.totalInvoiced.toLocaleString() : '0'}
-          </p>
+          {loading ? (
+            <Skeleton className="h-8 w-28 my-1" />
+          ) : (
+            <p className="text-2xl font-extrabold text-slate-900">
+              ₹{summary ? summary.totalInvoiced.toLocaleString() : '0'}
+            </p>
+          )}
           <span className="text-xs text-slate-500 mt-1 block">Across active invoices</span>
         </div>
 
@@ -204,9 +216,13 @@ export const CustomerDuesPage: React.FC = () => {
               <CheckCircle2 className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl font-extrabold text-emerald-700">
-            ₹{summary ? summary.totalCollected.toLocaleString() : '0'}
-          </p>
+          {loading ? (
+            <Skeleton className="h-8 w-28 my-1" />
+          ) : (
+            <p className="text-2xl font-extrabold text-emerald-700">
+              ₹{summary ? summary.totalCollected.toLocaleString() : '0'}
+            </p>
+          )}
           <span className="text-xs text-emerald-600 font-medium mt-1 block">Received into business</span>
         </div>
       </div>
@@ -223,14 +239,12 @@ export const CustomerDuesPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-            Outstanding Customer Invoices ({displayedDues.length})
+            Outstanding Customer Invoices {loading ? '' : `(${displayedDues.length})`}
           </h2>
         </div>
 
         {loading ? (
-          <div className="p-12 flex justify-center">
-            <LoadingSpinner size="lg" />
-          </div>
+          <SkeletonTable rows={5} columns={6} className="border-0 shadow-none rounded-none" />
         ) : displayedDues.length === 0 ? (
           <div className="p-12 text-center">
             <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />

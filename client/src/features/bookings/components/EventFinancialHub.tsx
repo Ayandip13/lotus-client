@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
+import { Skeleton, SkeletonStatCard, SkeletonTable } from '../../../components/ui/Skeleton';
 import { apiClient } from '../../../services/api';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
 import { RecordVendorPaymentModal } from '../../dues/components/RecordVendorPaymentModal';
@@ -58,8 +58,24 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-8 flex justify-center">
-        <LoadingSpinner size="md" />
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-48" />
+            <Skeleton className="h-3.5 w-72" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-24 rounded-lg" />
+            <Skeleton className="h-8 w-28 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-lg" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+        <SkeletonTable rows={4} columns={5} className="border-0 shadow-none rounded-none" />
       </div>
     );
   }

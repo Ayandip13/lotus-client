@@ -17,6 +17,7 @@ import { DeleteBookingModal } from '../components/DeleteBookingModal';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Alert } from '../../../components/ui/Alert';
+import { SkeletonTable } from '../../../components/ui/Skeleton';
 
 export const BookingListPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -126,12 +127,7 @@ export const BookingListPage: React.FC = () => {
 
       {/* 4. Loading Skeleton */}
       {isLoading ? (
-        <div className="space-y-3">
-          <div className="h-64 rounded-xl border border-slate-200 bg-white p-6 animate-pulse flex flex-col justify-center items-center gap-3">
-            <RefreshCw className="w-8 h-8 animate-spin text-slate-300" />
-            <p className="text-xs text-slate-400 font-medium">Loading catering records...</p>
-          </div>
-        </div>
+        <SkeletonTable rows={6} columns={6} />
       ) : bookings.length === 0 ? (
         /* 5. Empty State */
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">

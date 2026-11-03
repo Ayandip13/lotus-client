@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { bookingService } from '../services/bookingService';
 import { BookingFormData } from '../types/booking.types';
 import { BookingForm } from '../components/BookingForm';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
+import { SkeletonForm } from '../../../components/ui/Skeleton';
 
 export const BookingEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,12 +48,7 @@ export const BookingEditPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-64 rounded-xl border border-slate-200 bg-white p-6 animate-pulse flex flex-col justify-center items-center gap-3">
-        <RefreshCw className="w-8 h-8 animate-spin text-slate-300" />
-        <p className="text-xs text-slate-400 font-medium">Loading booking data...</p>
-      </div>
-    );
+    return <SkeletonForm fields={6} />;
   }
 
   if (isError || !booking) {

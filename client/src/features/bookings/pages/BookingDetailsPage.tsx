@@ -13,7 +13,6 @@ import {
   Edit3,
   Trash2,
   FileText,
-  RefreshCw,
 } from 'lucide-react';
 import { bookingService } from '../services/bookingService';
 import { DeleteBookingModal } from '../components/DeleteBookingModal';
@@ -21,6 +20,7 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/Card';
 import { Alert } from '../../../components/ui/Alert';
+import { SkeletonDetails } from '../../../components/ui/Skeleton';
 import { EventFinancialHub } from '../components/EventFinancialHub';
 
 export const BookingDetailsPage: React.FC = () => {
@@ -81,12 +81,7 @@ export const BookingDetailsPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="h-64 rounded-xl border border-slate-200 bg-white p-6 animate-pulse flex flex-col justify-center items-center gap-3">
-        <RefreshCw className="w-8 h-8 animate-spin text-slate-300" />
-        <p className="text-xs text-slate-400 font-medium">Loading booking details...</p>
-      </div>
-    );
+    return <SkeletonDetails />;
   }
 
   if (isError || !booking) {

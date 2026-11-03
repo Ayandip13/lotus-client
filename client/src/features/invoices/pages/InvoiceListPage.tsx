@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { LoadingSpinner } from '../../../components/ui/LoadingSpinner';
+import { SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
 import { invoiceService } from '../services/invoiceService';
 import { InvoiceItem } from '../types/invoice.types';
@@ -190,9 +190,7 @@ export const InvoiceListPage: React.FC = () => {
       {/* Invoices Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="p-12 flex justify-center">
-            <LoadingSpinner size="lg" />
-          </div>
+          <SkeletonTable rows={5} columns={6} className="border-0 shadow-none rounded-none" />
         ) : !invoices || invoices.length === 0 ? (
           <div className="p-12 text-center">
             <Receipt className="w-10 h-10 text-slate-400 mx-auto mb-3" />

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { transactionService } from '../services/transactionService';
 import { TransactionForm } from '../components/TransactionForm';
 import { Alert } from '../../../components/ui/Alert';
+import { SkeletonForm } from '../../../components/ui/Skeleton';
 
 export const TransactionEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -42,12 +43,7 @@ export const TransactionEditPage: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
-        <RefreshCw className="w-6 h-6 animate-spin text-slate-400 mx-auto mb-2" />
-        <p className="text-sm text-slate-500">Loading transaction record...</p>
-      </div>
-    );
+    return <SkeletonForm fields={6} />;
   }
 
   if (isError || !transaction) {

@@ -15,6 +15,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Badge } from '../../../components/ui/Badge';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
+import { SkeletonStatCard, SkeletonTable } from '../../../components/ui/Skeleton';
 import { formatINR } from '../../transactions/components/TransactionTable';
 import { TransactionDetailsModal } from '../../transactions/components/TransactionDetailsModal';
 import { AttachmentViewerModal } from '../../transactions/components/AttachmentViewerModal';
@@ -110,9 +111,13 @@ export const DateWiseExpensePage: React.FC = () => {
 
       {/* 3. Daily Aggregate Cards */}
       {isLoading ? (
-        <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
-          <RefreshCw className="w-6 h-6 animate-spin text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">Retrieving daily ledger entries...</p>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonStatCard key={i} />
+            ))}
+          </div>
+          <SkeletonTable rows={5} columns={6} />
         </div>
       ) : isError || !dateData ? (
         <Alert variant="error" title="Error loading daily entries">

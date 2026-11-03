@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { Skeleton, SkeletonStatCard } from '../components/ui/Skeleton';
 import { useAuth } from '../features/auth/context/AuthContext';
 import { apiClient } from '../services/api';
 
@@ -80,9 +80,84 @@ export const DashboardShellPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-16 flex flex-col justify-center items-center gap-3">
-        <LoadingSpinner size="lg" />
-        <p className="text-xs text-slate-400 font-medium">Loading executive dashboard...</p>
+      <div className="space-y-8 pb-12">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="h-8 w-72" />
+              <Skeleton className="h-6 w-32 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-96" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-28 rounded-lg" />
+            <Skeleton className="h-9 w-28 rounded-lg" />
+          </div>
+        </div>
+
+        {/* 4 Metrics Skeletons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+
+        {/* Split Section Skeletons */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-3 bg-slate-50 rounded-xl space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-3 w-48" />
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-16" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-slate-50 rounded-xl space-y-2">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-6 w-28" />
+              </div>
+              <div className="p-4 bg-slate-50 rounded-xl space-y-2">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-6 w-28" />
+              </div>
+            </div>
+            <Skeleton className="h-16 w-full rounded-xl" />
+          </div>
+        </div>
+
+        {/* Cash Custody Overview Skeletons */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <Skeleton className="h-5 w-56" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="p-4 bg-slate-50 rounded-xl space-y-2 border border-slate-100">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-7 w-7 rounded-full" />
+                </div>
+                <Skeleton className="h-6 w-24" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
