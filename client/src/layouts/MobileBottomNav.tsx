@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Badge } from '../components/ui/Badge';
+import { SignOutModal } from '../components/ui/SignOutModal';
 import { useAuth } from '../features/auth/context/AuthContext';
 
 export const MobileBottomNav: React.FC = () => {
@@ -28,6 +29,7 @@ export const MobileBottomNav: React.FC = () => {
 
   const [isDuesSheetOpen, setIsDuesSheetOpen] = useState(false);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
 
   // Close sheets whenever route changes
   useEffect(() => {
@@ -362,7 +364,7 @@ export const MobileBottomNav: React.FC = () => {
             <button
               onClick={() => {
                 setIsMoreSheetOpen(false);
-                logout();
+                setIsSignOutModalOpen(true);
               }}
               className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 rounded-xl transition-colors"
             >
@@ -492,6 +494,13 @@ export const MobileBottomNav: React.FC = () => {
           </button>
         </div>
       </nav>
+
+      {/* Confirmation Alert Modal */}
+      <SignOutModal
+        isOpen={isSignOutModalOpen}
+        onClose={() => setIsSignOutModalOpen(false)}
+        onConfirm={logout}
+      />
     </>
   );
 };

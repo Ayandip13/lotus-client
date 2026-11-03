@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Badge } from '../components/ui/Badge';
+import { SignOutModal } from '../components/ui/SignOutModal';
 import { useAuth } from '../features/auth/context/AuthContext';
 
 interface SidebarProps {
@@ -90,6 +91,7 @@ const navItems = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { partner, user, logout } = useAuth();
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
 
   return (
     <>
@@ -178,8 +180,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           </div>
           <button
             onClick={() => {
-              onClose?.();
-              logout();
+              setIsSignOutModalOpen(true);
             }}
             className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
           >
@@ -188,6 +189,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           </button>
         </div>
       </aside>
+
+      {/* Confirmation Alert Modal */}
+      <SignOutModal
+        isOpen={isSignOutModalOpen}
+        onClose={() => setIsSignOutModalOpen(false)}
+        onConfirm={() => {
+          onClose?.();
+          logout();
+        }}
+      />
     </>
   );
 };

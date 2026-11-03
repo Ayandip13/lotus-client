@@ -138,10 +138,10 @@ export const DashboardShellPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 4 Metrics Skeletons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonStatCard key={i} />
+        {/* 6 Metrics Skeletons */}
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonStatCard key={i} className="p-2.5 sm:p-4 rounded-xl sm:rounded-2xl space-y-2" />
           ))}
         </div>
 
@@ -284,101 +284,101 @@ export const DashboardShellPage: React.FC = () => {
           <span className="text-[11px] text-slate-400 font-medium">Distinct Account Balances</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3.5">
           {/* 1. Total Business Income */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
                 Total Income
               </span>
-              <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600">
-                <TrendingUp className="w-4 h-4" />
+              <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-emerald-700">
+            <p className="text-sm sm:text-lg lg:text-xl font-black text-emerald-700 truncate tracking-tight">
               ₹{financialOverview.totalBusinessIncome.toLocaleString()}
             </p>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">Total business revenue</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 block truncate">Total business revenue</span>
           </div>
 
           {/* 2. Total Business Expenses */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
                 Total Expenses
               </span>
-              <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600">
-                <TrendingDown className="w-4 h-4" />
+              <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-rose-50 text-rose-600 shrink-0">
+                <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-rose-600">
+            <p className="text-sm sm:text-lg lg:text-xl font-black text-rose-600 truncate tracking-tight">
               ₹{financialOverview.totalBusinessExpenses.toLocaleString()}
             </p>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">All business outflows</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 block truncate">All business outflows</span>
           </div>
 
           {/* 3. Bank Account Balance */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div className="flex items-center justify-between gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
                 Bank Balance
               </span>
-              <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
-                <Building className="w-4 h-4" />
+              <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-blue-700">
+            <p className="text-sm sm:text-lg lg:text-xl font-black text-blue-700 truncate tracking-tight">
               ₹{financialOverview.commonBusinessBankBalance.toLocaleString()}
             </p>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">Common bank account</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 block truncate">Common bank account</span>
           </div>
 
           {/* 4. Physical Cash Held */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition" onClick={() => navigate('/cash-custody')}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition flex flex-col justify-between" onClick={() => navigate('/cash-custody')}>
+            <div className="flex items-center justify-between gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
                 Physical Cash
               </span>
-              <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
-                <Wallet className="w-4 h-4" />
+              <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-amber-50 text-amber-600 shrink-0">
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-amber-700">
+            <p className="text-sm sm:text-lg lg:text-xl font-black text-amber-700 truncate tracking-tight">
               ₹{financialOverview.totalBusinessCashInHand.toLocaleString()}
             </p>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">Held across 3 partners</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 block truncate">Held across 3 partners</span>
           </div>
 
           {/* 5. Customer Outstanding Due */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition" onClick={() => navigate('/dues/customers')}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition flex flex-col justify-between" onClick={() => navigate('/dues/customers')}>
+            <div className="flex items-center justify-between gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
                 Customer Due
               </span>
-              <div className="p-1.5 rounded-lg bg-purple-50 text-purple-600">
-                <AlertTriangle className="w-4 h-4" />
+              <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-purple-50 text-purple-600 shrink-0">
+                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-purple-700">
+            <p className="text-sm sm:text-lg lg:text-xl font-black text-purple-700 truncate tracking-tight">
               ₹{financialOverview.totalCustomerDue.toLocaleString()}
             </p>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">Receivable from clients</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 block truncate">Receivable from clients</span>
           </div>
 
           {/* 6. Vendor Outstanding Due */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition" onClick={() => navigate('/dues/vendors')}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm cursor-pointer hover:border-slate-300 transition flex flex-col justify-between" onClick={() => navigate('/dues/vendors')}>
+            <div className="flex items-center justify-between gap-1 mb-1 sm:mb-1.5">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
                 Vendor Due
               </span>
-              <div className="p-1.5 rounded-lg bg-orange-50 text-orange-600">
-                <Truck className="w-4 h-4" />
+              <div className="p-1 sm:p-1.5 rounded-md sm:rounded-lg bg-orange-50 text-orange-600 shrink-0">
+                <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="text-xl font-black text-orange-700">
+            <p className="text-sm sm:text-lg lg:text-xl font-black text-orange-700 truncate tracking-tight">
               ₹{financialOverview.totalVendorDue.toLocaleString()}
             </p>
-            <span className="text-[10px] text-slate-400 mt-0.5 block">Payable to suppliers</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 block truncate">Payable to suppliers</span>
           </div>
         </div>
       </div>
@@ -426,7 +426,7 @@ export const DashboardShellPage: React.FC = () => {
         </div>
 
         {/* Section D: Due Management Overview */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-700" />
@@ -437,44 +437,52 @@ export const DashboardShellPage: React.FC = () => {
             <span className="text-xs text-slate-400 font-medium">Customer & Vendor Dues</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
             {/* Customer Due Card */}
             <div
-              className="p-4 bg-purple-50/50 border border-purple-200/70 rounded-xl cursor-pointer hover:bg-purple-50 transition"
+              className="p-3 sm:p-4 bg-purple-50/50 border border-purple-200/70 rounded-xl cursor-pointer hover:bg-purple-50 transition flex flex-col justify-between"
               onClick={() => navigate('/dues/customers')}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-purple-900">Customer Dues</span>
-                <ArrowRight className="w-4 h-4 text-purple-600" />
+              <div>
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2 gap-1">
+                  <span className="text-xs font-bold text-purple-900 truncate">Customer Dues</span>
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 shrink-0" />
+                </div>
+                <p className="text-lg sm:text-2xl font-black text-purple-800 truncate">
+                  ₹{(dueOverview?.customerDue?.totalDue ?? 0).toLocaleString()}
+                </p>
               </div>
-              <p className="text-2xl font-black text-purple-800">
-                ₹{(dueOverview?.customerDue?.totalDue ?? 0).toLocaleString()}
-              </p>
-              <div className="flex items-center gap-1.5 mt-2 text-xs text-purple-700">
-                <span className="px-1.5 py-0.5 bg-purple-100 rounded font-semibold text-[10px]">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-2 text-xs text-purple-700">
+                <span className="px-1.5 py-0.5 bg-purple-100 rounded font-semibold text-[9.5px] sm:text-[10px] whitespace-nowrap">
                   {dueOverview?.customerDue?.overdueCount ?? 0} Overdue
                 </span>
-                <span>(₹{(dueOverview?.customerDue?.overdueAmount ?? 0).toLocaleString()})</span>
+                <span className="text-[10px] sm:text-xs whitespace-nowrap font-medium">
+                  (₹{(dueOverview?.customerDue?.overdueAmount ?? 0).toLocaleString()})
+                </span>
               </div>
             </div>
 
             {/* Vendor Due Card */}
             <div
-              className="p-4 bg-orange-50/50 border border-orange-200/70 rounded-xl cursor-pointer hover:bg-orange-50 transition"
+              className="p-3 sm:p-4 bg-orange-50/50 border border-orange-200/70 rounded-xl cursor-pointer hover:bg-orange-50 transition flex flex-col justify-between"
               onClick={() => navigate('/dues/vendors')}
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-orange-900">Vendor Dues</span>
-                <ArrowRight className="w-4 h-4 text-orange-600" />
+              <div>
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2 gap-1">
+                  <span className="text-xs font-bold text-orange-900 truncate">Vendor Dues</span>
+                  <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-600 shrink-0" />
+                </div>
+                <p className="text-lg sm:text-2xl font-black text-orange-800 truncate">
+                  ₹{(dueOverview?.vendorDue?.totalDue ?? 0).toLocaleString()}
+                </p>
               </div>
-              <p className="text-2xl font-black text-orange-800">
-                ₹{(dueOverview?.vendorDue?.totalDue ?? 0).toLocaleString()}
-              </p>
-              <div className="flex items-center gap-1.5 mt-2 text-xs text-orange-700">
-                <span className="px-1.5 py-0.5 bg-orange-100 rounded font-semibold text-[10px]">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 mt-2 text-xs text-orange-700">
+                <span className="px-1.5 py-0.5 bg-orange-100 rounded font-semibold text-[9.5px] sm:text-[10px] whitespace-nowrap">
                   {dueOverview?.vendorDue?.overdueCount ?? 0} Overdue
                 </span>
-                <span>(₹{(dueOverview?.vendorDue?.overdueAmount ?? 0).toLocaleString()})</span>
+                <span className="text-[10px] sm:text-xs whitespace-nowrap font-medium">
+                  (₹{(dueOverview?.vendorDue?.overdueAmount ?? 0).toLocaleString()})
+                </span>
               </div>
             </div>
           </div>
