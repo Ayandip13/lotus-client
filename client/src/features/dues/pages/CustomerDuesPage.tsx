@@ -6,6 +6,8 @@ import {
   CheckCircle2,
   CreditCard,
   Eye,
+  Edit2,
+  Trash2,
   Phone,
   Plus,
   RefreshCw,
@@ -16,7 +18,9 @@ import { Skeleton, SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
 import { CustomerDueItem } from '../types/due.types';
 import { RecordCustomerPaymentModal } from '../components/RecordCustomerPaymentModal';
+import { DeleteInvoiceModal } from '../../invoices/components/DeleteInvoiceModal';
 import { useCustomerDues } from '../hooks/useDues';
+import { useDeleteInvoice } from '../../invoices/hooks/useInvoices';
 import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 import { useBookings } from '../../bookings/hooks/useBookings';
 
@@ -24,6 +28,8 @@ export const CustomerDuesPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedDue, setSelectedDue] = useState<CustomerDueItem | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<CustomerDueItem | null>(null);
+  const deleteInvoiceMutation = useDeleteInvoice();
 
   // Filters state
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -57,6 +63,16 @@ export const CustomerDuesPage: React.FC = () => {
 
   const handleResetFilters = () => {
     setFilters({ search: '', relatedEvent: '', status: '' });
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+    try {
+      await deleteInvoiceMutation.mutateAsync(invoiceToDelete.invoiceId);
+      setInvoiceToDelete(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete invoice');
+    }
   };
 
   const filterConfigs: FilterConfig[] = [
@@ -300,10 +316,34 @@ export const CustomerDuesPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 w-7 p-0"
+                          className="h-7 w-7 p-0 hover:bg-slate-100 text-slate-500 hover:text-slate-800"
+                          title="View Details"
                           onClick={() => navigate(`/invoices/${item.invoiceId}`)}
                         >
-                          <Eye className="w-3.5 h-3.5 text-slate-500" />
+                          <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600"
+                          title="Edit Invoice"
+                          onClick={() => navigate(`/invoices/${item.invoiceId}/edit`)}
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-30"
+                          title={
+                            item.amountReceived > 0
+                              ? 'Cannot delete invoice with payments recorded'
+                              : 'Delete Invoice'
+                          }
+                          disabled={item.amountReceived > 0}
+                          onClick={() => setInvoiceToDelete(item)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </td>
@@ -334,6 +374,18 @@ export const CustomerDuesPage: React.FC = () => {
             setIsPaymentModalOpen(false);
             setSelectedDue(null);
           }}
+        />
+      )}
+
+      {/* Delete Invoice Confirmation Modal */}
+      {invoiceToDelete && (
+        <DeleteInvoiceModal
+          isOpen={!!invoiceToDelete}
+          onClose={() => setInvoiceToDelete(null)}
+          onConfirm={handleDeleteInvoice}
+          isDeleting={deleteInvoiceMutation.isPending}
+          invoiceNumber={invoiceToDelete.invoiceNumber}
+          customerName={invoiceToDelete.customerName}
         />
       )}
     </div>

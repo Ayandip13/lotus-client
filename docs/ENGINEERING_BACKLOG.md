@@ -118,6 +118,7 @@ This document tracks phase-by-phase implementation progress, completed milestone
 | **P5-16** | Final Accounting Consistency & Risk Check | Completed | Rigorous accounting risk audit. Verified single customer payment creates exactly 1 income entry (eliminated duplicate income emission on cash assignment). Corrected opening cash classification as baseline physical cash rather than artificial partner contribution or revenue. Replaced naive debounce with standard Idempotency-Key support across invoices and vendor bills (with backward compatibility). Verified and stress-tested compensating rollback reliability on write failures. 17/17 audit tests passing; full regression suite 65/65 tests passing. |
 
 | **P5-17** | Project-Wide TanStack Query Architecture & Implementation | Completed | Full codebase audit, central QueryClient resilience (4xx error guards, 2min staleTime, 10min gcTime), unified `queryKeys` factory, feature query hooks (`useBookings`, `useTransactions`, `useAccounts`, `useInvoices`, `useDues`, `useCashCustody`, `useDashboard`), targeted mutation cache invalidation, `keepPreviousData` pagination, and `queryClient.clear()` logout session isolation. Full regression 65/65 tests passed; client production build verified. |
+| **P5-18** | Action Buttons Alignment & Safety Checks | Completed | Added Edit and Delete actions across Invoice List, Vendor Dues, and Customer Dues tables with confirmation modals, payment protection guards (`disabled` when payments recorded), and auto-invalidations. |
 
 ---
 
