@@ -11,7 +11,12 @@ interface EditPartnerPhoneModalProps {
 
 export const EditPartnerPhoneModal: React.FC<EditPartnerPhoneModalProps> = ({ isOpen, onClose }) => {
   const { partner, updatePartnerProfile } = useAuth();
+
+  // All hooks MUST be declared before any early returns (React Rules of Hooks)
   const [phone, setPhone] = useState(partner?.phone || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   // Prevent background scrolling while modal is open
   useEffect(() => {
@@ -22,9 +27,13 @@ export const EditPartnerPhoneModal: React.FC<EditPartnerPhoneModalProps> = ({ is
       };
     }
   }, [isOpen]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+
+  // Sync phone state when partner data changes
+  useEffect(() => {
+    if (partner?.phone) {
+      setPhone(partner.phone);
+    }
+  }, [partner?.phone]);
 
   if (!isOpen || !partner) return null;
 
