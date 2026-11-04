@@ -9,6 +9,7 @@ import {
   CreateVendorInput,
   UpdateVendorInput,
   CreateVendorBillInput,
+  UpdateVendorBillInput,
   RecordVendorPaymentInput,
   QueryVendorBillsInput,
 } from './vendor.schema';
@@ -502,6 +503,67 @@ export class VendorService {
     bill.deletedAt = new Date();
     bill.deletedByPartner = partnerId as any;
     await bill.save();
+  }
+
+  /**
+   * Updates an existing vendor bill.
+   */
+  async updateVendorBill(
+    id: string,
+    partnerId: string | Types.ObjectId,
+    data: UpdateVendorBillInput
+  ): Promise<IVendorBill> {
+    const bill = await VendorBill.findOne({ _id: id, isDeleted: false });
+    if (!bill) {
+      throw new NotFoundError('Vendor bill not found or is already deleted');
+    }
+
+    if (data.vendor) {
+      const vendorExists = await Vendor.findOne({ _id: data.vendor, isDeleted: false });
+      if (!vendorExists) {
+        throw new BadRequestError('Specified vendor not found or is deleted');
+      }
+      bill.vendor = data.vendor as any;
+    }
+
+    if (data.relatedEvent !== undefined) {
+      if (data.relatedEvent && data.relatedEvent.trim() !== '') {
+        const eventExists = await Event.findOne({ _id: data.relatedEvent, isDeleted: false });
+        if (!eventExists) {
+          throw new BadRequestError('Specified event not found or is deleted');
+        }
+        bill.relatedEvent = data.relatedEvent as any;
+      } else {
+        bill.relatedEvent = undefined as any;
+      }
+    }
+
+    if (data.billNumber !== undefined) bill.billNumber = data.billNumber.trim() || undefined;
+    if (data.billDate !== undefined) bill.billDate = new Date(data.billDate);
+    if (data.dueDate !== undefined) bill.dueDate = data.dueDate ? new Date(data.dueDate) : undefined;
+    if (data.description !== undefined) bill.description = data.description.trim();
+
+    if (data.totalAmount !== undefined) {
+      const newTotalPaise = Math.round(data.totalAmount * 100);
+      if (newTotalPaise < bill.paidAmountPaise) {
+        throw new BadRequestError('Updated bill amount cannot be less than the already settled amount');
+      }
+      bill.totalAmount = data.totalAmount;
+      bill.totalAmountPaise = newTotalPaise;
+      bill.remainingAmountPaise = newTotalPaise - bill.paidAmountPaise;
+      bill.remainingAmount = Math.round(bill.remainingAmountPaise / 100 * 100) / 100;
+
+      if (bill.remainingAmountPaise === 0 && bill.paidAmountPaise > 0) {
+        bill.status = 'PAID';
+      } else if (bill.paidAmountPaise > 0) {
+        bill.status = 'PARTIALLY_PAID';
+      } else {
+        bill.status = 'UNPAID';
+      }
+    }
+
+    await bill.save();
+    return bill;
   }
 }
 

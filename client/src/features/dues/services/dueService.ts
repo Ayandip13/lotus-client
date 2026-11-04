@@ -99,4 +99,24 @@ export const dueService = {
     const res = await apiClient.get(`/vendors/bills/${billId}`);
     return res.data.data;
   },
+
+  deleteVendorBill: async (billId: string): Promise<void> => {
+    await apiClient.delete(`/vendors/bills/${billId}`);
+  },
+
+  updateVendorBill: async (
+    billId: string,
+    payload: {
+      vendor?: string;
+      relatedEvent?: string;
+      billNumber?: string;
+      billDate?: string;
+      dueDate?: string;
+      description?: string;
+      totalAmount?: number;
+    }
+  ) => {
+    const res = await apiClient.put(`/vendors/bills/${billId}`, payload);
+    return res.data.data;
+  },
 };

@@ -127,3 +127,46 @@ export const useRecordVendorPayment = () => {
     },
   });
 };
+
+
+export const useDeleteVendorBill = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (billId: string) => dueService.deleteVendorBill(billId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dues.vendor() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vendors.bills() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+    },
+  });
+};
+
+export const useUpdateVendorBill = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      billId,
+      payload,
+    }: {
+      billId: string;
+      payload: {
+        vendor?: string;
+        relatedEvent?: string;
+        billNumber?: string;
+        billDate?: string;
+        dueDate?: string;
+        description?: string;
+        totalAmount?: number;
+      };
+    }) => dueService.updateVendorBill(billId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.dues.vendor() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.vendors.bills() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      if (variables.payload.relatedEvent) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.events.financials(variables.payload.relatedEvent) });
+      }
+    },
+  });
+};

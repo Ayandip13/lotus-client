@@ -3,7 +3,7 @@ import { X, AlertCircle, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { useCreateVendorBill } from '../hooks/useDues';
+import { useCreateVendorBill, useUpdateVendorBill } from '../hooks/useDues';
 import { VendorItem } from '../types/due.types';
 
 interface CreateVendorBillModalProps {
@@ -11,6 +11,7 @@ interface CreateVendorBillModalProps {
   vendors: VendorItem[];
   events: Array<{ id: string; title: string }>;
   defaultEventId?: string;
+  billToEdit?: any;
   onClose: () => void;
   onSuccess: () => void;
   onAddNewVendor?: () => void;
@@ -21,6 +22,7 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
   vendors,
   events,
   defaultEventId,
+  billToEdit,
   onClose,
   onSuccess,
   onAddNewVendor,
@@ -35,6 +37,40 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const createBillMutation = useCreateVendorBill();
+  const updateBillMutation = useUpdateVendorBill();
+  const isEditMode = Boolean(billToEdit);
+
+  // Populate form if editing
+  useEffect(() => {
+    if (billToEdit) {
+      setVendorId(billToEdit.vendorId || billToEdit.vendor?._id || billToEdit.vendor || '');
+      setRelatedEventId(billToEdit.relatedEvent?.id || billToEdit.relatedEvent?._id || billToEdit.relatedEvent || '');
+      setBillNumber(billToEdit.billNumber || '');
+      if (billToEdit.billDate) {
+        setBillDate(new Date(billToEdit.billDate).toISOString().split('T')[0]);
+      }
+      if (billToEdit.dueDate) {
+        setDueDate(new Date(billToEdit.dueDate).toISOString().split('T')[0]);
+      }
+      setDescription(billToEdit.description || '');
+      setTotalAmount(
+        typeof billToEdit.totalPayableAmount === 'number'
+          ? billToEdit.totalPayableAmount.toString()
+          : typeof billToEdit.totalAmount === 'number'
+          ? billToEdit.totalAmount.toString()
+          : ''
+      );
+    } else {
+      setVendorId(vendors[0]?._id || '');
+      setRelatedEventId(defaultEventId || '');
+      setBillNumber('');
+      setBillDate(new Date().toISOString().split('T')[0]);
+      setDueDate('');
+      setDescription('');
+      setTotalAmount('');
+    }
+    setError(null);
+  }, [billToEdit, isOpen, vendors, defaultEventId]);
 
   // Prevent background scrolling while modal is open
   useEffect(() => {
@@ -68,6 +104,24 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
     setError(null);
 
     try {
+      if (isEditMode && (billToEdit.billId || billToEdit._id)) {
+        await updateBillMutation.mutateAsync({
+          billId: billToEdit.billId || billToEdit._id,
+          payload: {
+            vendor: vendorId,
+            relatedEvent: relatedEventId || undefined,
+            billNumber: billNumber.trim() || undefined,
+            billDate: new Date(billDate).toISOString(),
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+            description: description.trim(),
+            totalAmount: parsedAmount,
+          },
+        });
+        onSuccess();
+        onClose();
+        return;
+      }
+
       await createBillMutation.mutateAsync({
         vendor: vendorId,
         relatedEvent: relatedEventId || undefined,
@@ -91,8 +145,8 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
         <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 shrink-0">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Record Vendor Payable Bill</h2>
-            <p className="text-xs text-slate-500 font-medium">Add supplier liability or purchase due</p>
+            <h2 className="text-base font-bold text-slate-900">{isEditMode ? 'Edit Vendor Payable Bill' : 'Record Vendor Payable Bill'}</h2>
+            <p className="text-xs text-slate-500 font-medium">{isEditMode ? 'Update vendor liability or amount due' : 'Add supplier liability or purchase due'}</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
             <X className="w-5 h-5" />
@@ -223,8 +277,10 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
             <Button type="button" variant="outline" onClick={onClose} disabled={createBillMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createBillMutation.isPending}>
-              {createBillMutation.isPending ? 'Recording...' : 'Create Payable Bill'}
+            <Button type="submit" disabled={createBillMutation.isPending || updateBillMutation.isPending}>
+              {isEditMode
+                ? updateBillMutation.isPending ? 'Updating...' : 'Update Bill'
+                : createBillMutation.isPending ? 'Recording...' : 'Create Payable Bill'}
             </Button>
           </div>
         </form>

@@ -109,6 +109,16 @@ export class VendorController {
       next(error);
     }
   };
+
+  updateVendorBill = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const partnerId = req.partner!._id;
+      const bill = await vendorService.updateVendorBill(req.params.id, partnerId, req.body);
+      sendSuccess(res, bill, 'Vendor bill updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const vendorController = new VendorController();

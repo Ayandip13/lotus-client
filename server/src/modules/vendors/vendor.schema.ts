@@ -89,8 +89,11 @@ export const queryVendorBillsSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
+export const updateVendorBillSchema = createVendorBillSchema.partial();
+
 export type CreateVendorInput = z.infer<typeof createVendorSchema>;
 export type UpdateVendorInput = z.infer<typeof updateVendorSchema>;
 export type CreateVendorBillInput = z.infer<typeof createVendorBillSchema>;
+export type UpdateVendorBillInput = z.infer<typeof updateVendorBillSchema>;
 export type RecordVendorPaymentInput = z.infer<typeof recordVendorPaymentSchema>;
 export type QueryVendorBillsInput = z.infer<typeof queryVendorBillsSchema>;

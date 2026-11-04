@@ -6,6 +6,7 @@ import {
   createVendorSchema,
   updateVendorSchema,
   createVendorBillSchema,
+  updateVendorBillSchema,
   recordVendorPaymentSchema,
   queryVendorBillsSchema,
 } from './vendor.schema';
@@ -28,6 +29,11 @@ router.post(
   vendorController.recordBillPayment
 );
 router.delete('/bills/:id', vendorController.deleteVendorBill);
+router.put(
+  '/bills/:id',
+  validateRequest({ body: updateVendorBillSchema }),
+  vendorController.updateVendorBill
+);
 
 // Vendor directory endpoints
 router.get('/', vendorController.getVendors);

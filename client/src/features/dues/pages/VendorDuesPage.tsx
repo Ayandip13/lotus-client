@@ -6,6 +6,8 @@ import {
   Plus,
   Building2,
   RefreshCw,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
@@ -15,7 +17,8 @@ import { VendorDueItem } from '../types/due.types';
 import { RecordVendorPaymentModal } from '../components/RecordVendorPaymentModal';
 import { CreateVendorBillModal } from '../components/CreateVendorBillModal';
 import { CreateVendorModal } from '../components/CreateVendorModal';
-import { useVendorDues, useVendors } from '../hooks/useDues';
+import { useVendorDues, useVendors, useDeleteVendorBill } from '../hooks/useDues';
+import { DeleteVendorBillModal } from '../components/DeleteVendorBillModal';
 import { useBookings } from '../../bookings/hooks/useBookings';
 import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 
@@ -24,6 +27,9 @@ export const VendorDuesPage: React.FC = () => {
   const [selectedDue, setSelectedDue] = useState<VendorDueItem | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isCreateBillModalOpen, setIsCreateBillModalOpen] = useState(false);
+  const [billToEdit, setBillToEdit] = useState<any>(null);
+  const [billToDelete, setBillToDelete] = useState<VendorDueItem | null>(null);
+  const deleteBillMutation = useDeleteVendorBill();
   const [isCreateVendorModalOpen, setIsCreateVendorModalOpen] = useState(false);
 
   // Filters state
@@ -39,6 +45,16 @@ export const VendorDuesPage: React.FC = () => {
     vendor: filters.vendor || undefined,
     relatedEvent: filters.relatedEvent || undefined,
   });
+
+  const handleDeleteBill = async () => {
+    if (!billToDelete) return;
+    try {
+      await deleteBillMutation.mutateAsync(billToDelete.billId);
+      setBillToDelete(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete vendor bill');
+    }
+  };
 
   const { data: vendors = [], isLoading: isVendorsLoading } = useVendors();
   const { data: eventsData, isLoading: isEventsLoading } = useBookings({ limit: 100 });
@@ -280,18 +296,42 @@ export const VendorDuesPage: React.FC = () => {
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[11px] px-2.5 border-rose-300 text-rose-800 hover:bg-rose-50"
-                        onClick={() => {
-                          setSelectedDue(item);
-                          setIsPaymentModalOpen(true);
-                        }}
-                      >
-                        <CreditCard className="w-3 h-3 mr-1" />
-                        Settle Payment
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] px-2.5 border-rose-300 text-rose-800 hover:bg-rose-50"
+                          onClick={() => {
+                            setSelectedDue(item);
+                            setIsPaymentModalOpen(true);
+                          }}
+                        >
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Settle Payment
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600"
+                          title="Edit Bill"
+                          onClick={() => {
+                            setBillToEdit(item);
+                            setIsCreateBillModalOpen(true);
+                          }}
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-30"
+                          title={item.amountPaid > 0 ? 'Cannot delete bill with recorded payments' : 'Delete Bill'}
+                          disabled={item.amountPaid > 0}
+                          onClick={() => setBillToDelete(item)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -324,14 +364,34 @@ export const VendorDuesPage: React.FC = () => {
         />
       )}
 
-      {/* Create Vendor Bill Modal */}
+      {/* Create / Edit Vendor Bill Modal */}
       <CreateVendorBillModal
         isOpen={isCreateBillModalOpen}
-        onClose={() => setIsCreateBillModalOpen(false)}
+        billToEdit={billToEdit}
+        onClose={() => {
+          setIsCreateBillModalOpen(false);
+          setBillToEdit(null);
+        }}
         vendors={vendors}
         events={events}
-        onSuccess={() => setIsCreateBillModalOpen(false)}
+        onSuccess={() => {
+          setIsCreateBillModalOpen(false);
+          setBillToEdit(null);
+        }}
       />
+
+      {/* Delete Vendor Bill Modal */}
+      {billToDelete && (
+        <DeleteVendorBillModal
+          isOpen={Boolean(billToDelete)}
+          onClose={() => setBillToDelete(null)}
+          onConfirm={handleDeleteBill}
+          isDeleting={deleteBillMutation.isPending}
+          vendorName={billToDelete.vendorName}
+          billNumber={billToDelete.billNumber}
+          amountFormatted={`₹${billToDelete.totalPayableAmount.toLocaleString()}`}
+        />
+      )}
 
       {/* Create Vendor Directory Modal */}
       <CreateVendorModal
