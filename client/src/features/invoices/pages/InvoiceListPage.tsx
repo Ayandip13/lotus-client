@@ -5,6 +5,8 @@ import {
   Plus,
   Eye,
   CreditCard,
+  Edit2,
+  Trash2,
   RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
@@ -13,7 +15,8 @@ import { SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
 import { InvoiceItem } from '../types/invoice.types';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
-import { useInvoices } from '../hooks/useInvoices';
+import { DeleteInvoiceModal } from '../components/DeleteInvoiceModal';
+import { useInvoices, useDeleteInvoice } from '../hooks/useInvoices';
 import { useBookings } from '../../bookings/hooks/useBookings';
 import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 
@@ -23,6 +26,8 @@ export const InvoiceListPage: React.FC = () => {
 
   // Modals
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<any>(null);
+  const deleteInvoiceMutation = useDeleteInvoice();
 
   // Filter state
   const [filters, setFilters] = useState<Record<string, string>>({
@@ -45,6 +50,16 @@ export const InvoiceListPage: React.FC = () => {
     startDate: filters.startDate || undefined,
     endDate: filters.endDate || undefined,
   });
+
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete) return;
+    try {
+      await deleteInvoiceMutation.mutateAsync(invoiceToDelete._id);
+      setInvoiceToDelete(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete invoice');
+    }
+  };
 
   const { data: eventsData } = useBookings({ limit: 100 });
   const { data: partnersData = [] } = usePartnerSummaries();
@@ -253,10 +268,30 @@ export const InvoiceListPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 w-7 p-0"
+                          className="h-7 w-7 p-0 hover:bg-slate-100 text-slate-500 hover:text-slate-800"
+                          title="View Details"
                           onClick={() => navigate(`/invoices/${inv._id}`)}
                         >
-                          <Eye className="w-3.5 h-3.5 text-slate-500" />
+                          <Eye className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-blue-50 text-slate-400 hover:text-blue-600"
+                          title="Edit Invoice"
+                          onClick={() => navigate(`/invoices/${inv._id}/edit`)}
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 w-7 p-0 hover:bg-rose-50 text-slate-400 hover:text-rose-600 disabled:opacity-30"
+                          title={inv.amountPaid > 0 ? 'Cannot delete invoice with payments recorded' : 'Delete Invoice'}
+                          disabled={inv.amountPaid > 0}
+                          onClick={() => setInvoiceToDelete(inv)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </td>
@@ -294,6 +329,18 @@ export const InvoiceListPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Invoice Confirmation Modal */}
+      {invoiceToDelete && (
+        <DeleteInvoiceModal
+          isOpen={Boolean(invoiceToDelete)}
+          onClose={() => setInvoiceToDelete(null)}
+          onConfirm={handleDeleteInvoice}
+          isDeleting={deleteInvoiceMutation.isPending}
+          invoiceNumber={invoiceToDelete.invoiceNumber}
+          customerName={invoiceToDelete.customerName}
+        />
+      )}
 
       {/* Record Payment Modal */}
       {selectedInvoiceForPayment && (

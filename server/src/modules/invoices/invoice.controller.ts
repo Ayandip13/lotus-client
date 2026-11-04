@@ -62,6 +62,16 @@ export class InvoiceController {
       next(error);
     }
   };
+
+  updateInvoice = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const partnerId = req.partner!._id;
+      const invoice = await invoiceService.updateInvoice(req.params.id, partnerId, req.body);
+      sendSuccess(res, invoice, 'Invoice updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export const invoiceController = new InvoiceController();

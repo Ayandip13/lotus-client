@@ -4,6 +4,7 @@ import { requireAuth, requirePartner } from '../../middleware/auth.middleware';
 import { validateRequest } from '../../middleware/validateRequest';
 import {
   createInvoiceSchema,
+  updateInvoiceSchema,
   recordInvoicePaymentSchema,
   queryInvoicesSchema,
 } from './invoice.schema';
@@ -34,5 +35,8 @@ router.post(
 
 // Delete invoice
 router.delete('/:id', invoiceController.deleteInvoice);
+
+// Update invoice
+router.put('/:id', validateRequest({ body: updateInvoiceSchema }), invoiceController.updateInvoice);
 
 export const invoiceRoutes = router;

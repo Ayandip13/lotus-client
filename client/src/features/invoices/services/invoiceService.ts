@@ -92,4 +92,9 @@ export const invoiceService = {
   deleteInvoice: async (id: string): Promise<void> => {
     await apiClient.delete(`/invoices/${id}`);
   },
+
+  updateInvoice: async (id: string, payload: Partial<CreateInvoicePayload>): Promise<InvoiceItem> => {
+    const res = await apiClient.put(`/invoices/${id}`, payload);
+    return res.data.data;
+  },
 };

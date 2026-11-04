@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   Plus,
@@ -12,7 +12,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { InvoiceType } from '../types/invoice.types';
-import { useCreateInvoice } from '../hooks/useInvoices';
+import { useCreateInvoice, useUpdateInvoice, useInvoiceDetails } from '../hooks/useInvoices';
 import { useBookings } from '../../bookings/hooks/useBookings';
 
 interface LineItemForm {
@@ -25,10 +25,14 @@ interface LineItemForm {
 
 export const InvoiceCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = Boolean(id);
   const [searchParams] = useSearchParams();
   const eventIdParam = searchParams.get('eventId');
 
   const createInvoiceMutation = useCreateInvoice();
+  const updateInvoiceMutation = useUpdateInvoice();
+  const { data: existingInvoice } = useInvoiceDetails(id || '');
   const { data: bookingsData } = useBookings({ limit: 100 });
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +69,49 @@ export const InvoiceCreatePage: React.FC = () => {
   }));
 
   useEffect(() => {
-    if (events.length > 0 && !relatedEvent) {
+    if (isEditMode && existingInvoice) {
+      setInvoiceType(existingInvoice.invoiceType);
+      setIsInterState(existingInvoice.taxDetails?.isInterState ?? false);
+      setInvoiceDate(new Date(existingInvoice.invoiceDate).toISOString().split('T')[0]);
+      if (existingInvoice.dueDate) {
+        setDueDate(new Date(existingInvoice.dueDate).toISOString().split('T')[0]);
+      }
+      setCustomerName(existingInvoice.customerName || '');
+      setCustomerPhone(existingInvoice.customerPhone || '');
+      setCustomerEmail(existingInvoice.customerEmail || '');
+      setCustomerAddress(existingInvoice.customerAddress || '');
+      setCustomerGstin(existingInvoice.customerGstin || '');
+      setDiscount(existingInvoice.discount || 0);
+      setNotes(existingInvoice.notes || '');
+
+      const evId = typeof existingInvoice.relatedEvent === 'object'
+        ? (existingInvoice.relatedEvent as any)?._id || (existingInvoice.relatedEvent as any)?.id
+        : existingInvoice.relatedEvent;
+      if (evId) setRelatedEvent(evId);
+
+      if (existingInvoice.businessDetails) {
+        if (existingInvoice.businessDetails.legalName) setBusinessName(existingInvoice.businessDetails.legalName);
+        if (existingInvoice.businessDetails.address) setBusinessAddress(existingInvoice.businessDetails.address);
+        if (existingInvoice.businessDetails.phone) setBusinessPhone(existingInvoice.businessDetails.phone);
+        if (existingInvoice.businessDetails.gstin) setBusinessGstin(existingInvoice.businessDetails.gstin);
+      }
+
+      if (existingInvoice.items && existingInvoice.items.length > 0) {
+        setItems(
+          existingInvoice.items.map((it: any) => ({
+            description: it.description,
+            quantity: it.quantity,
+            unit: it.unit || 'plates',
+            rate: it.rate,
+            gstRate: it.gstRate || 0,
+          }))
+        );
+      }
+    }
+  }, [isEditMode, existingInvoice]);
+
+  useEffect(() => {
+    if (!isEditMode && events.length > 0 && !relatedEvent) {
       const preselected = eventIdParam ? events.find((e: any) => e.id === eventIdParam) : null;
       const target = preselected || events[0];
       setRelatedEvent(target.id);
@@ -154,6 +200,41 @@ export const InvoiceCreatePage: React.FC = () => {
     setError(null);
 
     try {
+      if (isEditMode && id) {
+        await updateInvoiceMutation.mutateAsync({
+          id,
+          payload: {
+            invoiceType,
+            invoiceDate: new Date(invoiceDate).toISOString(),
+            dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+            customerName: customerName.trim(),
+            customerPhone: cleanCustomerPhone,
+            customerEmail: customerEmail.trim() || undefined,
+            customerAddress: customerAddress.trim() || undefined,
+            customerGstin: customerGstin.trim() || undefined,
+            relatedEvent,
+            items: items.map((it) => ({
+              description: it.description.trim(),
+              quantity: it.quantity,
+              unit: it.unit || 'plates',
+              rate: it.rate,
+              gstRate: invoiceType === 'GST' ? it.gstRate : 0,
+            })),
+            discount: discount || 0,
+            isInterState: invoiceType === 'GST' ? isInterState : false,
+            businessDetails: {
+              legalName: businessName.trim(),
+              address: businessAddress.trim(),
+              phone: businessPhone.trim(),
+              gstin: businessGstin.trim() || undefined,
+            },
+            notes: notes.trim() || undefined,
+          },
+        });
+        navigate(`/invoices/${id}`);
+        return;
+      }
+
       const created = await createInvoiceMutation.mutateAsync({
         invoiceType,
         invoiceDate: new Date(invoiceDate).toISOString(),
@@ -201,8 +282,8 @@ export const InvoiceCreatePage: React.FC = () => {
           <ArrowLeft className="w-4 h-4" />
         </Button>
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Create New Invoice</h1>
-          <p className="text-xs text-slate-500">Generate professional GST or Non-GST customer bill</p>
+          <h1 className="text-xl font-bold text-slate-900">{isEditMode ? `Edit Invoice #${existingInvoice?.invoiceNumber || ''}` : 'Create New Invoice'}</h1>
+          <p className="text-xs text-slate-500">{isEditMode ? 'Modify customer line items and details' : 'Generate professional GST or Non-GST customer bill'}</p>
         </div>
       </div>
 
@@ -612,8 +693,8 @@ export const InvoiceCreatePage: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => navigate('/invoices')}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createInvoiceMutation.isPending} className="gap-2">
-                {createInvoiceMutation.isPending ? 'Creating...' : 'Generate & Save Invoice'}
+              <Button type="submit" disabled={createInvoiceMutation.isPending || updateInvoiceMutation.isPending} className="gap-2">
+                {isEditMode ? (updateInvoiceMutation.isPending ? 'Saving...' : 'Update Invoice') : (createInvoiceMutation.isPending ? 'Creating...' : 'Generate & Save Invoice')}
               </Button>
             </div>
           </div>

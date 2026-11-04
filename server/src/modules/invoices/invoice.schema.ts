@@ -88,6 +88,9 @@ export const queryInvoicesSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
+export const updateInvoiceSchema = createInvoiceSchema.partial();
+
 export type CreateInvoiceInput = z.infer<typeof createInvoiceSchema>;
+export type UpdateInvoiceInput = z.infer<typeof updateInvoiceSchema>;
 export type RecordInvoicePaymentInput = z.infer<typeof recordInvoicePaymentSchema>;
 export type QueryInvoicesInput = z.infer<typeof queryInvoicesSchema>;

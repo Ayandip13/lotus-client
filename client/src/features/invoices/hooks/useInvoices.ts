@@ -87,3 +87,26 @@ export const useDeleteInvoice = () => {
     },
   });
 };
+
+export const useUpdateInvoice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) =>
+      invoiceService.updateInvoice(id, payload),
+    onSuccess: (updatedInvoice) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.detail(updatedInvoice._id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.invoices.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dues.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+      if (updatedInvoice.relatedEvent) {
+        const eventId =
+          typeof updatedInvoice.relatedEvent === 'object'
+            ? (updatedInvoice.relatedEvent as any)._id
+            : updatedInvoice.relatedEvent;
+        if (eventId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.events.financials(eventId) });
+        }
+      }
+    },
+  });
+};

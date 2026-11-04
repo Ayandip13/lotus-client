@@ -4,6 +4,8 @@ import {
   ArrowLeft,
   Printer,
   Share2,
+  Edit3,
+  Trash2,
   CreditCard,
   CheckCircle2,
   AlertCircle,
@@ -13,7 +15,8 @@ import { Badge } from '../../../components/ui/Badge';
 import { SkeletonDetails } from '../../../components/ui/Skeleton';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
 
-import { useInvoiceDetails } from '../hooks/useInvoices';
+import { useInvoiceDetails, useDeleteInvoice } from '../hooks/useInvoices';
+import { DeleteInvoiceModal } from '../components/DeleteInvoiceModal';
 import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 
 export const InvoiceDetailsPage: React.FC = () => {
@@ -21,7 +24,9 @@ export const InvoiceDetailsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const deleteInvoiceMutation = useDeleteInvoice();
 
   const { data: invoice, isLoading: loading } = useInvoiceDetails(id || '');
   const { data: rawPartners = [] } = usePartnerSummaries();
@@ -30,6 +35,17 @@ export const InvoiceDetailsPage: React.FC = () => {
     id: p.partnerId || p._id,
     name: p.partnerName || p.name,
   }));
+
+  const handleDeleteInvoice = async () => {
+    if (!id) return;
+    try {
+      await deleteInvoiceMutation.mutateAsync(id);
+      setIsDeleteModalOpen(false);
+      navigate('/invoices');
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete invoice');
+    }
+  };
 
   const handlePrint = () => {
     window.print();
@@ -157,6 +173,28 @@ export const InvoiceDetailsPage: React.FC = () => {
             onClick={handlePrint}
           >
             Print / PDF
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Edit3 className="w-4 h-4 text-blue-600" />}
+            className="text-xs text-blue-700 hover:text-blue-800 hover:bg-blue-50 shadow-sm"
+            onClick={() => navigate(`/invoices/${id}/edit`)}
+          >
+            Edit
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Trash2 className="w-4 h-4 text-rose-600" />}
+            className="text-xs text-rose-700 hover:text-rose-800 hover:bg-rose-50 shadow-sm disabled:opacity-40"
+            disabled={invoice.amountPaid > 0}
+            title={invoice.amountPaid > 0 ? 'Cannot delete an invoice that has payments recorded' : 'Delete Invoice'}
+            onClick={() => setIsDeleteModalOpen(true)}
+          >
+            Delete
           </Button>
         </div>
       </div>
@@ -396,6 +434,18 @@ export const InvoiceDetailsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Invoice Modal */}
+      {isDeleteModalOpen && invoice && (
+        <DeleteInvoiceModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeleteInvoice}
+          isDeleting={deleteInvoiceMutation.isPending}
+          invoiceNumber={invoice.invoiceNumber}
+          customerName={invoice.customerName}
+        />
+      )}
 
       {/* Record Payment Modal */}
       {isPaymentModalOpen && (

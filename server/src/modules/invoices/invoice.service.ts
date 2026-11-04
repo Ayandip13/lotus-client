@@ -4,7 +4,7 @@ import { Event } from '../events/event.model';
 import { Transaction } from '../transactions/transaction.model';
 import { CashMovement } from '../cashCustody/cashCustody.model';
 import { Partner } from '../partners/partner.model';
-import { CreateInvoiceInput, RecordInvoicePaymentInput, QueryInvoicesInput } from './invoice.schema';
+import { CreateInvoiceInput, UpdateInvoiceInput, RecordInvoicePaymentInput, QueryInvoicesInput } from './invoice.schema';
 import { BadRequestError, NotFoundError } from '../../utils/appError';
 import { PaginationMetadata } from '../../types/api.types';
 
@@ -539,6 +539,143 @@ export class InvoiceService {
     invoice.deletedAt = new Date();
     invoice.deletedByPartner = partnerId as any;
     await invoice.save();
+  }
+
+  /**
+   * Updates an existing invoice (when unpaid or recalculates grand total)
+   */
+  async updateInvoice(
+    id: string,
+    partnerId: string | Types.ObjectId,
+    data: UpdateInvoiceInput
+  ): Promise<IInvoice> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestError('Invalid invoice ID format');
+    }
+
+    const invoice = await Invoice.findOne({ _id: id, isDeleted: false });
+    if (!invoice) {
+      throw new NotFoundError('Invoice not found or has been deleted');
+    }
+
+    if (data.customerName !== undefined) invoice.customerName = data.customerName;
+    if (data.customerPhone !== undefined) invoice.customerPhone = data.customerPhone;
+    if (data.customerEmail !== undefined) invoice.customerEmail = data.customerEmail;
+    if (data.customerAddress !== undefined) invoice.customerAddress = data.customerAddress;
+    if (data.customerGstin !== undefined) invoice.customerGstin = data.customerGstin;
+    if (data.invoiceDate !== undefined) invoice.invoiceDate = new Date(data.invoiceDate);
+    if (data.dueDate !== undefined) invoice.dueDate = data.dueDate ? new Date(data.dueDate) : undefined;
+    if (data.invoiceType !== undefined) invoice.invoiceType = data.invoiceType;
+    if (data.notes !== undefined) invoice.notes = data.notes;
+    if (data.relatedEvent !== undefined) invoice.relatedEvent = data.relatedEvent as any;
+
+    if (data.businessDetails) {
+      invoice.businessDetails = {
+        ...invoice.businessDetails,
+        ...data.businessDetails,
+      };
+    }
+
+    // If line items or discount changed, recalculate
+    if (data.items || data.discount !== undefined || data.isInterState !== undefined) {
+      const itemsToUse = data.items || invoice.items;
+      const isInterState = data.isInterState !== undefined ? data.isInterState : (invoice.taxDetails?.isInterState ?? false);
+      let subtotal = 0;
+      let subtotalPaise = 0;
+      let totalCgst = 0;
+      let totalSgst = 0;
+      let totalIgst = 0;
+
+      const processedItems: IInvoiceLineItem[] = itemsToUse.map((item: any) => {
+        const amount = Math.round(item.quantity * item.rate * 100) / 100;
+        const amountPaise = Math.round(amount * 100);
+        subtotal += amount;
+        subtotalPaise += amountPaise;
+
+        let itemCgst = 0;
+        let itemSgst = 0;
+        let itemIgst = 0;
+
+        if (invoice.invoiceType === 'GST' && item.gstRate && item.gstRate > 0) {
+          const itemTax = Math.round(((amount * item.gstRate) / 100) * 100) / 100;
+          if (isInterState) {
+            itemIgst = itemTax;
+          } else {
+            itemCgst = Math.round((itemTax / 2) * 100) / 100;
+            itemSgst = Math.round((itemTax / 2) * 100) / 100;
+          }
+        }
+
+        const itemTotal = Math.round((amount + itemCgst + itemSgst + itemIgst) * 100) / 100;
+        totalCgst += itemCgst;
+        totalSgst += itemSgst;
+        totalIgst += itemIgst;
+
+        return {
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit || 'plates',
+          rate: item.rate,
+          amount,
+          amountPaise,
+          gstRate: item.gstRate || 0,
+          cgstAmount: itemCgst,
+          sgstAmount: itemSgst,
+          igstAmount: itemIgst,
+          totalAmount: itemTotal,
+        };
+      });
+
+      const totalTax = Math.round((totalCgst + totalSgst + totalIgst) * 100) / 100;
+      const totalTaxPaise = Math.round(totalTax * 100);
+
+      const discount = data.discount !== undefined ? data.discount : invoice.discount;
+      if (discount > subtotal) {
+        throw new BadRequestError('Discount cannot exceed the subtotal amount');
+      }
+
+      const grandTotal = Math.round((subtotal - discount + totalTax) * 100) / 100;
+      const grandTotalPaise = Math.round(grandTotal * 100);
+
+      if (invoice.amountPaid > grandTotal) {
+        throw new BadRequestError('Updated grand total cannot be less than the already collected amount');
+      }
+
+      const remainingDue = Math.round((grandTotal - invoice.amountPaid) * 100) / 100;
+      const remainingDuePaise = Math.round(remainingDue * 100);
+
+      invoice.items = processedItems as any;
+      invoice.subtotal = subtotal;
+      invoice.subtotalPaise = subtotalPaise;
+      invoice.taxDetails =
+        invoice.invoiceType === 'GST'
+          ? {
+              isInterState,
+              totalCgst,
+              totalSgst,
+              totalIgst,
+              totalTax,
+              totalTaxPaise,
+            }
+          : undefined;
+      invoice.discount = discount;
+      invoice.discountPaise = Math.round(discount * 100);
+      invoice.grandTotal = grandTotal;
+      invoice.grandTotalPaise = grandTotalPaise;
+      invoice.remainingDue = remainingDue;
+      invoice.remainingDuePaise = remainingDuePaise;
+
+      if (remainingDue === 0 && invoice.amountPaid > 0) {
+        invoice.paymentStatus = 'PAID';
+      } else if (invoice.amountPaid > 0) {
+        invoice.paymentStatus = 'PARTIALLY_PAID';
+      } else {
+        invoice.paymentStatus = 'UNPAID';
+      }
+    }
+
+    await invoice.save();
+    return invoice;
   }
 }
 

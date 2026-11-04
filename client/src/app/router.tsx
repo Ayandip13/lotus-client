@@ -116,6 +116,10 @@ export const router = createBrowserRouter([
                 path: ':id',
                 element: <InvoiceDetailsPage />,
               },
+              {
+                path: ':id/edit',
+                element: <InvoiceCreatePage />,
+              },
             ],
           },
           {
