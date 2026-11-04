@@ -156,7 +156,7 @@ export const DashboardShellPage: React.FC = () => {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               Lotus Caterer Management Hub
             </h1>
-            <Badge variant="success">Phase 5 Operational</Badge>
+            {/* <Badge variant="success">Phase 5 Operational</Badge> */}
           </div>
           <p className="mt-1 text-sm text-slate-500">
             Welcome back, <strong className="text-slate-800">{partner?.name || 'Partner'}</strong> ({user ? `@${user.username}` : ''}). Equal 3-partner financial custody session active.
