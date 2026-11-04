@@ -174,68 +174,74 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
               Transaction Category <span className="text-rose-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
               <label
-                className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`flex flex-row sm:flex-col items-center sm:items-stretch justify-between sm:justify-start p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all ${
                   watchedType === 'BUSINESS_EXPENSE'
                     ? 'border-rose-500 bg-rose-50/40 text-rose-950 font-medium'
                     : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-sm">Business Expense</span>
-                  <input
-                    type="radio"
-                    value="BUSINESS_EXPENSE"
-                    {...register('transactionType')}
-                    className="text-rose-600 focus:ring-rose-500"
-                  />
+                <div className="flex-1 pr-2 sm:pr-0">
+                  <div className="flex items-center justify-between sm:mb-1">
+                    <span className="font-semibold text-xs sm:text-sm">Business Expense</span>
+                  </div>
+                  <span className="text-[11px] sm:text-xs text-slate-500 block leading-tight">
+                    Operational costs (groceries, decor, labor, overhead)
+                  </span>
                 </div>
-                <span className="text-xs text-slate-500">
-                  Operational costs (groceries, decor, labor, overhead)
-                </span>
+                <input
+                  type="radio"
+                  value="BUSINESS_EXPENSE"
+                  {...register('transactionType')}
+                  className="text-rose-600 focus:ring-rose-500 shrink-0 self-center sm:self-auto sm:order-first sm:hidden"
+                />
               </label>
 
               <label
-                className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`flex flex-row sm:flex-col items-center sm:items-stretch justify-between sm:justify-start p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all ${
                   watchedType === 'BUSINESS_INCOME'
                     ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950 font-medium'
                     : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-sm">Business Income</span>
-                  <input
-                    type="radio"
-                    value="BUSINESS_INCOME"
-                    {...register('transactionType')}
-                    className="text-emerald-600 focus:ring-emerald-500"
-                  />
+                <div className="flex-1 pr-2 sm:pr-0">
+                  <div className="flex items-center justify-between sm:mb-1">
+                    <span className="font-semibold text-xs sm:text-sm">Business Income</span>
+                  </div>
+                  <span className="text-[11px] sm:text-xs text-slate-500 block leading-tight">
+                    Customer payments, booking advances, or event settlements
+                  </span>
                 </div>
-                <span className="text-xs text-slate-500">
-                  Customer payments, booking advances, or event settlements
-                </span>
+                <input
+                  type="radio"
+                  value="BUSINESS_INCOME"
+                  {...register('transactionType')}
+                  className="text-emerald-600 focus:ring-emerald-500 shrink-0 self-center sm:self-auto sm:order-first sm:hidden"
+                />
               </label>
 
               <label
-                className={`flex flex-col p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`flex flex-row sm:flex-col items-center sm:items-stretch justify-between sm:justify-start p-2.5 sm:p-3 rounded-lg border cursor-pointer transition-all ${
                   watchedType === 'PARTNER_CONTRIBUTION'
                     ? 'border-blue-500 bg-blue-50/40 text-blue-950 font-medium'
                     : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-sm">Partner Contribution</span>
-                  <input
-                    type="radio"
-                    value="PARTNER_CONTRIBUTION"
-                    {...register('transactionType')}
-                    className="text-blue-600 focus:ring-blue-500"
-                  />
+                <div className="flex-1 pr-2 sm:pr-0">
+                  <div className="flex items-center justify-between sm:mb-1">
+                    <span className="font-semibold text-xs sm:text-sm">Partner Contribution</span>
+                  </div>
+                  <span className="text-[11px] sm:text-xs text-slate-500 block leading-tight">
+                    Personal money injected by a partner into the business pool
+                  </span>
                 </div>
-                <span className="text-xs text-slate-500">
-                  Personal money injected by a partner into the business pool
-                </span>
+                <input
+                  type="radio"
+                  value="PARTNER_CONTRIBUTION"
+                  {...register('transactionType')}
+                  className="text-blue-600 focus:ring-blue-500 shrink-0 self-center sm:self-auto sm:order-first sm:hidden"
+                />
               </label>
             </div>
             {errors.transactionType && (
@@ -243,8 +249,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             )}
           </div>
 
-          {/* Amount & Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Amount & Date in one row on mobile */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
             <div>
               <Input
                 label="Amount (₹ in INR)"
@@ -256,8 +262,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                 {...register('amount', { valueAsNumber: true })}
                 required
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Precision is strictly preserved and calculated in whole paise internally.
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">
+                Precision is strictly preserved in paise.
               </p>
             </div>
 
@@ -269,8 +275,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                 {...register('transactionDate')}
                 required
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Standard Asia/Kolkata business date of occurrence.
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5 sm:mt-1 truncate">
+                Business date of occurrence.
               </p>
             </div>
           </div>
@@ -303,13 +309,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         <CardContent className="space-y-4">
           {/* Conditional: Payment Source for Expenses */}
           {watchedType === 'BUSINESS_EXPENSE' && (
-            <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+            <div className="p-2.5 sm:p-3.5 bg-slate-50 rounded-lg border border-slate-200 space-y-2 sm:space-y-3">
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                 How was this expense paid? <span className="text-rose-500">*</span>
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                 <label
-                  className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer ${
+                  className={`flex items-start gap-2 p-2.5 sm:p-3 rounded-lg border cursor-pointer ${
                     watchedPaymentSource === 'COMMON_BUSINESS'
                       ? 'border-slate-800 bg-white shadow-sm font-medium'
                       : 'border-slate-200 bg-slate-50 hover:bg-white'
@@ -322,17 +328,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                     className="mt-0.5 text-slate-900 focus:ring-slate-800"
                   />
                   <div>
-                    <span className="text-sm font-semibold text-slate-900 block">
+                    <span className="text-xs sm:text-sm font-semibold text-slate-900 block">
                       Common Business Account
                     </span>
-                    <span className="text-xs text-slate-500 block mt-0.5">
-                      Deducted immediately from common available business cash pool.
+                    <span className="text-[11px] sm:text-xs text-slate-500 block mt-0.5 leading-tight">
+                      Deducted immediately from common available cash pool.
                     </span>
                   </div>
                 </label>
 
                 <label
-                  className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer ${
+                  className={`flex items-start gap-2 p-2.5 sm:p-3 rounded-lg border cursor-pointer ${
                     watchedPaymentSource === 'PARTNER_PERSONAL'
                       ? 'border-purple-600 bg-purple-50/50 shadow-sm font-medium'
                       : 'border-slate-200 bg-slate-50 hover:bg-white'
@@ -345,11 +351,11 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                     className="mt-0.5 text-purple-600 focus:ring-purple-500"
                   />
                   <div>
-                    <span className="text-sm font-semibold text-purple-900 block">
+                    <span className="text-xs sm:text-sm font-semibold text-purple-900 block">
                       Partner Personally Paid
                     </span>
-                    <span className="text-xs text-slate-500 block mt-0.5">
-                      Paid from partner's personal pocket. Does NOT reduce common cash pool.
+                    <span className="text-[11px] sm:text-xs text-slate-500 block mt-0.5 leading-tight">
+                      Paid from partner's personal pocket.
                     </span>
                   </div>
                 </label>
@@ -422,9 +428,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* File Upload Drop Area */}
-          <div className="border-2 border-dashed border-slate-200 hover:border-slate-400 rounded-xl p-6 text-center transition-colors">
-            <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
-            <div className="text-sm font-medium text-slate-700">
+          <div className="border-2 border-dashed border-slate-200 hover:border-slate-400 rounded-xl p-3.5 sm:p-6 text-center transition-colors">
+            <Upload className="w-5 h-5 sm:w-8 sm:h-8 mx-auto text-slate-400 mb-1 sm:mb-2" />
+            <div className="text-xs sm:text-sm font-medium text-slate-700">
               <label
                 htmlFor="file-upload"
                 className="text-blue-600 hover:text-blue-800 cursor-pointer font-semibold underline underline-offset-2"
@@ -441,7 +447,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
               />{' '}
               or choose from device
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 sm:mt-1">
               Supports JPEG, PNG, or WebP up to 5MB each (Max 5 files).
             </p>
           </div>

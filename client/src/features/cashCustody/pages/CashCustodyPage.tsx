@@ -134,22 +134,22 @@ export const CashCustodyPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Cash Custody & Reconciliation
             </h1>
             {isFetching && !loading && (
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400" />
             )}
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500">
             Track individual partner cash-in-hand, cash handovers, bank deposits, and withdrawals
           </p>
         </div>
         <div>
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2 shadow-sm">
+          <Button onClick={() => setIsModalOpen(true)} size="sm" className="w-full sm:w-auto gap-2 shadow-sm">
             <Plus className="w-4 h-4" />
             Record Cash Movement
           </Button>
@@ -157,78 +157,94 @@ export const CashCustodyPage: React.FC = () => {
       </div>
 
       {/* Aggregate Balance Header Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs uppercase font-bold text-slate-500">Total Business Physical Cash</span>
-            <p className="text-2xl font-extrabold text-emerald-700 mt-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-start justify-between gap-1">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-500 tracking-wider truncate">
+              Physical Cash
+            </span>
+            <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <Wallet className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-lg sm:text-2xl font-black text-emerald-700 truncate tracking-tight">
               ₹{(overview?.totalBusinessCashInHand || 0).toLocaleString()}
             </p>
-            <span className="text-[11px] text-slate-400">Sum of cash held across all 3 partners</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <Wallet className="w-6 h-6" />
+            <span className="text-[9.5px] sm:text-[11px] text-slate-400 block mt-0.5 truncate">
+              Across all 3 partners
+            </span>
           </div>
         </div>
 
-        <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs uppercase font-bold text-slate-500">Common Business Bank Balance</span>
-            <p className="text-2xl font-extrabold text-indigo-700 mt-1">
+        <div className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+          <div className="flex items-start justify-between gap-1">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-500 tracking-wider truncate">
+              Bank Balance
+            </span>
+            <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+              <Building className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+            </div>
+          </div>
+          <div className="mt-2">
+            <p className="text-lg sm:text-2xl font-black text-indigo-700 truncate tracking-tight">
               ₹{(overview?.commonBusinessBankBalance || 0).toLocaleString()}
             </p>
-            <span className="text-[11px] text-slate-400">Bank accounts funds derived from ledger</span>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-            <Building className="w-6 h-6" />
+            <span className="text-[9.5px] sm:text-[11px] text-slate-400 block mt-0.5 truncate">
+              Common bank account
+            </span>
           </div>
         </div>
 
-        <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-sm flex items-center justify-between">
+        <div className="col-span-2 sm:col-span-1 p-3 sm:p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl sm:rounded-2xl shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs uppercase font-bold text-slate-300">Total Business Liquid Assets</span>
-            <p className="text-2xl font-extrabold text-white mt-1">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-300 tracking-wider block">
+              Total Business Liquid Assets
+            </span>
+            <p className="text-xl sm:text-2xl font-black text-white mt-1 tracking-tight">
               ₹{(overview?.commonBusinessTotalBalance || (overview?.totalBusinessCashInHand || 0) + (overview?.commonBusinessBankBalance || 0)).toLocaleString()}
             </p>
-            <span className="text-[11px] text-slate-300">Physical Cash in Hand + Bank Balance</span>
+            <span className="text-[9.5px] sm:text-[11px] text-slate-400 block mt-0.5">
+              Physical Cash in Hand + Bank Balance
+            </span>
           </div>
-          <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center">
-            <Coins className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/10 text-white flex items-center justify-center shrink-0">
+            <Coins className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
         </div>
       </div>
 
       {/* 3 Partners Cash Breakdown */}
       <div>
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
+        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-500 mb-2 sm:mb-3">
           Partner-Wise Physical Cash Custody
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           {loading
             ? Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-8 w-28" />
+                <div key={i} className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                  <Skeleton className="h-3 sm:h-4 w-16 sm:w-32" />
+                  <Skeleton className="h-5 sm:h-8 w-14 sm:w-28" />
                 </div>
               ))
             : overview?.partners?.map((partner) => (
                 <div
                   key={partner.partnerId}
-                  className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:border-slate-300 transition-colors"
+                  className="p-2.5 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm hover:border-slate-300 transition-colors flex flex-col justify-between"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900">{partner.partnerName}</h3>
-                      <p className="text-xs text-slate-500">{partner.partnerPhone || 'Partner in Charge'}</p>
+                  <div className="flex items-center justify-between gap-1">
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-base font-bold text-slate-900 truncate">{partner.partnerName}</h3>
+                      <p className="text-[10px] sm:text-xs text-slate-400 truncate">{partner.partnerPhone || 'Partner'}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm">
+                    <div className="w-6 h-6 sm:w-10 sm:h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-[10px] sm:text-sm shrink-0">
                       {partner.partnerName?.charAt(0) || 'P'}
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-baseline justify-between">
-                    <span className="text-xs text-slate-500 font-medium">Verified Cash-in-Hand:</span>
-                    <span className="text-xl font-extrabold font-mono text-emerald-700">
+                  <div className="mt-2 sm:mt-4 pt-2 sm:pt-3 border-t border-slate-100">
+                    <span className="text-[9.5px] sm:text-xs text-slate-400 font-medium block truncate">Cash-in-Hand:</span>
+                    <span className="text-xs sm:text-xl font-black font-mono text-emerald-700 block truncate mt-0.5">
                       ₹{(partner.cashInHand || 0).toLocaleString()}
                     </span>
                   </div>

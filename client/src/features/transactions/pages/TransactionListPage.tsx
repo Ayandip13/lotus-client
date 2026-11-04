@@ -132,24 +132,24 @@ export const TransactionListPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
               Income & Expense Ledger
             </h1>
             {isFetching && !isLoading && (
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400" />
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500">
             Centralized financial transactions, partner contributions, and operational expenses with receipt attachments.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Link to="/transactions/new">
-            <Button leftIcon={<Plus className="w-4 h-4" />} className="w-full sm:w-auto shadow-sm">
+          <Link to="/transactions/new" className="w-full sm:w-auto">
+            <Button size="sm" leftIcon={<Plus className="w-4 h-4" />} className="w-full sm:w-auto shadow-sm">
               Record Transaction
             </Button>
           </Link>
@@ -157,10 +157,10 @@ export const TransactionListPage: React.FC = () => {
       </div>
 
       {/* 2. Transaction Category Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto scrollbar-none pb-px">
+      <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto scrollbar-none pb-px text-xs sm:text-sm">
         <button
           onClick={() => handleTabChange('ALL')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'ALL'
               ? 'border-slate-900 text-slate-900 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
@@ -170,62 +170,62 @@ export const TransactionListPage: React.FC = () => {
         </button>
         <button
           onClick={() => handleTabChange('BUSINESS_INCOME')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'BUSINESS_INCOME'
               ? 'border-emerald-600 text-emerald-700 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
-          <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
+          <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
           <span>Business Income</span>
         </button>
         <button
           onClick={() => handleTabChange('BUSINESS_EXPENSE')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'BUSINESS_EXPENSE'
               ? 'border-rose-600 text-rose-700 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
-          <ArrowUpRight className="w-4 h-4 text-rose-600" />
+          <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" />
           <span>Business Expenses</span>
         </button>
         <button
           onClick={() => handleTabChange('PARTNER_CONTRIBUTION')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
             activeTab === 'PARTNER_CONTRIBUTION'
               ? 'border-blue-600 text-blue-700 font-semibold'
               : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
           }`}
         >
-          <Landmark className="w-4 h-4 text-blue-600" />
+          <Landmark className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
           <span>Partner Contributions</span>
         </button>
       </div>
 
       {/* 3. Search & Advanced Filtering Controls */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+      <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-sm space-y-2.5 sm:space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3">
           {/* Text Search */}
-          <div className="md:col-span-5">
+          <div className="sm:col-span-12 md:col-span-6">
             <Input
               placeholder="Search by description or transaction note..."
               leftIcon={<Search className="w-4 h-4 text-slate-400" />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border-slate-200 text-sm"
+              className="border-slate-200 text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
 
-          {/* Partner Filter */}
-          <div className="md:col-span-3">
+          {/* Partner & Payment Source Filters side-by-side on mobile */}
+          <div className="grid grid-cols-2 gap-2 sm:col-span-12 md:col-span-6">
             <select
               value={selectedPartner}
               onChange={(e) => {
                 setSelectedPartner(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 h-[38px]"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 h-9 sm:h-[38px] truncate"
             >
               <option value="">All Partners</option>
               {partners.map((p) => (
@@ -234,32 +234,27 @@ export const TransactionListPage: React.FC = () => {
                 </option>
               ))}
             </select>
-          </div>
 
-          {/* Payment Source Filter */}
-          <div className="md:col-span-4">
             <select
               value={selectedPaymentSource}
               onChange={(e) => {
                 setSelectedPaymentSource(e.target.value as PaymentSource);
                 setPage(1);
               }}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 h-[38px]"
+              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 h-9 sm:h-[38px] truncate"
             >
-              <option value="">All Payment Routes</option>
-              <option value="COMMON_BUSINESS">Common Business Account</option>
-              <option value="PARTNER_PERSONAL">Partner Personal Funds</option>
+              <option value="">All Routes</option>
+              <option value="COMMON_BUSINESS">Common Account</option>
+              <option value="PARTNER_PERSONAL">Partner Personal</option>
             </select>
           </div>
         </div>
 
         {/* Date Range Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-500 font-medium flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Date range:</span>
-            </span>
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <Calendar className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+            <span className="text-slate-500 font-medium text-[11px] sm:text-xs shrink-0">Date:</span>
             <input
               type="date"
               value={startDate}
@@ -267,9 +262,9 @@ export const TransactionListPage: React.FC = () => {
                 setStartDate(e.target.value);
                 setPage(1);
               }}
-              className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800"
+              className="w-full min-w-0 flex-1 rounded-md border border-slate-300 px-1.5 sm:px-2 py-1 text-[11px] sm:text-xs text-slate-800"
             />
-            <span className="text-slate-400">to</span>
+            <span className="text-slate-400 text-[11px] shrink-0">to</span>
             <input
               type="date"
               value={endDate}
@@ -277,17 +272,17 @@ export const TransactionListPage: React.FC = () => {
                 setEndDate(e.target.value);
                 setPage(1);
               }}
-              className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-800"
+              className="w-full min-w-0 flex-1 rounded-md border border-slate-300 px-1.5 sm:px-2 py-1 text-[11px] sm:text-xs text-slate-800"
             />
           </div>
 
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-800 font-medium"
+              className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-800 font-medium text-xs shrink-0"
             >
               <X className="w-3.5 h-3.5" />
-              <span>Clear filters</span>
+              <span>Clear</span>
             </button>
           )}
         </div>

@@ -138,45 +138,51 @@ export const VendorDuesPage: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-8 w-36" />
+            <div key={i} className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+              <Skeleton className="h-3 sm:h-4 w-20 sm:w-28" />
+              <Skeleton className="h-6 sm:h-8 w-24 sm:w-36" />
             </div>
           ))
         ) : (
           <>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
-              <span className="text-xs uppercase font-bold text-slate-500">Total Vendor Payable</span>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">
+            <div className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-500 tracking-wider truncate">
+                Total Vendor Payable
+              </span>
+              <p className="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">
                 ₹{(summary?.totalVendorDue || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-slate-400 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-slate-400 block mt-0.5 sm:mt-1 truncate">
                 Across {summary?.dues?.length || 0} active supplier bills
               </span>
             </div>
 
-            <div className="p-5 bg-rose-50/60 border border-rose-200/80 rounded-2xl shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-bold text-rose-800">Overdue Supplier Payables</span>
-                <Clock className="w-4 h-4 text-rose-600" />
+            <div className="p-3 sm:p-5 bg-rose-50/60 border border-rose-200/80 rounded-xl sm:rounded-2xl shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-xs uppercase font-bold text-rose-800 tracking-wider truncate">
+                  Overdue Payables
+                </span>
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
               </div>
-              <p className="text-2xl font-extrabold text-rose-700 mt-1">
+              <p className="text-lg sm:text-2xl font-black text-rose-700 mt-1 truncate">
                 ₹{(summary?.overdueAmount || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-rose-600/80 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-rose-600/80 block mt-0.5 sm:mt-1 truncate">
                 {summary?.overdueCount || 0} bills past payment due date
               </span>
             </div>
 
-            <div className="p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-2xl shadow-sm">
-              <span className="text-xs uppercase font-bold text-indigo-800">Total Billed Expenses</span>
-              <p className="text-2xl font-extrabold text-indigo-700 mt-1">
+            <div className="col-span-2 sm:col-span-1 p-3 sm:p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl sm:rounded-2xl shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] sm:text-xs uppercase font-bold text-indigo-800 tracking-wider truncate">
+                Total Billed Expenses
+              </span>
+              <p className="text-lg sm:text-2xl font-black text-indigo-700 mt-1 truncate">
                 ₹{(summary?.totalPayable || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-indigo-600/80 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-indigo-600/80 block mt-0.5 sm:mt-1 truncate">
                 Paid: ₹{(summary?.totalPaid || 0).toLocaleString()}
               </span>
             </div>

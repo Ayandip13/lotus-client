@@ -294,11 +294,11 @@ export const DashboardShellPage: React.FC = () => {
       {/* SECTION C & D: PARTNER CASH CUSTODY & DUE OVERVIEWS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Section C: Partner Cash Custody Overview */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Wallet className="w-4 h-4 text-slate-700" />
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">
                 Partner Physical Cash Custody
               </h2>
             </div>
@@ -310,24 +310,28 @@ export const DashboardShellPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {(partnerCashOverview?.partners || []).map((p, idx) => (
-              <div key={p.partnerId} className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Partner {idx + 1}
-                </span>
-                <p className="font-bold text-slate-900 text-sm truncate">{p.partnerName}</p>
-                <p className="text-lg font-black text-slate-900 mt-2">
-                  ₹{p.cashInHand.toLocaleString()}
-                </p>
-                <span className="text-[10px] text-slate-500 block mt-0.5">Physical Cash</span>
+              <div key={p.partnerId} className="p-2 sm:p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col justify-between">
+                <div>
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5 sm:mb-1 truncate">
+                    Partner {idx + 1}
+                  </span>
+                  <p className="font-bold text-slate-900 text-xs sm:text-sm truncate">{p.partnerName}</p>
+                </div>
+                <div className="mt-1.5 sm:mt-2">
+                  <p className="text-sm sm:text-lg font-black text-slate-900 truncate tracking-tight">
+                    ₹{p.cashInHand.toLocaleString()}
+                  </p>
+                  <span className="text-[9px] sm:text-[10px] text-slate-500 block mt-0.5 truncate">Physical Cash</span>
+                </div>
               </div>
             ))}
           </div>
 
-          <div className="p-3 bg-slate-900 text-white rounded-xl text-xs flex items-center justify-between">
-            <span className="text-slate-300">Total Business Cash Custody:</span>
-            <span className="font-bold text-amber-300 text-sm">
+          <div className="p-2.5 sm:p-3 bg-slate-900 text-white rounded-xl text-xs flex items-center justify-between">
+            <span className="text-slate-300 text-[11px] sm:text-xs">Total Business Cash Custody:</span>
+            <span className="font-bold text-amber-300 text-xs sm:text-sm">
               ₹{(partnerCashOverview?.totalBusinessCashInHand ?? 0).toLocaleString()}
             </span>
           </div>

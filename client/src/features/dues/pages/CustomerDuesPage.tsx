@@ -131,55 +131,63 @@ export const CustomerDuesPage: React.FC = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-8 w-36" />
+            <div key={i} className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+              <Skeleton className="h-3 sm:h-4 w-20 sm:w-28" />
+              <Skeleton className="h-6 sm:h-8 w-24 sm:w-36" />
             </div>
           ))
         ) : (
           <>
-            <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
-              <span className="text-xs uppercase font-bold text-slate-500">Total Customer Due</span>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">
+            <div className="p-3 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] sm:text-xs uppercase font-bold text-slate-500 tracking-wider truncate">
+                Total Customer Due
+              </span>
+              <p className="text-lg sm:text-2xl font-black text-slate-900 mt-1 truncate">
                 ₹{(summary?.totalCustomerDue || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-slate-400 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-slate-400 block mt-0.5 sm:mt-1 truncate">
                 Across {summary?.dues?.length || 0} active unpaid / partial invoices
               </span>
             </div>
 
-            <div className="p-5 bg-rose-50/60 border border-rose-200/80 rounded-2xl shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-bold text-rose-800">Overdue Customer Receivables</span>
-                <AlertTriangle className="w-4 h-4 text-rose-600" />
+            <div className="p-3 sm:p-5 bg-rose-50/60 border border-rose-200/80 rounded-xl sm:rounded-2xl shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[10px] sm:text-xs uppercase font-bold text-rose-800 tracking-wider truncate">
+                  Overdue Receivables
+                </span>
+                <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
               </div>
-              <p className="text-2xl font-extrabold text-rose-700 mt-1">
+              <p className="text-lg sm:text-2xl font-black text-rose-700 mt-1 truncate">
                 ₹{(summary?.overdueAmount || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-rose-600/80 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-rose-600/80 block mt-0.5 sm:mt-1 truncate">
                 {summary?.overdueCount || 0} invoices past payment due date
               </span>
             </div>
 
-            <div className="p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl shadow-sm">
-              <span className="text-xs uppercase font-bold text-emerald-800">Total Invoiced Amount</span>
-              <p className="text-2xl font-extrabold text-emerald-700 mt-1">
+            <div className="p-3 sm:p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-xl sm:rounded-2xl shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] sm:text-xs uppercase font-bold text-emerald-800 tracking-wider truncate">
+                Total Invoiced
+              </span>
+              <p className="text-lg sm:text-2xl font-black text-emerald-700 mt-1 truncate">
                 ₹{(summary?.totalInvoiced || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-emerald-600/80 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-emerald-600/80 block mt-0.5 sm:mt-1 truncate">
                 Cumulative revenue booked for filtered events
               </span>
             </div>
 
-            <div className="p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-2xl shadow-sm">
-              <span className="text-xs uppercase font-bold text-indigo-800">Collected Amount</span>
-              <p className="text-2xl font-extrabold text-indigo-700 mt-1">
+            <div className="p-3 sm:p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-xl sm:rounded-2xl shadow-sm flex flex-col justify-between">
+              <span className="text-[10px] sm:text-xs uppercase font-bold text-indigo-800 tracking-wider truncate">
+                Collected Amount
+              </span>
+              <p className="text-lg sm:text-2xl font-black text-indigo-700 mt-1 truncate">
                 ₹{(summary?.totalCollected || 0).toLocaleString()}
               </p>
-              <span className="text-[11px] text-indigo-600/80 block mt-1">
+              <span className="text-[9.5px] sm:text-[11px] text-indigo-600/80 block mt-0.5 sm:mt-1 truncate">
                 Received & verified via ledger entries
               </span>
             </div>
