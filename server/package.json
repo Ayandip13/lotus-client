@@ -12,6 +12,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "seed:partners": "tsx src/scripts/seedPartners.ts",
+    "seed:demo": "tsx src/scripts/seedRealisticDemoData.ts",
     "test:auth": "tsx src/tests/auth.test.ts",
     "test:events": "tsx src/tests/event.test.ts",
     "test:transactions": "tsx src/tests/transaction.test.ts",
