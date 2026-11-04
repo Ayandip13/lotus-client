@@ -30,7 +30,7 @@ export class DashboardService {
       })
         .sort({ eventDate: 1 })
         .limit(6)
-        .select('title eventDate eventType guestCount location clientName clientPhone totalAmount status')
+        .select('title eventDate guestName guestPhone guestEmail guestAddress eventDetails')
         .lean(),
 
       // 2. Financial Overview from centralized ledger
