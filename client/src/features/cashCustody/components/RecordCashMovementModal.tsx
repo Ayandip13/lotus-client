@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -21,7 +21,15 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
   onClose,
   onSuccess,
 }) => {
-  if (!isOpen) return null;
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
 
   const [movementType, setMovementType] = useState<CashMovementType>('PARTNER_HANDOVER');
   const [fromPartner, setFromPartner] = useState<string>(partners[0]?.partnerId || '');
@@ -33,6 +41,18 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
   const [error, setError] = useState<string | null>(null);
 
   const movementMutation = useRecordCashMovement();
+
+  // Keep fromPartner and toPartner synchronized when partners prop loads
+  useEffect(() => {
+    if (partners && partners.length > 0) {
+      if (!fromPartner || !partners.some(p => p.partnerId === fromPartner)) {
+        setFromPartner(partners[0].partnerId);
+      }
+      if (!toPartner || !partners.some(p => p.partnerId === toPartner)) {
+        setToPartner(partners[1]?.partnerId || partners[0].partnerId);
+      }
+    }
+  }, [partners, fromPartner, toPartner]);
 
   const selectedFromPartner = partners.find((p) => p.partnerId === fromPartner);
 
@@ -88,25 +108,30 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to record cash movement');
+      const serverMsg = err.response?.data?.message || err.message || 'Failed to record cash movement';
+      const detailMsg = err.details?.map((d: any) => d.message).join(', ') || err.response?.data?.error?.details?.map((d: any) => d.message).join(', ');
+      setError(detailMsg ? `${serverMsg}: ${detailMsg}` : serverMsg);
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+        {/* Header (Sticky) */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-100 bg-slate-50/80 shrink-0">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Record Business Cash Movement</h2>
-            <p className="text-xs text-slate-500 font-medium">Physical cash custody and handover management</p>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">Record Business Cash Movement</h2>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium">Physical cash custody and handover management</p>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Scrollable Form Body */}
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3.5 overflow-y-auto flex-1">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -116,7 +141,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
 
           <div className="p-3 bg-blue-50/80 border border-blue-200/80 rounded-xl text-xs text-blue-900 flex items-start gap-2">
             <Info className="w-4 h-4 shrink-0 mt-0.5 text-blue-600" />
-            <p>
+            <p className="text-[11px] sm:text-xs leading-relaxed">
               Strictly tracks <strong>physical business cash</strong> held by partners. Partner-to-partner transfers and
               bank transfers shift custody channels without creating duplicate income or expenses.
             </p>
@@ -129,7 +154,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
             <select
               value={movementType}
               onChange={(e) => setMovementType(e.target.value as any)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+              className="w-full h-9 sm:h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
             >
               <option value="PARTNER_HANDOVER">Partner-to-Partner Cash Handover</option>
               <option value="BANK_DEPOSIT">Deposit Cash into Business Bank Account</option>
@@ -148,7 +173,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
                   {movementType === 'PARTNER_HANDOVER' ? 'Handing Over (From Partner)' : 'Spending/Depositing Partner'}
                 </label>
                 {selectedFromPartner && (
-                  <span className="text-[11px] font-bold text-slate-600">
+                  <span className="text-[10px] sm:text-[11px] font-bold text-slate-600">
                     Available Custody: ₹{selectedFromPartner.cashInHand.toLocaleString()}
                   </span>
                 )}
@@ -156,7 +181,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
               <select
                 value={fromPartner}
                 onChange={(e) => setFromPartner(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
+                className="w-full h-9 sm:h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm text-slate-800"
                 required
               >
                 {partners.map((p) => (
@@ -178,7 +203,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
               <select
                 value={toPartner}
                 onChange={(e) => setToPartner(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
+                className="w-full h-9 sm:h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm text-slate-800"
                 required
               >
                 {partners.map((p) => (
@@ -190,7 +215,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Amount (₹) <span className="text-rose-500">*</span>
@@ -221,7 +246,7 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
             <select
               value={relatedEvent}
               onChange={(e) => setRelatedEvent(e.target.value)}
-              className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-800"
+              className="w-full h-9 sm:h-10 px-3 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm text-slate-800"
             >
               <option value="">General Cash Movement (No Event)</option>
               {events.map((ev) => (
@@ -245,11 +270,12 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={onClose} disabled={movementMutation.isPending}>
+          {/* Footer (Actions) */}
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 shrink-0">
+            <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={movementMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={movementMutation.isPending} className="gap-2">
+            <Button type="submit" size="sm" disabled={movementMutation.isPending} className="gap-2">
               {movementMutation.isPending ? 'Recording...' : 'Record Cash Movement'}
             </Button>
           </div>

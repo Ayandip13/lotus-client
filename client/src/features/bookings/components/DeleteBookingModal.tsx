@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 
@@ -17,6 +17,15 @@ export const DeleteBookingModal: React.FC<DeleteBookingModalProps> = ({
   isDeleting,
   bookingTitle,
 }) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (

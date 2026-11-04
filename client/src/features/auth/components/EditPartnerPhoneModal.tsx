@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Phone, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -12,6 +12,16 @@ interface EditPartnerPhoneModalProps {
 export const EditPartnerPhoneModal: React.FC<EditPartnerPhoneModalProps> = ({ isOpen, onClose }) => {
   const { partner, updatePartnerProfile } = useAuth();
   const [phone, setPhone] = useState(partner?.phone || '');
+
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -50,9 +60,9 @@ export const EditPartnerPhoneModal: React.FC<EditPartnerPhoneModalProps> = ({ is
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl border border-slate-100 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-2xl max-w-sm w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/70 shrink-0">
           <div className="flex items-center gap-2">
             <Phone className="w-4 h-4 text-slate-700" />
             <h2 className="text-sm font-bold text-slate-900">Update Your Phone Number</h2>
@@ -65,7 +75,7 @@ export const EditPartnerPhoneModal: React.FC<EditPartnerPhoneModalProps> = ({ is
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-5 space-y-4">
           <div className="flex items-center gap-2.5 p-2.5 bg-blue-50/60 border border-blue-200/70 rounded-xl text-xs text-blue-900">
             <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
             <span>

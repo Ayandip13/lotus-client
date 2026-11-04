@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   X,
@@ -31,13 +31,23 @@ export const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = (
 }) => {
   const [selectedAttachment, setSelectedAttachment] = useState<TransactionAttachment | null>(null);
 
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen || !transaction) return null;
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
         <div
-          className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden transform transition-all max-h-[90vh] flex flex-col"
+          className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden transform transition-all max-h-[92vh] flex flex-col"
           role="dialog"
           aria-modal="true"
         >

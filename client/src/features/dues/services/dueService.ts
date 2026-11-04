@@ -87,11 +87,11 @@ export const dueService = {
         ? crypto.randomUUID()
         : `idemp-vend-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
 
-    const res = await apiClient.post(
-      `/vendors/bills/${billId}/payments`,
-      { ...payload, idempotencyKey: key },
-      { headers: { 'Idempotency-Key': key } }
-    );
+    // Pass idempotencyKey safely in body so CORS preflights never block on custom headers
+    const res = await apiClient.post(`/vendors/bills/${billId}/payments`, {
+      ...payload,
+      idempotencyKey: key,
+    });
     return res.data.data;
   },
 

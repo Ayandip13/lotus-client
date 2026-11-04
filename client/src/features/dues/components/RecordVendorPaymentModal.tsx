@@ -23,7 +23,6 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
   onSuccess,
 }) => {
   const target = dueItem || bill;
-  if (!isOpen || !target) return null;
 
   const billId = target.billId || target._id;
   const billNumber = target.billNumber || 'BILL';
@@ -50,6 +49,16 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
   const [error, setError] = useState<string | null>(null);
 
   const paymentMutation = useRecordVendorPayment();
+
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
 
   // Function to generate a new cryptographic or timestamped UUID
   const createNewIdempotencyKey = () =>
@@ -111,11 +120,13 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
     }
   };
 
+  if (!isOpen || !target) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 shrink-0">
           <div>
             <h2 className="text-base font-bold text-slate-900">Record Vendor Bill Payment</h2>
             <p className="text-xs text-slate-500 font-medium">
@@ -131,7 +142,7 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-3.5">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -231,7 +242,7 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 sticky bottom-0 bg-white/95 backdrop-blur-xs py-1 shrink-0">
             <Button type="button" variant="outline" onClick={handleClose} disabled={paymentMutation.isPending}>
               Cancel
             </Button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -25,8 +25,6 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
   onSuccess,
   onAddNewVendor,
 }) => {
-  if (!isOpen) return null;
-
   const [vendorId, setVendorId] = useState(vendors[0]?._id || '');
   const [relatedEventId, setRelatedEventId] = useState(defaultEventId || '');
   const [billNumber, setBillNumber] = useState('');
@@ -37,6 +35,16 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const createBillMutation = useCreateVendorBill();
+
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,10 +84,12 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 bg-slate-50/70 shrink-0">
           <div>
             <h2 className="text-base font-bold text-slate-900">Record Vendor Payable Bill</h2>
             <p className="text-xs text-slate-500 font-medium">Add supplier liability or purchase due</p>
@@ -89,7 +99,7 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-3.5">
           {error && (
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -209,7 +219,7 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 sticky bottom-0 bg-white/95 backdrop-blur-xs py-1 shrink-0">
             <Button type="button" variant="outline" onClick={onClose} disabled={createBillMutation.isPending}>
               Cancel
             </Button>
