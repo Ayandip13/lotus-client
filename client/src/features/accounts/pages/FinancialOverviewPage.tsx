@@ -137,10 +137,13 @@ export const FinancialOverviewPage: React.FC = () => {
       {/* 4. Primary Financial Metrics Cards */}
       {isSummaryLoading ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <SkeletonStatCard key={i} />
-            ))}
+          <div className="space-y-2.5 sm:space-y-4">
+            <SkeletonStatCard />
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <SkeletonStatCard key={i} />
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Array.from({ length: 2 }).map((_, i) => (
@@ -161,78 +164,81 @@ export const FinancialOverviewPage: React.FC = () => {
         </Alert>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Common Business Balance Card */}
+          <div className="space-y-2.5 sm:space-y-4">
+            {/* Common Business Balance Card (Featured Top Full-Width on Mobile) */}
             <Card className="border-l-4 border-l-slate-900 bg-slate-900 text-white">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-medium text-slate-300 uppercase tracking-wider">
+              <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-3.5 sm:p-6">
+                <CardTitle className="text-[11px] sm:text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Common Business Balance
                 </CardTitle>
                 <Wallet className="w-4 h-4 text-emerald-400" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold font-mono text-emerald-400">
+              <CardContent className="p-3.5 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">
                   {formatINR(summary.commonBusinessBalance)}
                 </div>
-                <p className="mt-1 text-[11px] text-slate-300">
+                <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[11px] text-slate-300">
                   Available common operational cash pool
                 </p>
               </CardContent>
             </Card>
 
-            {/* Total Business Income */}
-            <Card className="border-l-4 border-l-emerald-500">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Total Business Income
-                </CardTitle>
-                <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold font-mono text-emerald-600">
-                  {formatINR(summary.totalBusinessIncome)}
-                </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Revenue from catering jobs & events
-                </p>
-              </CardContent>
-            </Card>
+            {/* Income, Expenses & Contributions in the SAME ROW on mobile */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              {/* Total Business Income */}
+              <Card className="border-l-2 sm:border-l-4 border-l-emerald-500 flex flex-col justify-between">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 p-2 sm:p-4">
+                  <CardTitle className="text-[9px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">
+                    Income
+                  </CardTitle>
+                  <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                </CardHeader>
+                <CardContent className="p-2 pt-0 sm:p-4 sm:pt-0">
+                  <div className="text-xs sm:text-xl font-bold font-mono text-emerald-600 truncate">
+                    {formatINR(summary.totalBusinessIncome)}
+                  </div>
+                  <p className="mt-0.5 text-[9px] sm:text-[11px] text-slate-400 truncate hidden sm:block">
+                    Revenue from catering jobs & events
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Total Business Expenses */}
-            <Card className="border-l-4 border-l-rose-500">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Total Business Expenses
-                </CardTitle>
-                <ArrowUpRight className="w-4 h-4 text-rose-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold font-mono text-slate-900">
-                  {formatINR(summary.totalBusinessExpenses)}
-                </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  All operational expenditures (Common + Personal)
-                </p>
-              </CardContent>
-            </Card>
+              {/* Total Business Expenses */}
+              <Card className="border-l-2 sm:border-l-4 border-l-rose-500 flex flex-col justify-between">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 p-2 sm:p-4">
+                  <CardTitle className="text-[9px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">
+                    Expenses
+                  </CardTitle>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                </CardHeader>
+                <CardContent className="p-2 pt-0 sm:p-4 sm:pt-0">
+                  <div className="text-xs sm:text-xl font-bold font-mono text-slate-900 truncate">
+                    {formatINR(summary.totalBusinessExpenses)}
+                  </div>
+                  <p className="mt-0.5 text-[9px] sm:text-[11px] text-slate-400 truncate hidden sm:block">
+                    All operational expenditures (Common + Personal)
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Total Partner Contributions */}
-            <Card className="border-l-4 border-l-blue-500">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                  Partner Contributions
-                </CardTitle>
-                <Landmark className="w-4 h-4 text-blue-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold font-mono text-blue-600">
-                  {formatINR(summary.totalPartnerContributions)}
-                </div>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Personal money injected into business funds
-                </p>
-              </CardContent>
-            </Card>
+              {/* Total Partner Contributions */}
+              <Card className="border-l-2 sm:border-l-4 border-l-blue-500 flex flex-col justify-between">
+                <CardHeader className="flex flex-row items-center justify-between pb-1 p-2 sm:p-4">
+                  <CardTitle className="text-[9px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider truncate">
+                    Contributions
+                  </CardTitle>
+                  <Landmark className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                </CardHeader>
+                <CardContent className="p-2 pt-0 sm:p-4 sm:pt-0">
+                  <div className="text-xs sm:text-xl font-bold font-mono text-blue-600 truncate">
+                    {formatINR(summary.totalPartnerContributions)}
+                  </div>
+                  <p className="mt-0.5 text-[9px] sm:text-[11px] text-slate-400 truncate hidden sm:block">
+                    Personal money injected into business funds
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* 5. Expense Breakdown & Account Source Details */}
