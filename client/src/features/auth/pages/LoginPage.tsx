@@ -39,7 +39,10 @@ export const LoginPage: React.FC = () => {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       setErrorMessage(null);
-      await login(values);
+      await login({
+        username: values.username.trim(),
+        password: values.password.trim(),
+      });
       const destination = (location.state as any)?.from?.pathname || '/';
       navigate(destination, { replace: true });
     } catch (err: any) {

@@ -29,6 +29,7 @@ export class AuthService {
    */
   async login(input: LoginInput): Promise<LoginResult> {
     const normalizedUsername = input.username.toLowerCase().trim();
+    const normalizedPassword = input.password.trim();
 
     // 1. Fetch user by username including passwordHash
     const user = await User.findOne({ username: normalizedUsername }).select('+passwordHash');
@@ -39,7 +40,7 @@ export class AuthService {
     }
 
     // 2. Validate password hash
-    const isPasswordValid = await user.comparePassword(input.password);
+    const isPasswordValid = await user.comparePassword(normalizedPassword);
     if (!isPasswordValid) {
       throw new UnauthorizedError('Invalid username or password');
     }
