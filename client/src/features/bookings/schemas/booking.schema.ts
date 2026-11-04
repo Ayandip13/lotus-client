@@ -26,8 +26,7 @@ export const bookingFormSchema = z.object({
   guestPhone: z
     .string()
     .trim()
-    .min(5, 'Contact number must be at least 5 digits')
-    .max(20, 'Contact number cannot exceed 20 digits'),
+    .regex(/^[0-9]{10}$/, 'Contact phone number must be exactly 10 digits'),
   guestEmail: z
     .string()
     .trim()

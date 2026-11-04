@@ -26,8 +26,14 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!name.trim() || !cleanPhone) {
       setError('Vendor name and contact phone are required');
+      return;
+    }
+
+    if (cleanPhone.length !== 10) {
+      setError('Please provide a valid 10-digit mobile number');
       return;
     }
 
@@ -36,7 +42,7 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
     try {
       await createVendorMutation.mutateAsync({
         name: name.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
         email: email.trim() || undefined,
         category,
         address: address.trim() || undefined,
@@ -84,8 +90,10 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
                 Phone Number <span className="text-rose-500">*</span>
               </label>
               <Input
+                type="tel"
+                isPhone
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 placeholder="e.g. 9830012345"
                 required
               />

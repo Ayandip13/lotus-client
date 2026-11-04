@@ -128,8 +128,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             />
 
             <Input
+              type="tel"
+              isPhone
               label="Contact Phone Number *"
-              placeholder="e.g. +91 98300 12345"
+              placeholder="e.g. 9830012345"
               leftIcon={<Phone className="w-4 h-4" />}
               error={errors.guestPhone?.message}
               {...register('guestPhone')}

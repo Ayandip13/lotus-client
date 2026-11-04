@@ -38,13 +38,16 @@
 /* Print Stylesheet: Remove browser page headers/footers and interface elements */
 @media print {
   @page {
-    margin: 12mm 15mm;
+    /* Setting margin to 0 suppresses browser default header and footer (URL, date, title, page numbers) */
+    margin: 0;
     size: auto;
   }
 
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    margin: 14mm 16mm !important;
+    padding: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -55,7 +58,7 @@
   aside,
   [role="dialog"][aria-label*="Hub"],
   [role="dialog"][aria-label*="Modules"],
-  .print\\:hidden {
+  .print\:hidden {
     display: none !important;
     visibility: hidden !important;
   }

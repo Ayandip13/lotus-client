@@ -130,8 +130,14 @@ export const InvoiceCreatePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerName.trim() || !customerPhone.trim()) {
+    const cleanCustomerPhone = customerPhone.replace(/\D/g, '');
+    if (!customerName.trim() || !cleanCustomerPhone) {
       setError('Customer name and phone number are required');
+      return;
+    }
+
+    if (cleanCustomerPhone.length !== 10) {
+      setError('Customer contact number must be a valid 10-digit mobile number');
       return;
     }
 
@@ -153,7 +159,7 @@ export const InvoiceCreatePage: React.FC = () => {
         invoiceDate: new Date(invoiceDate).toISOString(),
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        customerPhone: cleanCustomerPhone,
         customerEmail: customerEmail.trim() || undefined,
         customerAddress: customerAddress.trim() || undefined,
         customerGstin: customerGstin.trim() || undefined,
@@ -345,8 +351,10 @@ export const InvoiceCreatePage: React.FC = () => {
                 Customer Contact # <span className="text-rose-500">*</span>
               </label>
               <Input
+                type="tel"
+                isPhone
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
+                onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 placeholder="e.g. 9830011111"
                 required
               />
