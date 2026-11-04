@@ -25,3 +25,11 @@ export const fetchCurrentSession = async (): Promise<{ user: User; partner: Part
   }
   return response.data.data;
 };
+
+export const updateCurrentPartnerProfile = async (data: { phone: string; email?: string }): Promise<Partner> => {
+  const response = await apiClient.patch<ApiResponse<Partner>>('/auth/me', data);
+  if (!response.data.data) {
+    throw new Error('Failed to update partner profile');
+  }
+  return response.data.data;
+};

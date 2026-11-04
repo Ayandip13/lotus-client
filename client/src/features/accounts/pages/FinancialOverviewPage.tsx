@@ -20,8 +20,13 @@ import { Button } from '../../../components/ui/Button';
 import { Skeleton, SkeletonStatCard } from '../../../components/ui/Skeleton';
 import { formatINR } from '../../transactions/components/TransactionTable';
 import { useOverallSummary, usePartnerSummaries } from '../hooks/useAccounts';
+import { useAuth } from '../../auth/context/AuthContext';
+import { EditPartnerPhoneModal } from '../../auth/components/EditPartnerPhoneModal';
+import { Edit2 } from 'lucide-react';
 
 export const FinancialOverviewPage: React.FC = () => {
+  const { partner: currentPartner } = useAuth();
+  const [isEditPhoneModalOpen, setIsEditPhoneModalOpen] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -353,39 +358,65 @@ export const FinancialOverviewPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {partnerSummaries.map((ps) => (
-                <Card key={ps.partnerId} className="hover:border-slate-300 transition-colors">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold text-slate-900">
-                        {ps.partnerName}
-                      </CardTitle>
-                      <Badge variant="outline" className="text-[10px]">
-                        {ps.transactionCount} entries
-                      </Badge>
-                    </div>
-                    {ps.partnerPhone && (
-                      <CardDescription className="text-xs">{ps.partnerPhone}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-xs pt-2">
-                    <div className="p-2.5 bg-blue-50/50 rounded-lg border border-blue-100 flex items-center justify-between">
-                      <span className="text-slate-600">Contributed to Pool:</span>
-                      <span className="font-mono font-bold text-blue-700">
-                        {formatINR(ps.totalContributions)}
-                      </span>
-                    </div>
-                    <div className="p-2.5 bg-purple-50/50 rounded-lg border border-purple-100 flex items-center justify-between">
-                      <span className="text-slate-600">Paid Personally:</span>
-                      <span className="font-mono font-bold text-purple-700">
-                        {formatINR(ps.totalPersonallyPaidExpenses)}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {partnerSummaries.map((ps) => {
+                const isMe = currentPartner?.id === ps.partnerId || (currentPartner as any)?._id === ps.partnerId;
+                return (
+                  <Card key={ps.partnerId} className="hover:border-slate-300 transition-colors">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>{ps.partnerName}</span>
+                          {isMe && (
+                            <span className="text-[10px] bg-slate-900 text-white font-semibold px-1.5 py-0.5 rounded">
+                              You
+                            </span>
+                          )}
+                        </CardTitle>
+                        <Badge variant="outline" className="text-[10px]">
+                          {ps.transactionCount} entries
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <CardDescription className="text-xs">
+                          {ps.partnerPhone || 'No phone set'}
+                        </CardDescription>
+                        {isMe && (
+                          <button
+                            type="button"
+                            onClick={() => setIsEditPhoneModalOpen(true)}
+                            className="text-[11px] text-blue-600 hover:text-blue-800 font-medium inline-flex items-center gap-1 hover:underline"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Edit Phone</span>
+                          </button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-xs pt-2">
+                      <div className="p-2.5 bg-blue-50/50 rounded-lg border border-blue-100 flex items-center justify-between">
+                        <span className="text-slate-600">Contributed to Pool:</span>
+                        <span className="font-mono font-bold text-blue-700">
+                          {formatINR(ps.totalContributions)}
+                        </span>
+                      </div>
+                      <div className="p-2.5 bg-purple-50/50 rounded-lg border border-purple-100 flex items-center justify-between">
+                        <span className="text-slate-600">Paid Personally:</span>
+                        <span className="font-mono font-bold text-purple-700">
+                          {formatINR(ps.totalPersonallyPaidExpenses)}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
+
+          {/* Edit Own Phone Modal */}
+          <EditPartnerPhoneModal
+            isOpen={isEditPhoneModalOpen}
+            onClose={() => setIsEditPhoneModalOpen(false)}
+          />
         </>
       )}
     </div>

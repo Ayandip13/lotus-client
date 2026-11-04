@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { User, Partner, LoginCredentials, AuthContextType } from '../types/auth.types';
-import { loginPartner, logoutPartner, fetchCurrentSession } from '../services/auth.service';
+import { loginPartner, logoutPartner, fetchCurrentSession, updateCurrentPartnerProfile } from '../services/auth.service';
 import { queryKeys } from '../../../lib/queryKeys';
 
 const AUTH_TOKEN_KEY = 'lotus_auth_token';
@@ -84,6 +84,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryClient.setQueryData(queryKeys.auth.session(), { user: data.user, partner: data.partner });
   };
 
+  // Update authenticated partner profile
+  const updatePartnerProfile = async (data: { phone: string; email?: string }): Promise<Partner> => {
+    const updated = await updateCurrentPartnerProfile(data);
+    setPartner(updated);
+    if (user) {
+      queryClient.setQueryData(queryKeys.auth.session(), { user, partner: updated });
+    }
+    // Invalidate partner summaries and accounts across the application
+    queryClient.invalidateQueries({ queryKey: queryKeys.accounts.partners() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.overview() });
+    queryClient.invalidateQueries({ queryKey: queryKeys.cashCustody.all });
+    return updated;
+  };
+
   const value: AuthContextType = {
     user,
     partner,
@@ -92,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     login,
     logout,
+    updatePartnerProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -50,3 +50,28 @@ export const getMe = async (req: Request, res: Response, next: NextFunction): Pr
     next(error);
   }
 };
+
+export const updateMe = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user || !req.user.userId) {
+      throw new UnauthorizedError('Authentication session not found');
+    }
+
+    const updatedPartner = await authService.updatePartnerProfile(req.user.userId, {
+      phone: req.body.phone,
+      email: req.body.email,
+    });
+
+    const payload = {
+      id: updatedPartner._id.toString(),
+      name: updatedPartner.name,
+      email: updatedPartner.email,
+      phone: updatedPartner.phone,
+      status: updatedPartner.status,
+    };
+
+    sendSuccess(res, payload, 'Partner profile updated successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+};

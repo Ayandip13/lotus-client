@@ -13,3 +13,18 @@ export const loginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const updateProfileSchema = z.object({
+  phone: z
+    .string({ required_error: 'Phone number is required' })
+    .trim()
+    .regex(/^[0-9]{10}$/, 'Mobile number must be exactly 10 digits'),
+  email: z
+    .string()
+    .trim()
+    .email('Invalid email address format')
+    .optional()
+    .or(z.literal('')),
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

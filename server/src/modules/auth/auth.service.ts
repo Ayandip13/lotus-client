@@ -120,6 +120,25 @@ export class AuthService {
 
     return { user, partner };
   }
+
+  /**
+   * Updates the profile (phone and optional email) of the currently authenticated partner.
+   * STRICT SECURITY: Only updates the partner attached to the caller's own session.
+   */
+  async updatePartnerProfile(
+    userId: string,
+    input: { phone: string; email?: string }
+  ): Promise<IPartner> {
+    const { partner } = await this.getCurrentPartner(userId);
+
+    partner.phone = input.phone;
+    if (input.email !== undefined) {
+      partner.email = input.email || undefined;
+    }
+
+    await partner.save();
+    return partner;
+  }
 }
 
 export const authService = new AuthService();

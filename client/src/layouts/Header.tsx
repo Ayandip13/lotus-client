@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Activity, User as UserIcon, LogOut } from 'lucide-react';
+import { Activity, User as UserIcon, LogOut, Edit2 } from 'lucide-react';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { SignOutModal } from '../components/ui/SignOutModal';
+import { EditPartnerPhoneModal } from '../features/auth/components/EditPartnerPhoneModal';
 import { useAuth } from '../features/auth/context/AuthContext';
 
 interface HeaderProps {
@@ -10,8 +11,9 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = () => {
-  const { user, partner, logout } = useAuth();
+  const { partner, logout } = useAuth();
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
+  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
 
   return (
     <>
@@ -41,20 +43,30 @@ export const Header: React.FC<HeaderProps> = () => {
 
           <div className="h-6 w-px bg-slate-200 hidden sm:block" />
 
-          {/* Authenticated Partner Profile */}
-          <div className="flex items-center gap-2 pl-0.5 sm:pl-1">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-900 text-white font-semibold text-[11px] sm:text-xs shadow-sm">
+          {/* Authenticated Partner Profile with Phone Edit Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsPhoneModalOpen(true)}
+            className="flex items-center gap-2 pl-0.5 sm:pl-1 text-left p-1 rounded-xl hover:bg-slate-100/80 transition-colors group cursor-pointer"
+            title="Click to edit your phone number"
+          >
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-900 text-white font-semibold text-[11px] sm:text-xs shadow-sm group-hover:ring-2 group-hover:ring-slate-900/20 transition-all">
               {partner?.name ? partner.name.charAt(0).toUpperCase() : <UserIcon className="w-3.5 h-3.5" />}
             </div>
             <div className="hidden md:block text-left">
-              <div className="text-xs font-semibold text-slate-900 leading-tight">
-                {partner?.name || 'Partner Account'}
+              <div className="text-xs font-semibold text-slate-900 leading-tight flex items-center gap-1">
+                <span>{partner?.name || 'Partner Account'}</span>
+                <Edit2 className="w-3 h-3 text-slate-400 group-hover:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <div className="text-[10px] text-slate-500">
-                {user ? `@${user.username}` : 'Authenticated Partner'}
+              <div className="text-[10px] text-slate-500 flex items-center gap-1">
+                {partner?.phone ? (
+                  <span>{partner.phone}</span>
+                ) : (
+                  <span className="text-blue-600 underline">Add phone</span>
+                )}
               </div>
             </div>
-          </div>
+          </button>
 
           {/* Logout Action */}
           <Button
@@ -75,6 +87,12 @@ export const Header: React.FC<HeaderProps> = () => {
         isOpen={isSignOutModalOpen}
         onClose={() => setIsSignOutModalOpen(false)}
         onConfirm={logout}
+      />
+
+      {/* Edit Own Phone Modal */}
+      <EditPartnerPhoneModal
+        isOpen={isPhoneModalOpen}
+        onClose={() => setIsPhoneModalOpen(false)}
       />
     </>
   );
