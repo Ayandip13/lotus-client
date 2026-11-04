@@ -378,7 +378,7 @@ export const MobileBottomNav: React.FC = () => {
       {/* 4. Fixed Bottom Tab Bar (5 Primary Destinations) */}
       <nav
         aria-label="Mobile Navigation"
-        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] lg:hidden pb-[env(safe-area-inset-bottom,0px)]"
+        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] lg:hidden pb-[env(safe-area-inset-bottom,0px)] print:hidden"
       >
         <div className="grid grid-cols-5 h-16 max-w-md mx-auto items-center px-1">
           {/* Tab 1: Home */}

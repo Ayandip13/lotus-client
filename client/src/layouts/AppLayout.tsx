@@ -22,8 +22,10 @@ export const AppLayout: React.FC = () => {
           </div>
         </main>
 
-        {/* Mobile Fixed Bottom Navigation (< lg screens) */}
-        <MobileBottomNav />
+        {/* Mobile Fixed Bottom Navigation (< lg screens, hidden when printing) */}
+        <div className="print:hidden">
+          <MobileBottomNav />
+        </div>
       </div>
     </div>
   );
