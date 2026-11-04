@@ -11,9 +11,9 @@ import {
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { invoiceService } from '../services/invoiceService';
 import { InvoiceType } from '../types/invoice.types';
-import { apiClient } from '../../../services/api';
+import { useCreateInvoice } from '../hooks/useInvoices';
+import { useBookings } from '../../bookings/hooks/useBookings';
 
 interface LineItemForm {
   description: string;
@@ -28,8 +28,8 @@ export const InvoiceCreatePage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const eventIdParam = searchParams.get('eventId');
 
-  const [events, setEvents] = useState<Array<{ id: string; title: string; clientName?: string; clientPhone?: string }>>([]);
-  const [loading, setLoading] = useState(false);
+  const createInvoiceMutation = useCreateInvoice();
+  const { data: bookingsData } = useBookings({ limit: 100 });
   const [error, setError] = useState<string | null>(null);
 
   // Form Fields
@@ -57,29 +57,22 @@ export const InvoiceCreatePage: React.FC = () => {
     { description: 'Buffet Catering Services', quantity: 150, unit: 'plates', rate: 450, gstRate: 5 },
   ]);
 
+  const events = (bookingsData?.items || []).map((ev: any) => ({
+    id: ev._id,
+    title: ev.title,
+    clientName: ev.guestName || ev.clientName,
+    clientPhone: ev.guestPhone || ev.clientPhone,
+  }));
+
   useEffect(() => {
-    apiClient
-      .get('/events')
-      .then((res) => {
-        if (res.data?.data?.items) {
-          const list = res.data.data.items.map((ev: any) => ({
-            id: ev._id,
-            title: ev.title,
-            clientName: ev.guestName || ev.clientName,
-            clientPhone: ev.guestPhone || ev.clientPhone,
-          }));
-          setEvents(list);
-          if (list.length > 0) {
-            const preselected = eventIdParam ? list.find((e: any) => e.id === eventIdParam) : null;
-            const target = preselected || list[0];
-            setRelatedEvent(target.id);
-            if (target.clientName) setCustomerName(target.clientName);
-            if (target.clientPhone) setCustomerPhone(target.clientPhone);
-          }
-        }
-      })
-      .catch((err) => console.error('Failed to load events:', err));
-  }, [eventIdParam]);
+    if (events.length > 0 && !relatedEvent) {
+      const preselected = eventIdParam ? events.find((e: any) => e.id === eventIdParam) : null;
+      const target = preselected || events[0];
+      setRelatedEvent(target.id);
+      if (target.clientName) setCustomerName(target.clientName);
+      if (target.clientPhone) setCustomerPhone(target.clientPhone);
+    }
+  }, [events, eventIdParam, relatedEvent]);
 
   const handleEventChange = (eventId: string) => {
     setRelatedEvent(eventId);
@@ -152,11 +145,10 @@ export const InvoiceCreatePage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      const created = await invoiceService.createInvoice({
+      const created = await createInvoiceMutation.mutateAsync({
         invoiceType,
         invoiceDate: new Date(invoiceDate).toISOString(),
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
@@ -187,8 +179,6 @@ export const InvoiceCreatePage: React.FC = () => {
       navigate(`/invoices/${created._id}`);
     } catch (err: any) {
       setError(err.message || 'Failed to generate invoice');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -614,8 +604,8 @@ export const InvoiceCreatePage: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => navigate('/invoices')}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="gap-2">
-                {loading ? 'Creating...' : 'Generate & Save Invoice'}
+              <Button type="submit" disabled={createInvoiceMutation.isPending} className="gap-2">
+                {createInvoiceMutation.isPending ? 'Creating...' : 'Generate & Save Invoice'}
               </Button>
             </div>
           </div>

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   UserCheck,
@@ -12,7 +11,6 @@ import {
   Eye,
   Plus,
 } from 'lucide-react';
-import { accountService } from '../../accounts/services/accountService';
 import { Transaction, TransactionAttachment } from '../../transactions/types/transaction.types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -22,23 +20,21 @@ import { Skeleton } from '../../../components/ui/Skeleton';
 import { formatINR, formatDate } from '../../transactions/components/TransactionTable';
 import { TransactionDetailsModal } from '../../transactions/components/TransactionDetailsModal';
 import { AttachmentViewerModal } from '../../transactions/components/AttachmentViewerModal';
+import { usePartnerSummaries, usePartnerDetails } from '../../accounts/hooks/useAccounts';
 
 export const PartnerAccountsPage: React.FC = () => {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
   const [inspectTx, setInspectTx] = useState<Transaction | null>(null);
   const [inspectAttachment, setInspectAttachment] = useState<TransactionAttachment | null>(null);
 
-  // 1. Fetch all 3 partners' financial summaries
+  // 1. Fetch all 3 partners' financial summaries using centralized hook
   const {
     data: partnerSummaries = [],
     isLoading: isSummaryLoading,
     isError: isSummaryError,
     error: summaryError,
     isFetching,
-  } = useQuery({
-    queryKey: ['partner-financial-summaries'],
-    queryFn: () => accountService.getPartnerSummaries(),
-  });
+  } = usePartnerSummaries();
 
   // Set default selected partner once loaded
   React.useEffect(() => {
@@ -53,11 +49,7 @@ export const PartnerAccountsPage: React.FC = () => {
     isLoading: isDetailsLoading,
     isError: isDetailsError,
     error: detailsError,
-  } = useQuery({
-    queryKey: ['partner-details', selectedPartnerId],
-    queryFn: () => accountService.getPartnerDetails(selectedPartnerId!),
-    enabled: Boolean(selectedPartnerId),
-  });
+  } = usePartnerDetails(selectedPartnerId || '');
 
   const selectedPartnerSummary = partnerSummaries.find(
     (p) => p.partnerId === selectedPartnerId

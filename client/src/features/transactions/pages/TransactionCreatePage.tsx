@@ -1,82 +1,59 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
-import { transactionService } from '../services/transactionService';
+import { useNavigate } from 'react-router-dom';
 import { TransactionForm } from '../components/TransactionForm';
 import { Alert } from '../../../components/ui/Alert';
+import { useCreateTransaction } from '../hooks/useTransactions';
 
 export const TransactionCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [searchParams] = useSearchParams();
-  const eventId = searchParams.get('eventId');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const createMutation = useCreateTransaction();
+
   const handleSubmit = async (formData: FormData) => {
     try {
-      setIsSubmitting(true);
       setErrorMessage(null);
-      await transactionService.createTransaction(formData);
-
-      // Invalidate relevant queries so ledger and balances update automatically
-      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      await queryClient.invalidateQueries({ queryKey: ['financial-summary'] });
-      await queryClient.invalidateQueries({ queryKey: ['partner-financial-summaries'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-      setSuccessMessage('Financial transaction recorded successfully!');
+      await createMutation.mutateAsync(formData);
+      setSuccessMessage('Financial transaction recorded into ledger successfully!');
 
       setTimeout(() => {
         navigate('/transactions');
       }, 500);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to record transaction. Please verify entries.');
-      setIsSubmitting(false);
+      setErrorMessage(
+        err.message || 'Failed to record transaction. Please verify amount and required fields.'
+      );
     }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Top Breadcrumb & Header */}
+    <div className="space-y-6">
       <div>
-        <Link
-          to="/transactions"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors mb-2"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Ledger</span>
-        </Link>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Record Financial Transaction
+          Record Ledger Transaction
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Enter operational business income, partner fund contribution, or an expense with receipt attachments.
+          Post an operational expense, client catering payment, or partner capital deposit.
         </p>
       </div>
 
-      {/* Success Notification */}
       {successMessage && (
         <Alert variant="success" title="Success">
           {successMessage}
         </Alert>
       )}
 
-      {/* Error Notification */}
       {errorMessage && (
-        <Alert variant="error" title="Creation Failed">
+        <Alert variant="error" title="Entry Failed">
           {errorMessage}
         </Alert>
       )}
 
-      {/* Reusable Form Component */}
       <TransactionForm
-        initialData={eventId ? { relatedEvent: eventId } : undefined}
         onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        submitLabel="Record In Ledger"
+        isSubmitting={createMutation.isPending}
+        submitLabel="Record Transaction"
         cancelHref="/transactions"
       />
     </div>

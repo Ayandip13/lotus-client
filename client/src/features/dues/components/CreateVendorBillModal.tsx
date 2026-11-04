@@ -3,7 +3,7 @@ import { X, AlertCircle, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { dueService } from '../services/dueService';
+import { useCreateVendorBill } from '../hooks/useDues';
 import { VendorItem } from '../types/due.types';
 
 interface CreateVendorBillModalProps {
@@ -34,8 +34,9 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const createBillMutation = useCreateVendorBill();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +57,10 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      await dueService.createVendorBill({
+      await createBillMutation.mutateAsync({
         vendor: vendorId,
         relatedEvent: relatedEventId || undefined,
         billNumber: billNumber.trim() || undefined,
@@ -73,8 +73,6 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
       onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to create vendor payable bill');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -212,11 +210,11 @@ export const CreateVendorBillModal: React.FC<CreateVendorBillModalProps> = ({
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={createBillMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Recording...' : 'Create Payable Bill'}
+            <Button type="submit" disabled={createBillMutation.isPending}>
+              {createBillMutation.isPending ? 'Recording...' : 'Create Payable Bill'}
             </Button>
           </div>
         </form>

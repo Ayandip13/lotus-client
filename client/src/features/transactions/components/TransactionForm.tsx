@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import {
   DollarSign,
   ArrowLeft,
@@ -13,17 +12,17 @@ import {
   Upload,
 } from 'lucide-react';
 import { transactionFormSchema, TransactionFormSchema } from '../schemas/transaction.schema';
-import { TransactionFormData, TransactionAttachment, TransactionType, PaymentSource } from '../types/transaction.types';
+import { TransactionAttachment, TransactionType, PaymentSource } from '../types/transaction.types';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
 import { Button } from '../../../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card';
 import { useAuth } from '../../auth/context/AuthContext';
-import { accountService } from '../../accounts/services/accountService';
-import { bookingService } from '../../bookings/services/bookingService';
+import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
+import { useBookings } from '../../bookings/hooks/useBookings';
 
 interface TransactionFormProps {
-  initialData?: Partial<TransactionFormData> & { _id?: string; attachments?: TransactionAttachment[] };
+  initialData?: any;
   onSubmit: (formData: FormData) => Promise<void>;
   isSubmitting: boolean;
   submitLabel: string;
@@ -39,16 +38,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 }) => {
   const { partner: currentPartner } = useAuth();
 
-  // Queries to populate dropdowns
-  const { data: partners = [] } = useQuery({
-    queryKey: ['partner-list-dropdown'],
-    queryFn: () => accountService.getPartnerSummaries(),
-  });
-
-  const { data: eventsData } = useQuery({
-    queryKey: ['events-dropdown'],
-    queryFn: () => bookingService.getBookings({ limit: 100 }),
-  });
+  // Queries to populate dropdowns using centralized query hooks
+  const { data: partners = [] } = usePartnerSummaries();
+  const { data: eventsData } = useBookings({ limit: 100 });
 
   const events = eventsData?.items || [];
 
@@ -503,7 +495,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
                 Previously Attached Receipts ({initialData.attachments.length})
               </h5>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {initialData.attachments.map((att) => (
+                {initialData.attachments.map((att: TransactionAttachment) => (
                   <div
                     key={att._id}
                     className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50"

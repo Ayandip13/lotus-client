@@ -1,30 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   Receipt,
   CheckCircle2,
-  Clock,
   CreditCard,
   Eye,
   Phone,
   Plus,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton, SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
-import { dueService } from '../services/dueService';
-import { CustomerDuesSummary, CustomerDueItem } from '../types/due.types';
+import { CustomerDueItem } from '../types/due.types';
 import { RecordCustomerPaymentModal } from '../components/RecordCustomerPaymentModal';
-import { apiClient } from '../../../services/api';
+import { useCustomerDues } from '../hooks/useDues';
+import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
+import { useBookings } from '../../bookings/hooks/useBookings';
 
 export const CustomerDuesPage: React.FC = () => {
   const navigate = useNavigate();
-  const [summary, setSummary] = useState<CustomerDuesSummary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [partners, setPartners] = useState<Array<{ id: string; name: string }>>([]);
-  const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
   const [selectedDue, setSelectedDue] = useState<CustomerDueItem | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
@@ -35,47 +32,24 @@ export const CustomerDuesPage: React.FC = () => {
     status: '',
   });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [duesData, partnersRes, eventsRes] = await Promise.all([
-        dueService.getCustomerDues({
-          customerName: filters.search || undefined,
-          relatedEvent: filters.relatedEvent || undefined,
-        }),
-        apiClient.get('/accounts/partners').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/events').catch(() => ({ data: { data: { items: [] } } })),
-      ]);
+  // Queries
+  const { data: summary, isLoading: loading, isFetching } = useCustomerDues({
+    customerName: filters.search || undefined,
+    relatedEvent: filters.relatedEvent || undefined,
+  });
 
-      setSummary(duesData);
+  const { data: rawPartners = [] } = usePartnerSummaries();
+  const { data: eventsData } = useBookings({ limit: 100 });
 
-      if (partnersRes?.data?.data) {
-        setPartners(
-          partnersRes.data.data.map((p: any) => ({
-            id: p.partnerId || p._id,
-            name: p.partnerName || p.name,
-          }))
-        );
-      }
+  const partners = rawPartners.map((p: any) => ({
+    id: p.partnerId || p._id,
+    name: p.partnerName || p.name,
+  }));
 
-      if (eventsRes?.data?.data?.items) {
-        setEvents(
-          eventsRes.data.data.items.map((ev: any) => ({
-            id: ev._id,
-            title: ev.title,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to load customer dues:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, [filters.search, filters.relatedEvent]);
+  const events = (eventsData?.items || []).map((ev: any) => ({
+    id: ev._id,
+    title: ev.title,
+  }));
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -125,7 +99,12 @@ export const CustomerDuesPage: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Customer Due Management</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Customer Due Management</h1>
+            {isFetching && !loading && (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400" />
+            )}
+          </div>
           <p className="text-sm text-slate-500">
             Track outstanding event balances, customer receivables, and payment histories
           </p>
@@ -146,93 +125,69 @@ export const CustomerDuesPage: React.FC = () => {
             className="flex-1 sm:flex-initial justify-center shadow-sm"
             onClick={() => navigate('/invoices/new')}
           >
-            Create New Invoice
+            New Invoice
           </Button>
         </div>
       </div>
 
-      {/* Summary KPI Cards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Total Outstanding Due
-            </span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-600">
-              <AlertTriangle className="w-5 h-5" />
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-8 w-36" />
             </div>
-          </div>
-          {loading ? (
-            <Skeleton className="h-8 w-28 my-1" />
-          ) : (
-            <p className="text-2xl font-extrabold text-rose-600">
-              ₹{summary ? summary.totalCustomerDue.toLocaleString() : '0'}
-            </p>
-          )}
-          <span className="text-xs text-slate-500 mt-1 block">Awaiting customer clearance</span>
-        </div>
+          ))
+        ) : (
+          <>
+            <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+              <span className="text-xs uppercase font-bold text-slate-500">Total Customer Due</span>
+              <p className="text-2xl font-extrabold text-slate-900 mt-1">
+                ₹{(summary?.totalCustomerDue || 0).toLocaleString()}
+              </p>
+              <span className="text-[11px] text-slate-400 block mt-1">
+                Across {summary?.dues?.length || 0} active unpaid / partial invoices
+              </span>
+            </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Overdue Amount
-            </span>
-            <div className="p-2 rounded-xl bg-amber-50 text-amber-600">
-              <Clock className="w-5 h-5" />
+            <div className="p-5 bg-rose-50/60 border border-rose-200/80 rounded-2xl shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase font-bold text-rose-800">Overdue Customer Receivables</span>
+                <AlertTriangle className="w-4 h-4 text-rose-600" />
+              </div>
+              <p className="text-2xl font-extrabold text-rose-700 mt-1">
+                ₹{(summary?.overdueAmount || 0).toLocaleString()}
+              </p>
+              <span className="text-[11px] text-rose-600/80 block mt-1">
+                {summary?.overdueCount || 0} invoices past payment due date
+              </span>
             </div>
-          </div>
-          {loading ? (
-            <Skeleton className="h-8 w-28 my-1" />
-          ) : (
-            <p className="text-2xl font-extrabold text-amber-700">
-              ₹{summary ? summary.overdueAmount.toLocaleString() : '0'}
-            </p>
-          )}
-          <span className="text-xs text-amber-600 font-medium mt-1 block">
-            {loading ? <Skeleton className="h-3 w-24 inline-block" /> : `${summary?.overdueCount || 0} overdue invoices`}
-          </span>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Total Amount Invoiced
-            </span>
-            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-              <Receipt className="w-5 h-5" />
+            <div className="p-5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl shadow-sm">
+              <span className="text-xs uppercase font-bold text-emerald-800">Total Invoiced Amount</span>
+              <p className="text-2xl font-extrabold text-emerald-700 mt-1">
+                ₹{(summary?.totalInvoiced || 0).toLocaleString()}
+              </p>
+              <span className="text-[11px] text-emerald-600/80 block mt-1">
+                Cumulative revenue booked for filtered events
+              </span>
             </div>
-          </div>
-          {loading ? (
-            <Skeleton className="h-8 w-28 my-1" />
-          ) : (
-            <p className="text-2xl font-extrabold text-slate-900">
-              ₹{summary ? summary.totalInvoiced.toLocaleString() : '0'}
-            </p>
-          )}
-          <span className="text-xs text-slate-500 mt-1 block">Across active invoices</span>
-        </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Amount Collected
-            </span>
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-2xl shadow-sm">
+              <span className="text-xs uppercase font-bold text-indigo-800">Collected Amount</span>
+              <p className="text-2xl font-extrabold text-indigo-700 mt-1">
+                ₹{(summary?.totalCollected || 0).toLocaleString()}
+              </p>
+              <span className="text-[11px] text-indigo-600/80 block mt-1">
+                Received & verified via ledger entries
+              </span>
             </div>
-          </div>
-          {loading ? (
-            <Skeleton className="h-8 w-28 my-1" />
-          ) : (
-            <p className="text-2xl font-extrabold text-emerald-700">
-              ₹{summary ? summary.totalCollected.toLocaleString() : '0'}
-            </p>
-          )}
-          <span className="text-xs text-emerald-600 font-medium mt-1 block">Received into business</span>
-        </div>
+          </>
+        )}
       </div>
 
-      {/* Advanced Filter Panel */}
+      {/* Filter Panel */}
       <FilterPanel
         configs={filterConfigs}
         values={filters}
@@ -240,107 +195,107 @@ export const CustomerDuesPage: React.FC = () => {
         onReset={handleResetFilters}
       />
 
-      {/* Dues List Table & Responsive Cards */}
+      {/* Dues Table */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-            Outstanding Customer Invoices {loading ? '' : `(${displayedDues.length})`}
-          </h2>
-        </div>
-
         {loading ? (
-          <SkeletonTable rows={5} columns={6} className="border-0 shadow-none rounded-none" />
+          <SkeletonTable rows={5} columns={6} />
         ) : displayedDues.length === 0 ? (
-          <div className="p-12 text-center">
-            <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
-            <p className="text-slate-800 font-semibold text-sm">No Outstanding Customer Dues</p>
-            <p className="text-slate-500 text-xs mt-1">
-              All active customer invoices are fully settled or match none of your filters.
+          <div className="p-12 text-center space-y-3">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-emerald-600">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">Zero Outstanding Dues</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              All client payments are currently up to date. No pending customer collections.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
-                <tr>
-                  <th className="px-6 py-3">Customer & Event</th>
-                  <th className="px-6 py-3">Invoice Details</th>
-                  <th className="px-6 py-3">Total Invoiced</th>
-                  <th className="px-6 py-3">Received</th>
-                  <th className="px-6 py-3 text-rose-600">Remaining Due</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/75 text-slate-600 font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4">Client Details</th>
+                  <th className="py-3 px-4">Associated Event</th>
+                  <th className="py-3 px-4">Invoice #</th>
+                  <th className="py-3 px-4">Total Billed</th>
+                  <th className="py-3 px-4">Paid Amount</th>
+                  <th className="py-3 px-4">Balance Due</th>
+                  <th className="py-3 px-4">Due Date</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 text-slate-700">
                 {displayedDues.map((item) => (
-                  <tr key={item.invoiceId} className="hover:bg-slate-50/60 transition">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-bold text-slate-900">{item.customerName}</p>
-                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                          <Phone className="w-3 h-3 text-slate-400" /> {item.customerPhone}
-                        </p>
-                        {item.relatedEvent && (
-                          <span className="inline-block mt-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                            {item.relatedEvent.title}
-                          </span>
-                        )}
-                      </div>
+                  <tr
+                    key={item.invoiceId}
+                    className={`hover:bg-slate-50/60 transition-colors ${
+                      item.isOverdue ? 'bg-rose-50/20' : ''
+                    }`}
+                  >
+                    <td className="py-3.5 px-4">
+                      <span className="font-bold text-slate-900 block">{item.customerName}</span>
+                      <a
+                        href={`tel:${item.customerPhone}`}
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 font-mono"
+                      >
+                        <Phone className="w-3 h-3 text-slate-400" />
+                        {item.customerPhone}
+                      </a>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-800">#{item.invoiceNumber}</p>
-                      <p className="text-xs text-slate-500">
-                        Date: {new Date(item.invoiceDate).toLocaleDateString()}
-                      </p>
-                      {item.dueDate && (
-                        <p
-                          className={`text-xs mt-0.5 font-medium ${
-                            item.isOverdue ? 'text-rose-600 font-bold' : 'text-slate-500'
-                          }`}
-                        >
-                          Due: {new Date(item.dueDate).toLocaleDateString()}
-                        </p>
-                      )}
+                    <td className="py-3.5 px-4 font-medium text-slate-800">
+                      {item.relatedEvent?.title || 'General Catering Job'}
                     </td>
-                    <td className="px-6 py-4 font-semibold text-slate-800">
-                      ₹{item.totalBillAmount.toLocaleString()}
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      {item.invoiceNumber}
                     </td>
-                    <td className="px-6 py-4 font-medium text-emerald-700">
+                    <td className="py-3.5 px-4 font-mono">₹{item.totalBillAmount.toLocaleString()}</td>
+                    <td className="py-3.5 px-4 font-mono text-emerald-700 font-medium">
                       ₹{item.amountReceived.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 font-extrabold text-rose-600">
+                    <td className="py-3.5 px-4 font-mono font-bold text-rose-700">
                       ₹{item.remainingDue.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4">
-                      {item.isOverdue ? (
-                        <Badge variant="danger">OVERDUE</Badge>
-                      ) : item.paymentStatus === 'PARTIALLY_PAID' ? (
-                        <Badge variant="warning">PARTIALLY PAID</Badge>
+                    <td className="py-3.5 px-4">
+                      {item.dueDate ? (
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={
+                              item.isOverdue ? 'text-rose-700 font-bold' : 'text-slate-600'
+                            }
+                          >
+                            {new Date(item.dueDate).toLocaleDateString('en-IN')}
+                          </span>
+                          {item.isOverdue && (
+                            <Badge variant="danger" className="text-[10px] py-0 px-1.5 ml-1">
+                              OVERDUE
+                            </Badge>
+                          )}
+                        </div>
                       ) : (
-                        <Badge variant="default">UNPAID</Badge>
+                        <span className="text-slate-400">Immediate</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Button
                           size="sm"
-                          className="h-8 text-xs gap-1"
+                          variant="outline"
+                          className="h-7 text-[11px] px-2.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
                           onClick={() => {
                             setSelectedDue(item);
                             setIsPaymentModalOpen(true);
                           }}
                         >
-                          <CreditCard className="w-3.5 h-3.5" /> Record Payment
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Record Payment
                         </Button>
                         <Button
-                          variant="outline"
                           size="sm"
-                          className="h-8 text-xs px-2"
+                          variant="ghost"
+                          className="h-7 w-7 p-0"
                           onClick={() => navigate(`/invoices/${item.invoiceId}`)}
-                          title="View Invoice"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-3.5 h-3.5 text-slate-500" />
                         </Button>
                       </div>
                     </td>
@@ -353,16 +308,23 @@ export const CustomerDuesPage: React.FC = () => {
       </div>
 
       {/* Record Payment Modal */}
-      {isPaymentModalOpen && selectedDue && (
+      {selectedDue && (
         <RecordCustomerPaymentModal
-          dueItem={selectedDue}
-          partners={partners}
+          isOpen={isPaymentModalOpen}
           onClose={() => {
             setIsPaymentModalOpen(false);
             setSelectedDue(null);
           }}
+          invoice={{
+            _id: selectedDue.invoiceId,
+            invoiceNumber: selectedDue.invoiceNumber,
+            customerName: selectedDue.customerName,
+            balanceDue: selectedDue.remainingDue,
+          }}
+          partners={partners}
           onSuccess={() => {
-            loadData();
+            setIsPaymentModalOpen(false);
+            setSelectedDue(null);
           }}
         />
       )}

@@ -1,25 +1,30 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { User, Partner, LoginCredentials, AuthContextType } from '../types/auth.types';
 import { loginPartner, logoutPartner, fetchCurrentSession } from '../services/auth.service';
+import { queryKeys } from '../../../lib/queryKeys';
 
 const AUTH_TOKEN_KEY = 'lotus_auth_token';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [partner, setPartner] = useState<Partner | null>(null);
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_TOKEN_KEY));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Logout handler
+  // Logout handler - clears session, wipes local storage, and completely clears query cache
   const logout = useCallback(() => {
     localStorage.removeItem(AUTH_TOKEN_KEY);
     setToken(null);
     setUser(null);
     setPartner(null);
+    // Securely clear all cached sensitive financial, booking, and partner queries to prevent cross-session leakage
+    queryClient.clear();
     logoutPartner();
-  }, []);
+  }, [queryClient]);
 
   // Restore authenticated session on initial mount
   useEffect(() => {
@@ -41,6 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(session.user);
           setPartner(session.partner);
           setToken(storedToken);
+          // Set in query cache for any consumers
+          queryClient.setQueryData(queryKeys.auth.session(), session);
         }
       } catch (err) {
         console.warn('Session restoration failed or token expired. Logging out.');
@@ -49,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(null);
           setUser(null);
           setPartner(null);
+          queryClient.clear();
         }
       } finally {
         if (isMounted) {
@@ -62,15 +70,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [queryClient]);
 
   // Login handler
   const login = async (credentials: LoginCredentials): Promise<void> => {
+    // Clear any previous session queries before populating new user session
+    queryClient.clear();
     const data = await loginPartner(credentials);
     localStorage.setItem(AUTH_TOKEN_KEY, data.token);
     setToken(data.token);
     setUser(data.user);
     setPartner(data.partner);
+    queryClient.setQueryData(queryKeys.auth.session(), { user: data.user, partner: data.partner });
   };
 
   const value: AuthContextType = {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { queryKeys } from '../../../lib/queryKeys';
 import { Link } from 'react-router-dom';
 import {
   Plus,
@@ -37,7 +38,7 @@ export const BookingListPage: React.FC = () => {
 
   // Fetch bookings using TanStack Query
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
-    queryKey: ['bookings', { page, search: debouncedSearch }],
+    queryKey: queryKeys.events.list({ page, search: debouncedSearch }),
     queryFn: () =>
       bookingService.getBookings({
         page,
@@ -46,8 +47,8 @@ export const BookingListPage: React.FC = () => {
         sortBy: 'eventDate',
         sortOrder: 'desc',
       }),
-    refetchOnMount: 'always',
-    staleTime: 0,
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 2,
   });
 
   // Delete mutation
@@ -55,7 +56,8 @@ export const BookingListPage: React.FC = () => {
     mutationFn: (id: string) => bookingService.deleteBooking(id),
     onSuccess: () => {
       setDeletingBooking(null);
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     },
   });
 

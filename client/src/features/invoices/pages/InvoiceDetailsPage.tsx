@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -11,48 +11,25 @@ import {
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { SkeletonDetails } from '../../../components/ui/Skeleton';
-import { invoiceService } from '../services/invoiceService';
-import { InvoiceItem } from '../types/invoice.types';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
-import { apiClient } from '../../../services/api';
+
+import { useInvoiceDetails } from '../hooks/useInvoices';
+import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 
 export const InvoiceDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [invoice, setInvoice] = useState<InvoiceItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [partners, setPartners] = useState<Array<{ id: string; name: string }>>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
-  const loadInvoice = async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const [data, partnersRes] = await Promise.all([
-        invoiceService.getInvoiceById(id),
-        apiClient.get('/accounts/partners').catch(() => ({ data: { data: [] } })),
-      ]);
-      setInvoice(data);
-      if (partnersRes?.data?.data) {
-        setPartners(
-          partnersRes.data.data.map((p: any) => ({
-            id: p.partnerId || p._id,
-            name: p.partnerName || p.name,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to load invoice:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: invoice, isLoading: loading } = useInvoiceDetails(id || '');
+  const { data: rawPartners = [] } = usePartnerSummaries();
 
-  useEffect(() => {
-    loadInvoice();
-  }, [id]);
+  const partners = rawPartners.map((p: any) => ({
+    id: p.partnerId || p._id,
+    name: p.partnerName || p.name,
+  }));
 
   const handlePrint = () => {
     window.print();
@@ -438,7 +415,7 @@ export const InvoiceDetailsPage: React.FC = () => {
           }}
           partners={partners}
           onClose={() => setIsPaymentModalOpen(false)}
-          onSuccess={() => loadInvoice()}
+          onSuccess={() => setIsPaymentModalOpen(false)}
         />
       )}
     </div>

@@ -3,32 +3,53 @@ import { X, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { dueService } from '../services/dueService';
-import { VendorDueItem } from '../types/due.types';
+import { useRecordVendorPayment } from '../hooks/useDues';
 
 interface RecordVendorPaymentModalProps {
-  dueItem: VendorDueItem | null;
+  isOpen?: boolean;
+  dueItem?: any;
+  bill?: any;
   partners: Array<{ id: string; name: string }>;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> = ({
+  isOpen = true,
   dueItem,
+  bill,
   partners,
   onClose,
   onSuccess,
 }) => {
-  if (!dueItem) return null;
+  const target = dueItem || bill;
+  if (!isOpen || !target) return null;
 
-  const [amount, setAmount] = useState<string>(dueItem.remainingAmount.toString());
+  const billId = target.billId || target._id;
+  const billNumber = target.billNumber || 'BILL';
+  const vendorName = target.vendorName || target.vendor?.name || 'Vendor';
+  const remainingDue =
+    typeof target.remainingAmount === 'number'
+      ? target.remainingAmount
+      : typeof target.balanceDue === 'number'
+      ? target.balanceDue
+      : 0;
+  const totalAmount =
+    typeof target.totalPayableAmount === 'number'
+      ? target.totalPayableAmount
+      : typeof target.totalAmount === 'number'
+      ? target.totalAmount
+      : remainingDue;
+
+  const [amount, setAmount] = useState<string>(remainingDue.toString());
   const [paymentSource, setPaymentSource] = useState<'COMMON_BUSINESS' | 'PARTNER_PERSONAL'>('COMMON_BUSINESS');
   const [paidByPartner, setPaidByPartner] = useState<string>(partners[0]?.id || '');
   const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [deductFromPartnerCash, setDeductFromPartnerCash] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const paymentMutation = useRecordVendorPayment();
 
   // Function to generate a new cryptographic or timestamped UUID
   const createNewIdempotencyKey = () =>
@@ -39,15 +60,13 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
   // Stable idempotency key across retries for the active payment session
   const [idempotencyKey, setIdempotencyKey] = useState<string>(createNewIdempotencyKey);
 
-  // Regenerate a brand new idempotency key whenever a new vendor payment operation is started or bill changes
   useEffect(() => {
-    if (dueItem) {
+    if (target) {
       setIdempotencyKey(createNewIdempotencyKey());
-      setAmount(dueItem.remainingAmount.toString());
+      setAmount(remainingDue.toString());
       setError(null);
-      setLoading(false);
     }
-  }, [dueItem?.billId]);
+  }, [billId]);
 
   const handleClose = () => {
     setIdempotencyKey(createNewIdempotencyKey());
@@ -63,32 +82,32 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
       return;
     }
 
-    if (parsedAmount > dueItem.remainingAmount) {
-      setError(`Payment cannot exceed remaining payable amount of ₹${dueItem.remainingAmount.toLocaleString()}`);
+    if (parsedAmount > remainingDue) {
+      setError(`Payment cannot exceed remaining due amount of ₹${remainingDue.toLocaleString()}`);
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      await dueService.recordVendorPayment(dueItem.billId, {
-        amount: parsedAmount,
-        paymentSource,
-        paidByPartner,
-        paymentDate: new Date(paymentDate).toISOString(),
-        deductFromPartnerCash: paymentSource === 'COMMON_BUSINESS' && deductFromPartnerCash,
-        notes: notes.trim() || undefined,
-        idempotencyKey,
+      await paymentMutation.mutateAsync({
+        billId,
+        payload: {
+          amount: parsedAmount,
+          paymentSource,
+          paidByPartner: paidByPartner || undefined,
+          paymentDate: new Date(paymentDate).toISOString(),
+          notes: notes.trim() || undefined,
+          deductFromPartnerCash: paymentSource === 'COMMON_BUSINESS' ? deductFromPartnerCash : false,
+          idempotencyKey,
+        },
       });
       setIdempotencyKey(createNewIdempotencyKey());
       onSuccess();
       onClose();
     } catch (err: any) {
-      // Keep the same idempotencyKey so that retrying resubmits the same logical payment
+      // Keep same idempotencyKey so that network retry resubmits the same logical operation
       setError(err.message || 'Failed to record vendor payment');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -98,9 +117,9 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Record Vendor Payment</h2>
+            <h2 className="text-base font-bold text-slate-900">Record Vendor Bill Payment</h2>
             <p className="text-xs text-slate-500 font-medium">
-              {dueItem.vendorName} • {dueItem.description}
+              Bill #{billNumber} • {vendorName}
             </p>
           </div>
           <button
@@ -123,11 +142,11 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
           <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 grid grid-cols-2 gap-2 text-xs">
             <div>
               <span className="text-slate-500">Total Payable:</span>
-              <p className="font-semibold text-slate-900">₹{dueItem.totalPayableAmount.toLocaleString()}</p>
+              <p className="font-semibold text-slate-900">₹{totalAmount.toLocaleString()}</p>
             </div>
             <div>
               <span className="text-slate-500">Remaining Due:</span>
-              <p className="font-bold text-rose-600">₹{dueItem.remainingAmount.toLocaleString()}</p>
+              <p className="font-bold text-rose-600">₹{remainingDue.toLocaleString()}</p>
             </div>
           </div>
 
@@ -139,7 +158,7 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
               type="number"
               step="0.01"
               min="0.01"
-              max={dueItem.remainingAmount}
+              max={remainingDue}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="e.g. 10000"
@@ -213,11 +232,11 @@ export const RecordVendorPaymentModal: React.FC<RecordVendorPaymentModalProps> =
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={paymentMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="gap-2">
-              {loading ? 'Recording...' : 'Record Payment'}
+            <Button type="submit" disabled={paymentMutation.isPending} className="gap-2">
+              {paymentMutation.isPending ? 'Recording...' : 'Record Payment'}
             </Button>
           </div>
         </form>

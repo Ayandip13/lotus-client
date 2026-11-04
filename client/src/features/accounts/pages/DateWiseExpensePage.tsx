@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   CalendarDays,
@@ -9,7 +8,6 @@ import {
   Eye,
   Paperclip,
 } from 'lucide-react';
-import { accountService } from '../services/accountService';
 import { Transaction, TransactionAttachment } from '../../transactions/types/transaction.types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
@@ -19,6 +17,7 @@ import { SkeletonStatCard, SkeletonTable } from '../../../components/ui/Skeleton
 import { formatINR } from '../../transactions/components/TransactionTable';
 import { TransactionDetailsModal } from '../../transactions/components/TransactionDetailsModal';
 import { AttachmentViewerModal } from '../../transactions/components/AttachmentViewerModal';
+import { useDateWiseHistory } from '../hooks/useAccounts';
 
 export const DateWiseExpensePage: React.FC = () => {
   // Default to today's date in local YYYY-MM-DD
@@ -36,11 +35,7 @@ export const DateWiseExpensePage: React.FC = () => {
     isError,
     error,
     isFetching,
-  } = useQuery({
-    queryKey: ['date-wise-history', selectedDate],
-    queryFn: () => accountService.getDateWiseHistory(selectedDate),
-    enabled: Boolean(selectedDate),
-  });
+  } = useDateWiseHistory(selectedDate);
 
   const allTransactions = dateData?.transactions || [];
   const displayedTransactions = expensesOnly

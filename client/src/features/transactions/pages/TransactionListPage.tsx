@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { queryKeys } from '../../../lib/queryKeys';
 import { Link } from 'react-router-dom';
 import {
   Plus,
@@ -66,7 +67,7 @@ export const TransactionListPage: React.FC = () => {
 
   // Fetch partner options for filter dropdown
   const { data: partners = [] } = useQuery({
-    queryKey: ['partner-list-filter'],
+    queryKey: queryKeys.accounts.partners(),
     queryFn: () => accountService.getPartnerSummaries(),
   });
 
@@ -85,10 +86,10 @@ export const TransactionListPage: React.FC = () => {
   };
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
-    queryKey: ['transactions', queryParams],
+    queryKey: queryKeys.transactions.list(queryParams),
     queryFn: () => transactionService.getTransactions(queryParams),
-    refetchOnMount: 'always',
-    staleTime: 0,
+    placeholderData: keepPreviousData,
+    staleTime: 1000 * 60 * 2,
   });
 
   // Delete mutation
@@ -96,9 +97,9 @@ export const TransactionListPage: React.FC = () => {
     mutationFn: (id: string) => transactionService.deleteTransaction(id),
     onSuccess: () => {
       setDeletingTransaction(null);
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['financial-summary'] });
-      queryClient.invalidateQueries({ queryKey: ['partner-financial-summaries'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     },
   });
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Wallet,
   Building,
@@ -6,24 +6,19 @@ import {
   Plus,
   Coins,
   History,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton, SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
-import { cashCustodyService } from '../services/cashCustodyService';
-import { CashCustodyOverview, CashMovementItem } from '../types/cashCustody.types';
+import { CashMovementItem } from '../types/cashCustody.types';
 import { RecordCashMovementModal } from '../components/RecordCashMovementModal';
-import { apiClient } from '../../../services/api';
+import { useCashCustodyOverview, useCashMovements } from '../hooks/useCashCustody';
+import { useBookings } from '../../bookings/hooks/useBookings';
 
 export const CashCustodyPage: React.FC = () => {
-  const [overview, setOverview] = useState<CashCustodyOverview | null>(null);
-  const [movements, setMovements] = useState<CashMovementItem[]>([]);
-  const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filters
@@ -35,58 +30,30 @@ export const CashCustodyPage: React.FC = () => {
     endDate: '',
   });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [overviewData, movementsRes, eventsRes] = await Promise.all([
-        cashCustodyService.getOverview().catch((err) => {
-          console.warn('Overview load warning:', err);
-          return null;
-        }),
-        cashCustodyService
-          .getMovements({
-            page,
-            limit: 15,
-            search: filters.search || undefined,
-            movementType: filters.movementType || undefined,
-            partner: filters.partner || undefined,
-            startDate: filters.startDate || undefined,
-            endDate: filters.endDate || undefined,
-          })
-          .catch((err) => {
-            console.warn('Movements load warning:', err);
-            return {
-              items: [],
-              pagination: { page: 1, limit: 15, totalItems: 0, totalPages: 1, hasNextPage: false, hasPrevPage: false },
-            };
-          }),
-        apiClient.get('/events').catch(() => ({ data: { data: { items: [] } } })),
-      ]);
+  // Queries
+  const { data: overview, isLoading: isOverviewLoading, isFetching: isOverviewFetching } = useCashCustodyOverview();
+  const { data: movementsData, isLoading: isMovementsLoading, isFetching: isMovementsFetching } = useCashMovements({
+    page,
+    limit: 15,
+    search: filters.search || undefined,
+    movementType: filters.movementType || undefined,
+    partner: filters.partner || undefined,
+    startDate: filters.startDate || undefined,
+    endDate: filters.endDate || undefined,
+  });
 
-      if (overviewData) {
-        setOverview(overviewData);
-      }
-      setMovements(Array.isArray(movementsRes?.items) ? movementsRes.items : []);
-      setTotalPages(movementsRes?.pagination?.totalPages || 1);
+  const { data: eventsData, isLoading: isEventsLoading } = useBookings({ limit: 100 });
 
-      if (eventsRes?.data?.data?.items) {
-        setEvents(
-          eventsRes.data.data.items.map((ev: any) => ({
-            id: ev._id,
-            title: ev.title,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to load cash custody:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = isOverviewLoading || isMovementsLoading || isEventsLoading;
+  const isFetching = isOverviewFetching || isMovementsFetching;
 
-  useEffect(() => {
-    loadData();
-  }, [page, filters]);
+  const movements: CashMovementItem[] = Array.isArray(movementsData?.items) ? movementsData.items : [];
+  const totalPages = movementsData?.pagination?.totalPages || 1;
+
+  const events = (eventsData?.items || []).map((ev: any) => ({
+    id: ev._id,
+    title: ev.title,
+  }));
 
   const handleFilterChange = (key: string, value: string) => {
     setPage(1);
@@ -148,17 +115,17 @@ export const CashCustodyPage: React.FC = () => {
   const getMovementBadge = (type: string) => {
     switch (type) {
       case 'PARTNER_HANDOVER':
-        return <Badge variant="outline" className="border-indigo-300 text-indigo-700 bg-indigo-50">HANDOVER</Badge>;
+        return <Badge variant="outline" className="border-indigo-300 text-indigo-700 bg-indigo-50/50">Partner Handover</Badge>;
       case 'BANK_DEPOSIT':
-        return <Badge variant="default" className="bg-blue-600">BANK DEPOSIT</Badge>;
+        return <Badge variant="success">Bank Deposit</Badge>;
       case 'BANK_WITHDRAWAL':
-        return <Badge variant="warning">BANK WITHDRAWAL</Badge>;
+        return <Badge variant="warning">Bank Withdrawal</Badge>;
       case 'CASH_EXPENSE':
-        return <Badge variant="danger">CASH EXPENSE</Badge>;
+        return <Badge variant="danger">Cash Expense</Badge>;
       case 'CASH_INCOME_ASSIGNED':
-        return <Badge variant="success">INCOME ASSIGNED</Badge>;
+        return <Badge variant="default">Income Assigned</Badge>;
       case 'OPENING_BALANCE':
-        return <Badge variant="outline">OPENING BALANCE</Badge>;
+        return <Badge variant="default">Opening Balance</Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -166,133 +133,111 @@ export const CashCustodyPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Partner Cash Custody</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Cash Custody & Reconciliation
+            </h1>
+            {isFetching && !loading && (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400" />
+            )}
+          </div>
           <p className="text-sm text-slate-500">
-            Track physical business cash-in-hand held by each partner, handovers, and bank reconciliation
+            Track individual partner cash-in-hand, cash handovers, bank deposits, and withdrawals
           </p>
         </div>
-        <Button
-          size="md"
-          leftIcon={<Plus className="w-4 h-4" />}
-          className="w-full sm:w-auto shadow-sm"
-          onClick={() => setIsModalOpen(true)}
-        >
-          Record Cash Movement
-        </Button>
-      </div>
-
-      {/* Explanatory Notice */}
-      <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-sm flex items-start gap-3">
-        <div className="p-2 bg-white/10 rounded-xl">
-          <Coins className="w-5 h-5 text-amber-300" />
-        </div>
-        <div className="text-xs space-y-1">
-          <p className="font-bold text-white text-sm">Business Cash Custody Principle</p>
-          <p className="text-slate-300 leading-relaxed">
-            These figures represent <strong>physical business cash</strong> currently held in the physical custody of each
-            partner for day-to-day procurement, vendor cash settlements, and event operations. Personal funds and personal
-            expenses remain strictly separated.
-          </p>
+        <div>
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2 shadow-sm">
+            <Plus className="w-4 h-4" />
+            Record Cash Movement
+          </Button>
         </div>
       </div>
 
-      {/* Partner Cash Balances Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-8 w-8 rounded-full" />
+      {/* Aggregate Balance Header Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs uppercase font-bold text-slate-500">Total Business Physical Cash</span>
+            <p className="text-2xl font-extrabold text-emerald-700 mt-1">
+              ₹{(overview?.totalBusinessCashInHand || 0).toLocaleString()}
+            </p>
+            <span className="text-[11px] text-slate-400">Sum of cash held across all 3 partners</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs uppercase font-bold text-slate-500">Common Business Bank Balance</span>
+            <p className="text-2xl font-extrabold text-indigo-700 mt-1">
+              ₹{(overview?.commonBusinessBankBalance || 0).toLocaleString()}
+            </p>
+            <span className="text-[11px] text-slate-400">Bank accounts funds derived from ledger</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <Building className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl shadow-sm flex items-center justify-between">
+          <div>
+            <span className="text-xs uppercase font-bold text-slate-300">Total Business Liquid Assets</span>
+            <p className="text-2xl font-extrabold text-white mt-1">
+              ₹{(overview?.commonBusinessTotalBalance || (overview?.totalBusinessCashInHand || 0) + (overview?.commonBusinessBankBalance || 0)).toLocaleString()}
+            </p>
+            <span className="text-[11px] text-slate-300">Physical Cash in Hand + Bank Balance</span>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-white/10 text-white flex items-center justify-center">
+            <Coins className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Partners Cash Breakdown */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
+          Partner-Wise Physical Cash Custody
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {loading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-8 w-28" />
                 </div>
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-3 w-40" />
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-6 w-28" />
-                </div>
-              </div>
-            ))
-          : (overview?.partners && overview.partners.length > 0
-              ? overview.partners
-              : [
-                  { partnerId: '6ae74e7f83df4e2c4c410093', partnerName: 'Partner 1', cashInHand: 0, cashInHandPaise: 0 },
-                  { partnerId: '6ae74e7f83df4e2c4c41009b', partnerName: 'Partner 2', cashInHand: 0, cashInHandPaise: 0 },
-                  { partnerId: '6ae74e8083df4e2c4c4100a1', partnerName: 'Partner 3', cashInHand: 0, cashInHandPaise: 0 },
-                ]
-            ).map((partner, index) => (
-              <div
-                key={partner.partnerId}
-                className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Partner {index + 1} Custody
-                  </span>
-                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-bold text-xs">
-                    {partner.partnerName.charAt(0)}
+              ))
+            : overview?.partners?.map((partner) => (
+                <div
+                  key={partner.partnerId}
+                  className="p-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:border-slate-300 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{partner.partnerName}</h3>
+                      <p className="text-xs text-slate-500">{partner.partnerPhone || 'Partner in Charge'}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-sm">
+                      {partner.partnerName?.charAt(0) || 'P'}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-baseline justify-between">
+                    <span className="text-xs text-slate-500 font-medium">Verified Cash-in-Hand:</span>
+                    <span className="text-xl font-extrabold font-mono text-emerald-700">
+                      ₹{(partner.cashInHand || 0).toLocaleString()}
+                    </span>
                   </div>
                 </div>
-                <h3 className="text-base font-bold text-slate-900">{partner.partnerName}</h3>
-                <p className="text-xs text-slate-500 mb-4">{partner.partnerPhone || partner.partnerEmail || 'Active Partner'}</p>
-                <div className="pt-3 border-t border-slate-100 flex items-baseline justify-between">
-                  <span className="text-xs text-slate-500 font-medium">Physical Cash:</span>
-                  <span className="text-2xl font-black text-slate-900">
-                    ₹{partner.cashInHand.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-      </div>
-
-      {/* Reconciled Totals Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-300 block mb-1">
-              Total Physical Cash Held by Partners
-            </span>
-            {loading ? (
-              <Skeleton className="h-9 w-36 bg-slate-700 my-1" />
-            ) : (
-              <p className="text-3xl font-black text-amber-300">
-                ₹{overview ? overview.totalBusinessCashInHand.toLocaleString() : '0'}
-              </p>
-            )}
-            <p className="text-xs text-slate-400 mt-1">Sum of cash across all 3 partners</p>
-          </div>
-          <div className="p-3 bg-white/10 rounded-2xl">
-            <Wallet className="w-7 h-7 text-amber-300" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              Common Business Bank Account Balance
-            </span>
-            {loading ? (
-              <Skeleton className="h-9 w-36 my-1" />
-            ) : (
-              <p className="text-3xl font-black text-blue-700">
-                ₹{overview ? overview.commonBusinessBankBalance.toLocaleString() : '0'}
-              </p>
-            )}
-            <p className="text-xs text-slate-500 mt-1">Bank account funds (separate from cash custody)</p>
-          </div>
-          <div className="p-3 bg-blue-50 rounded-2xl">
-            <Building className="w-7 h-7 text-blue-600" />
-          </div>
+              ))}
         </div>
       </div>
 
-      {/* Advanced Filter Panel */}
+      {/* Filter Panel */}
       <FilterPanel
         configs={filterConfigs}
         values={filters}
@@ -300,63 +245,68 @@ export const CashCustodyPage: React.FC = () => {
         onReset={handleResetFilters}
       />
 
-      {/* Cash Movement Audit History */}
+      {/* Audit Log of Cash Movements */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-slate-500" />
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Cash Movement & Handover History {loading ? '' : `(${(movements || []).length})`}
-            </h2>
+            <h2 className="text-sm font-bold text-slate-900">Cash Movements & Handover Audit Log</h2>
           </div>
+          <span className="text-xs text-slate-400">Chronological history with running balances</span>
         </div>
 
         {loading ? (
-          <SkeletonTable rows={5} columns={5} className="border-0 shadow-none rounded-none" />
-        ) : !movements || movements.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 text-xs py-10">
-            No cash movements match the active filters.
+          <SkeletonTable rows={5} columns={6} />
+        ) : movements.length === 0 ? (
+          <div className="p-12 text-center space-y-3">
+            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+              <ArrowRightLeft className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">No Cash Movements Recorded</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              No cash transactions or partner handovers match the selected filter parameters.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
-                <tr>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Movement Type</th>
-                  <th className="px-6 py-3">Channel / Parties</th>
-                  <th className="px-6 py-3">Description</th>
-                  <th className="px-6 py-3 text-right">Amount</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/75 text-slate-600 font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4">Date</th>
+                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">From Partner / Source</th>
+                  <th className="py-3 px-4">To Partner / Destination</th>
+                  <th className="py-3 px-4">Amount</th>
+                  <th className="py-3 px-4">Description / Linked Event</th>
+                  <th className="py-3 px-4">Audit Partner</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {(movements || []).map((m) => (
-                  <tr key={m._id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      {new Date(m.movementDate).toLocaleDateString()}
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {movements.map((m) => (
+                  <tr key={m._id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3.5 px-4 font-mono">
+                      {new Date(m.movementDate).toLocaleDateString('en-IN')}
                     </td>
-                    <td className="px-6 py-4">{getMovementBadge(m.movementType)}</td>
-                    <td className="px-6 py-4 text-xs">
-                      {m.fromPartner && m.toPartner ? (
-                        <div className="flex items-center gap-1.5 font-medium text-slate-800">
-                          <span>{m.fromPartner.name}</span>
-                          <ArrowRightLeft className="w-3 h-3 text-slate-400" />
-                          <span>{m.toPartner.name}</span>
-                        </div>
-                      ) : m.fromPartner ? (
-                        <span className="font-medium text-slate-800">From: {m.fromPartner.name}</span>
-                      ) : m.toPartner ? (
-                        <span className="font-medium text-slate-800">To: {m.toPartner.name}</span>
-                      ) : (
-                        <span className="text-slate-400">Common Business</span>
-                      )}
-                      {m.relatedEvent && (
-                        <p className="text-[11px] text-slate-500 mt-0.5">Event: {m.relatedEvent.title}</p>
-                      )}
+                    <td className="py-3.5 px-4">{getMovementBadge(m.movementType)}</td>
+                    <td className="py-3.5 px-4 font-medium text-slate-800">
+                      {m.fromPartner?.name || '—'}
                     </td>
-                    <td className="px-6 py-4 text-xs text-slate-700 max-w-xs">{m.description}</td>
-                    <td className="px-6 py-4 text-right font-bold text-slate-900">
+                    <td className="py-3.5 px-4 font-medium text-slate-800">
+                      {m.toPartner?.name || '—'}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
                       ₹{m.amount.toLocaleString()}
+                    </td>
+                    <td className="py-3.5 px-4 max-w-xs truncate">
+                      <span className="block text-slate-900 font-medium">{m.description}</span>
+                      {m.relatedEvent?.title && (
+                        <span className="text-[11px] text-slate-400 block truncate">
+                          Event: {m.relatedEvent.title}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">
+                      {m.createdByPartner?.name || 'Partner'}
                     </td>
                   </tr>
                 ))}
@@ -367,24 +317,24 @@ export const CashCustodyPage: React.FC = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs text-slate-500">
+          <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>
               Page {page} of {totalPages}
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <Button
-                variant="outline"
                 size="sm"
+                variant="outline"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
               >
                 Previous
               </Button>
               <Button
-                variant="outline"
                 size="sm"
+                variant="outline"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
               >
                 Next
               </Button>
@@ -394,23 +344,13 @@ export const CashCustodyPage: React.FC = () => {
       </div>
 
       {/* Record Movement Modal */}
-      {isModalOpen && (
-        <RecordCashMovementModal
-          isOpen={isModalOpen}
-          partners={
-            overview?.partners && overview.partners.length > 0
-              ? overview.partners
-              : [
-                  { partnerId: '6ae74e7f83df4e2c4c410093', partnerName: 'Partner 1', cashInHand: 0, cashInHandPaise: 0 },
-                  { partnerId: '6ae74e7f83df4e2c4c41009b', partnerName: 'Partner 2', cashInHand: 0, cashInHandPaise: 0 },
-                  { partnerId: '6ae74e8083df4e2c4c4100a1', partnerName: 'Partner 3', cashInHand: 0, cashInHandPaise: 0 },
-                ]
-          }
-          events={events}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={() => loadData()}
-        />
-      )}
+      <RecordCashMovementModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        partners={overview?.partners || []}
+        events={events}
+        onSuccess={() => setIsModalOpen(false)}
+      />
     </div>
   );
 };

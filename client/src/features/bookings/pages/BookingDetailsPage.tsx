@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../../lib/queryKeys';
 import {
   ArrowLeft,
   Calendar,
@@ -36,7 +37,7 @@ export const BookingDetailsPage: React.FC = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['booking', id],
+    queryKey: queryKeys.events.detail(id || ''),
     queryFn: () => bookingService.getBookingById(id!),
     enabled: !!id,
   });
@@ -44,7 +45,8 @@ export const BookingDetailsPage: React.FC = () => {
   const deleteMutation = useMutation({
     mutationFn: () => bookingService.deleteBooking(id!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
       navigate('/bookings');
     },
   });

@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
-import { bookingService } from '../services/bookingService';
 import { BookingFormData } from '../types/booking.types';
 import { BookingForm } from '../components/BookingForm';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { SkeletonForm } from '../../../components/ui/Skeleton';
+import { useBookingDetails, useUpdateBooking } from '../hooks/useBookings';
 
 export const BookingEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -23,19 +20,15 @@ export const BookingEditPage: React.FC = () => {
     isError,
     error,
     refetch,
-  } = useQuery({
-    queryKey: ['booking', id],
-    queryFn: () => bookingService.getBookingById(id!),
-    enabled: !!id,
-  });
+  } = useBookingDetails(id || '');
+
+  const updateMutation = useUpdateBooking();
 
   const handleSubmit = async (data: BookingFormData) => {
+    if (!id) return;
     try {
-      setIsSubmitting(true);
       setErrorMessage(null);
-      await bookingService.updateBooking(id!, data);
-      queryClient.invalidateQueries({ queryKey: ['booking', id] });
-      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await updateMutation.mutateAsync({ id, data });
       setSuccessMessage('Booking details updated successfully!');
 
       setTimeout(() => {
@@ -43,7 +36,6 @@ export const BookingEditPage: React.FC = () => {
       }, 500);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to update booking. Please check input fields.');
-      setIsSubmitting(false);
     }
   };
 
@@ -118,7 +110,7 @@ export const BookingEditPage: React.FC = () => {
           guestAddress: booking.guestAddress,
         }}
         onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
+        isSubmitting={updateMutation.isPending}
         submitLabel="Save Changes"
         cancelHref={`/bookings/${id}`}
       />

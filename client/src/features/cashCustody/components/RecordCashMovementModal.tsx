@@ -3,7 +3,7 @@ import { X, AlertCircle, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { cashCustodyService } from '../services/cashCustodyService';
+import { useRecordCashMovement } from '../hooks/useCashCustody';
 import { PartnerCashBalance, CashMovementType } from '../types/cashCustody.types';
 
 interface RecordCashMovementModalProps {
@@ -30,8 +30,9 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
   const [movementDate, setMovementDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState<string>('');
   const [relatedEvent, setRelatedEvent] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const movementMutation = useRecordCashMovement();
 
   const selectedFromPartner = partners.find((p) => p.partnerId === fromPartner);
 
@@ -65,11 +66,10 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      await cashCustodyService.recordMovement({
+      await movementMutation.mutateAsync({
         movementType,
         amount: parsedAmount,
         movementDate: new Date(movementDate).toISOString(),
@@ -89,8 +89,6 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
       onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to record cash movement');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -248,11 +246,11 @@ export const RecordCashMovementModal: React.FC<RecordCashMovementModalProps> = (
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={movementMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="gap-2">
-              {loading ? 'Recording...' : 'Record Cash Movement'}
+            <Button type="submit" disabled={movementMutation.isPending} className="gap-2">
+              {movementMutation.isPending ? 'Recording...' : 'Record Cash Movement'}
             </Button>
           </div>
         </form>

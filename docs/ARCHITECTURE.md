@@ -312,3 +312,38 @@ Every catering event features a dedicated 360-degree financial overview:
 - **Cash Flow vs. Accounting Position**: Explicitly isolates net cash collected from unpaid liabilities.
 - **Quick Action Links**: Allows directly recording event income, booking expenses, issuing invoices, and generating vendor bills pre-linked to the active event.
 
+
+
+## 8. Frontend State Management & TanStack Query Architecture
+
+The application utilizes **TanStack Query (v5.62+)** as the unified server-state and cache management layer across the entire React application.
+
+### 8.1 Centralized QueryClient Configuration
+Configured in `client/src/lib/queryClient.ts` with enterprise-grade resilience:
+- **Default staleTime**: 2 minutes (120,000ms) for high-frequency operational data; 1 minute for executive dashboard; 5 minutes for master directory lists.
+- **Default gcTime**: 10 minutes (600,000ms) to retain inactive data without memory bloating.
+- **Intelligent Retry Policy**: Automatically prevents aggressive retries on client errors (`4xx` HTTP status codes such as 401 Unauthorized, 403 Forbidden, 400 Bad Request, or 404 Not Found), avoiding infinite retry storms. Network/server errors (`5xx`) retry up to 2 times.
+- **Window Focus & Reconnection**: `refetchOnWindowFocus: false` avoids jarring UI re-fetches during normal tab switching; `refetchOnReconnect: true` ensures data updates when network connectivity is restored.
+
+### 8.2 Query Key Architecture (`queryKeys`)
+Deterministic, structured query keys defined in `client/src/lib/queryKeys.ts`:
+- `queryKeys.auth.session()`
+- `queryKeys.accounts.summary(filters)`, `queryKeys.accounts.partners()`, `queryKeys.accounts.partnerDetail(id)`, `queryKeys.accounts.dateWise(date)`
+- `queryKeys.events.list(params)`, `queryKeys.events.detail(id)`, `queryKeys.events.financials(id)`
+- `queryKeys.transactions.list(params)`, `queryKeys.transactions.detail(id)`
+- `queryKeys.invoices.list(params)`, `queryKeys.invoices.detail(id)`
+- `queryKeys.dues.customer(params)`, `queryKeys.dues.vendor(params)`
+- `queryKeys.vendors.list(params)`, `queryKeys.vendors.detail(id)`, `queryKeys.vendors.bills(params)`
+- `queryKeys.cashCustody.overview()`, `queryKeys.cashCustody.movements(params)`
+- `queryKeys.dashboard.overview()`
+
+### 8.3 Targeted Cache Invalidation & Cross-Feature Synchronization
+Mutations never blindly wipe the entire cache; they target dependent query subtrees:
+- **Booking Creation / Update / Deletion**: Invalidates `events.lists()`, `events.detail(id)`, and `dashboard.all`.
+- **Transaction Creation / Update / Deletion**: Invalidates `transactions.lists()`, `accounts.all`, `dashboard.all`, and related `events.financials(id)`.
+- **Customer Invoice Creation / Payment**: Invalidates `invoices.lists()`, `invoices.detail(id)`, `dues.all`, `transactions.lists()`, `accounts.all`, `cashCustody.all`, `dashboard.all`, and `events.financials(id)`.
+- **Vendor Bill / Payment**: Invalidates `dues.vendor()`, `vendors.bills()`, `transactions.lists()`, `accounts.all`, `cashCustody.all`, `dashboard.all`, and `events.financials(id)`.
+- **Cash Movement**: Invalidates `cashCustody.all`, `accounts.all`, `transactions.lists()`, `dashboard.all`, and related `events.financials(id)`.
+
+### 8.4 Authentication & Partner Session Cache Isolation
+On user logout or expired session cleanup, `queryClient.clear()` is called immediately within `AuthContext`. This guarantees that no sensitive financial balances, invoices, or customer ledger data leak across distinct partner browser sessions.

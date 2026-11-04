@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Info } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton, SkeletonStatCard, SkeletonTable } from '../../../components/ui/Skeleton';
-import { apiClient } from '../../../services/api';
+import { useEventFinancials } from '../hooks/useBookings';
+import { useVendors } from '../../dues/hooks/useDues';
+import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
 import { RecordVendorPaymentModal } from '../../dues/components/RecordVendorPaymentModal';
 import { CreateVendorBillModal } from '../../dues/components/CreateVendorBillModal';
@@ -15,46 +17,24 @@ interface EventFinancialHubProps {
 
 export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId }) => {
   const navigate = useNavigate();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'invoices' | 'collections' | 'expenses' | 'vendors'>('invoices');
 
   // Modals
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any>(null);
   const [selectedVendorDue, setSelectedVendorDue] = useState<any>(null);
   const [isVendorBillModalOpen, setIsVendorBillModalOpen] = useState(false);
-  const [vendors, setVendors] = useState<any[]>([]);
-  const [partners, setPartners] = useState<any[]>([]);
 
-  const loadFinancials = async () => {
-    setLoading(true);
-    try {
-      const [finRes, vendorsRes, partnersRes] = await Promise.all([
-        apiClient.get(`/events/${eventId}/financials`),
-        apiClient.get('/vendors').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/accounts/partners').catch(() => ({ data: { data: [] } })),
-      ]);
+  // Queries using centralized TanStack Query hooks
+  const { data, isLoading: isFinLoading } = useEventFinancials(eventId);
+  const { data: vendors = [], isLoading: isVendorsLoading } = useVendors();
+  const { data: rawPartners = [], isLoading: isPartnersLoading } = usePartnerSummaries();
 
-      setData(finRes.data.data);
-      setVendors(vendorsRes.data.data || []);
-      if (partnersRes?.data?.data) {
-        setPartners(
-          partnersRes.data.data.map((p: any) => ({
-            id: p.partnerId || p._id,
-            name: p.partnerName || p.name,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to load event financials:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = isFinLoading || isVendorsLoading || isPartnersLoading;
 
-  useEffect(() => {
-    loadFinancials();
-  }, [eventId]);
+  const partners = rawPartners.map((p: any) => ({
+    id: p.partnerId || p._id,
+    name: p.partnerName || p.name,
+  }));
 
   if (loading) {
     return (
@@ -433,7 +413,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
           dueItem={selectedInvoiceForPayment}
           partners={partners}
           onClose={() => setSelectedInvoiceForPayment(null)}
-          onSuccess={() => loadFinancials()}
+          onSuccess={() => setSelectedInvoiceForPayment(null)}
         />
       )}
 
@@ -442,7 +422,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
           dueItem={selectedVendorDue}
           partners={partners}
           onClose={() => setSelectedVendorDue(null)}
-          onSuccess={() => loadFinancials()}
+          onSuccess={() => setSelectedVendorDue(null)}
         />
       )}
 
@@ -450,10 +430,10 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
         <CreateVendorBillModal
           isOpen={isVendorBillModalOpen}
           vendors={vendors}
-          events={[{ id: eventId, title: data.event?.title || 'This Event' }]}
+          events={[{ id: eventId, title: data?.event?.title || 'This Event' }]}
           defaultEventId={eventId}
           onClose={() => setIsVendorBillModalOpen(false)}
-          onSuccess={() => loadFinancials()}
+          onSuccess={() => setIsVendorBillModalOpen(false)}
         />
       )}
     </div>

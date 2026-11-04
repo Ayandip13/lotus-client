@@ -1,52 +1,35 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
-import { bookingService } from '../services/bookingService';
+import { useNavigate } from 'react-router-dom';
 import { BookingFormData } from '../types/booking.types';
 import { BookingForm } from '../components/BookingForm';
 import { Alert } from '../../../components/ui/Alert';
+import { useCreateBooking } from '../hooks/useBookings';
 
 export const BookingCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const createMutation = useCreateBooking();
+
   const handleSubmit = async (data: BookingFormData) => {
     try {
-      setIsSubmitting(true);
       setErrorMessage(null);
-      await bookingService.createBooking(data);
+      const newBooking = await createMutation.mutateAsync(data);
+      setSuccessMessage('Booking record created successfully!');
 
-      // Invalidate queries so Bookings list and Dashboard update immediately without manual refresh
-      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-
-      setSuccessMessage('Booking / Event created successfully!');
-
-      // Short delay for user visual feedback before navigating back to the event page
       setTimeout(() => {
-        navigate('/bookings');
+        navigate(`/bookings/${newBooking._id}`);
       }, 500);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to create booking / event. Please check inputs.');
-      setIsSubmitting(false);
+      setErrorMessage(err.message || 'Failed to create booking. Please verify all required fields.');
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Top Breadcrumb & Header */}
+      {/* Page Title & Context */}
       <div>
-        <Link
-          to="/bookings"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors mb-2"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Back to Bookings</span>
-        </Link>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
           New Catering Booking / Event
         </h1>
@@ -72,7 +55,7 @@ export const BookingCreatePage: React.FC = () => {
       {/* Reusable Form Component */}
       <BookingForm
         onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
+        isSubmitting={createMutation.isPending}
         submitLabel="Create Booking Record"
         cancelHref="/bookings"
       />

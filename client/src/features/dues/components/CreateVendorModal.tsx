@@ -3,7 +3,7 @@ import { X, AlertCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Textarea } from '../../../components/ui/Textarea';
-import { dueService } from '../services/dueService';
+import { useCreateVendor } from '../hooks/useDues';
 
 interface CreateVendorModalProps {
   isOpen: boolean;
@@ -20,8 +20,9 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
   const [category, setCategory] = useState('GROCERIES_SPICES');
   const [address, setAddress] = useState('');
   const [bankDetails, setBankDetails] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const createVendorMutation = useCreateVendor();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +31,10 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     try {
-      await dueService.createVendor({
+      await createVendorMutation.mutateAsync({
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim() || undefined,
@@ -46,8 +46,6 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
       onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to register vendor');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -145,11 +143,11 @@ export const CreateVendorModal: React.FC<CreateVendorModalProps> = ({ isOpen, on
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={createVendorMutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Add Vendor'}
+            <Button type="submit" disabled={createVendorMutation.isPending}>
+              {createVendorMutation.isPending ? 'Saving...' : 'Add Vendor'}
             </Button>
           </div>
         </form>

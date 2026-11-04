@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   ArrowDownLeft,
@@ -14,13 +13,13 @@ import {
   Info,
   CalendarDays,
 } from 'lucide-react';
-import { accountService } from '../services/accountService';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Alert } from '../../../components/ui/Alert';
 import { Button } from '../../../components/ui/Button';
 import { Skeleton, SkeletonStatCard } from '../../../components/ui/Skeleton';
 import { formatINR } from '../../transactions/components/TransactionTable';
+import { useOverallSummary, usePartnerSummaries } from '../hooks/useAccounts';
 
 export const FinancialOverviewPage: React.FC = () => {
   const [startDate, setStartDate] = useState('');
@@ -33,16 +32,10 @@ export const FinancialOverviewPage: React.FC = () => {
     isError: isSummaryError,
     error: summaryError,
     isFetching,
-  } = useQuery({
-    queryKey: ['financial-summary', { startDate, endDate }],
-    queryFn: () => accountService.getOverallSummary(startDate || undefined, endDate || undefined),
-  });
+  } = useOverallSummary(startDate || undefined, endDate || undefined);
 
   // 2. Partner Summaries Query
-  const { data: partnerSummaries = [] } = useQuery({
-    queryKey: ['partner-financial-summaries'],
-    queryFn: () => accountService.getPartnerSummaries(),
-  });
+  const { data: partnerSummaries = [] } = usePartnerSummaries();
 
   const clearDateFilter = () => {
     setStartDate('');

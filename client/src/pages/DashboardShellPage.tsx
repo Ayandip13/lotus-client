@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CalendarDays,
@@ -20,105 +20,13 @@ import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { Skeleton, SkeletonStatCard } from '../components/ui/Skeleton';
 import { useAuth } from '../features/auth/context/AuthContext';
-import { apiClient } from '../services/api';
-
-interface DashboardData {
-  upcomingEvents: any[];
-  financialOverview: {
-    totalBusinessIncome: number;
-    totalBusinessExpenses: number;
-    commonBusinessBankBalance: number;
-    totalBusinessCashInHand: number;
-    totalCustomerDue: number;
-    totalVendorDue: number;
-  };
-  partnerCashOverview: {
-    partners: Array<{
-      partnerId: string;
-      partnerName: string;
-      partnerPhone?: string;
-      cashInHand: number;
-    }>;
-    totalBusinessCashInHand: number;
-    commonBusinessBankBalance: number;
-  };
-  dueOverview: {
-    customerDue: {
-      totalDue: number;
-      overdueCount: number;
-      overdueAmount: number;
-    };
-    vendorDue: {
-      totalDue: number;
-      overdueCount: number;
-      overdueAmount: number;
-    };
-  };
-  recentActivity: any[];
-}
+import { useDashboard } from '../features/dashboard/hooks/useDashboard';
 
 export const DashboardShellPage: React.FC = () => {
   const { partner, user } = useAuth();
   const navigate = useNavigate();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadDashboard = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await apiClient.get('/dashboard');
-      setData(res.data.data);
-    } catch (err: any) {
-      // Graceful fallback: If /dashboard endpoint is unavailable on current backend,
-      // reconstruct dashboard view from available core endpoints (/accounts/summary, /events, /transactions)
-      try {
-        const [summaryRes, eventsRes, transRes] = await Promise.all([
-          apiClient.get('/accounts/summary').catch(() => null),
-          apiClient.get('/events?limit=5').catch(() => null),
-          apiClient.get('/transactions?limit=5').catch(() => null),
-        ]);
-
-        if (summaryRes?.data?.data) {
-          const acc = summaryRes.data.data;
-          setData({
-            financialOverview: {
-              totalBusinessIncome: acc.totalBusinessIncome || 0,
-              totalBusinessExpenses: acc.totalBusinessExpenses || 0,
-              commonBusinessBankBalance: acc.commonBusinessBankBalance || 0,
-              totalBusinessCashInHand: acc.totalBusinessCashInHand || 0,
-              totalCustomerDue: 0,
-              totalVendorDue: 0,
-            },
-            upcomingEvents: eventsRes?.data?.data?.items || eventsRes?.data?.data?.events || [],
-            partnerCashOverview: {
-              partners: [],
-              totalBusinessCashInHand: acc.totalBusinessCashInHand || 0,
-              commonBusinessBankBalance: acc.commonBusinessBankBalance || 0,
-            },
-            dueOverview: {
-              customerDue: { totalDue: 0, overdueCount: 0, overdueAmount: 0 },
-              vendorDue: { totalDue: 0, overdueCount: 0, overdueAmount: 0 },
-            },
-            recentActivity: transRes?.data?.data?.items || transRes?.data?.data?.transactions || [],
-          });
-          return;
-        }
-      } catch (fallbackErr) {
-        console.error('Fallback load also encountered an issue:', fallbackErr);
-      }
-
-      console.error('Failed to load dashboard:', err);
-      setError(err?.message || 'Failed to connect to executive dashboard service.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadDashboard();
-  }, []);
+  const { data, isLoading: loading, error, refetch } = useDashboard();
 
   if (loading) {
     return (
@@ -209,10 +117,10 @@ export const DashboardShellPage: React.FC = () => {
       <div className="space-y-6 max-w-2xl mx-auto py-12">
         <Alert variant="error" title="Dashboard Data Unavailable">
           <p className="text-sm">
-            {error || 'Unable to retrieve dashboard figures. The backend service may be restarting or unreachable.'}
+            {error instanceof Error ? error.message : 'Unable to retrieve dashboard figures. The backend service may be restarting or unreachable.'}
           </p>
           <div className="mt-4">
-            <Button size="sm" onClick={loadDashboard}>
+            <Button size="sm" onClick={() => refetch()}>
               Retry Connection
             </Button>
           </div>

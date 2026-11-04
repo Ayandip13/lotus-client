@@ -1,29 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Receipt,
   Plus,
   Eye,
   CreditCard,
-  Clock,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { SkeletonTable } from '../../../components/ui/Skeleton';
 import { FilterPanel, FilterConfig } from '../../../components/ui/FilterPanel';
-import { invoiceService } from '../services/invoiceService';
 import { InvoiceItem } from '../types/invoice.types';
-import { apiClient } from '../../../services/api';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
+import { useInvoices } from '../hooks/useInvoices';
+import { useBookings } from '../../bookings/hooks/useBookings';
+import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 
 export const InvoiceListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [invoices, setInvoices] = useState<InvoiceItem[]>([]);
-  const [events, setEvents] = useState<Array<{ id: string; title: string }>>([]);
-  const [partners, setPartners] = useState<Array<{ id: string; name: string }>>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   // Modals
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any>(null);
@@ -38,54 +34,33 @@ export const InvoiceListPage: React.FC = () => {
     endDate: '',
   });
 
-  const loadInvoices = async () => {
-    setLoading(true);
-    try {
-      const [res, eventsRes, partnersRes] = await Promise.all([
-        invoiceService.getInvoices({
-          page,
-          limit: 15,
-          search: filters.search || undefined,
-          invoiceType: filters.invoiceType || undefined,
-          paymentStatus: filters.paymentStatus || undefined,
-          relatedEvent: filters.relatedEvent || undefined,
-          startDate: filters.startDate || undefined,
-          endDate: filters.endDate || undefined,
-        }),
-        apiClient.get('/events').catch(() => ({ data: { data: { items: [] } } })),
-        apiClient.get('/accounts/partners').catch(() => ({ data: { data: [] } })),
-      ]);
+  // Queries
+  const { data, isLoading, isFetching } = useInvoices({
+    page,
+    limit: 15,
+    search: filters.search || undefined,
+    invoiceType: filters.invoiceType || undefined,
+    paymentStatus: filters.paymentStatus || undefined,
+    relatedEvent: filters.relatedEvent || undefined,
+    startDate: filters.startDate || undefined,
+    endDate: filters.endDate || undefined,
+  });
 
-      setInvoices(Array.isArray(res?.items) ? res.items : []);
-      setTotalPages(res?.pagination?.totalPages || 1);
+  const { data: eventsData } = useBookings({ limit: 100 });
+  const { data: partnersData = [] } = usePartnerSummaries();
 
-      if (eventsRes?.data?.data?.items) {
-        setEvents(
-          eventsRes.data.data.items.map((ev: any) => ({
-            id: ev._id,
-            title: ev.title,
-          }))
-        );
-      }
+  const invoices: InvoiceItem[] = Array.isArray(data?.items) ? data.items : [];
+  const totalPages = data?.pagination?.totalPages || 1;
 
-      if (partnersRes?.data?.data) {
-        setPartners(
-          partnersRes.data.data.map((p: any) => ({
-            id: p.partnerId || p._id,
-            name: p.partnerName || p.name,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to load invoices:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const events = (eventsData?.items || []).map((ev: any) => ({
+    id: ev._id,
+    title: ev.title,
+  }));
 
-  useEffect(() => {
-    loadInvoices();
-  }, [page, filters]);
+  const partners = partnersData.map((p: any) => ({
+    id: p.partnerId || p._id,
+    name: p.partnerName || p.name,
+  }));
 
   const handleFilterChange = (key: string, value: string) => {
     setPage(1);
@@ -157,33 +132,25 @@ export const InvoiceListPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Billing & Invoices</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Billing & Invoices</h1>
+            {isFetching && !isLoading && (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400" />
+            )}
+          </div>
           <p className="text-sm text-slate-500">
             Generate and manage customer-facing GST and Non-GST catering invoices
           </p>
         </div>
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="md"
-            leftIcon={<Clock className="w-4 h-4 text-amber-600" />}
-            className="flex-1 sm:flex-initial justify-center shadow-sm"
-            onClick={() => navigate('/dues/customers')}
-          >
-            Customer Dues
-          </Button>
-          <Button
-            size="md"
-            leftIcon={<Plus className="w-4 h-4" />}
-            className="flex-1 sm:flex-initial justify-center shadow-sm"
-            onClick={() => navigate('/invoices/new')}
-          >
-            Create New Invoice
+        <div className="flex items-center gap-2">
+          <Button onClick={() => navigate('/invoices/new')} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Create Invoice
           </Button>
         </div>
       </div>
 
-      {/* Advanced Filter Panel */}
+      {/* Filter Panel */}
       <FilterPanel
         configs={filterConfigs}
         values={filters}
@@ -191,119 +158,105 @@ export const InvoiceListPage: React.FC = () => {
         onReset={handleResetFilters}
       />
 
-      {/* Invoices Table */}
+      {/* Table Section */}
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        {loading ? (
-          <SkeletonTable rows={5} columns={6} className="border-0 shadow-none rounded-none" />
-        ) : !invoices || invoices.length === 0 ? (
-          <div className="p-12 text-center">
-            <Receipt className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-            <p className="text-slate-800 font-semibold text-sm">No Invoices Found</p>
-            <p className="text-slate-500 text-xs mt-1">
-              Create an invoice for an upcoming catering event to begin billing.
+        {isLoading ? (
+          <SkeletonTable rows={5} columns={6} />
+        ) : invoices.length === 0 ? (
+          <div className="p-12 text-center space-y-3">
+            <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+              <Receipt className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">No Invoices Found</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              No bills match your current filters. Create a new catering invoice or clear filters.
             </p>
-            <Button
-              size="sm"
-              className="mt-4 text-xs"
-              onClick={() => navigate('/invoices/new')}
-            >
+            <Button variant="outline" size="sm" onClick={() => navigate('/invoices/new')}>
               + Create First Invoice
             </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
-                <tr>
-                  <th className="px-6 py-3">Invoice # & Date</th>
-                  <th className="px-6 py-3">Customer & Event</th>
-                  <th className="px-6 py-3">Type</th>
-                  <th className="px-6 py-3">Grand Total</th>
-                  <th className="px-6 py-3">Paid Amount</th>
-                  <th className="px-6 py-3 text-rose-600">Remaining Due</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/75 text-slate-600 font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4">Invoice #</th>
+                  <th className="py-3 px-4">Client / Event</th>
+                  <th className="py-3 px-4">Issue / Due Date</th>
+                  <th className="py-3 px-4">Total Amount</th>
+                  <th className="py-3 px-4">Paid / Due</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {(invoices || []).map((inv) => (
-                  <tr key={inv._id} className="hover:bg-slate-50/60 transition">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900">{inv.invoiceNumber}</p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(inv.invoiceDate).toLocaleDateString()}
-                      </p>
-                      {inv.dueDate && (
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          Due: {new Date(inv.dueDate).toLocaleDateString()}
-                        </p>
-                      )}
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {invoices.map((inv) => (
+                  <tr key={inv._id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      {inv.invoiceNumber}
+                      <span className="block text-[10px] text-slate-400 font-normal">
+                        {inv.invoiceType}
+                      </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-800">{inv.customerName}</p>
-                      <p className="text-xs text-slate-500">{inv.customerPhone}</p>
-                      {inv.relatedEvent && (
-                        <span className="inline-block mt-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                          {inv.relatedEvent.title}
+                    <td className="py-3.5 px-4">
+                      <span className="font-semibold text-slate-900 block">{inv.customerName}</span>
+                      <span className="text-[11px] text-slate-400">
+                        {inv.customerPhone} {inv.relatedEvent?.title ? `• ${inv.relatedEvent.title}` : ''}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span>{new Date(inv.invoiceDate).toLocaleDateString('en-IN')}</span>
+                      {inv.dueDate && (
+                        <span className="block text-[10px] text-slate-400">
+                          Due: {new Date(inv.dueDate).toLocaleDateString('en-IN')}
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      {inv.invoiceType === 'GST' ? (
-                        <Badge variant="default" className="bg-indigo-50 text-indigo-700 border-indigo-200">
-                          GST ({inv.taxDetails?.totalTax ? `₹${inv.taxDetails.totalTax.toLocaleString()}` : '0%'})
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">NON-GST</Badge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
                       ₹{inv.grandTotal.toLocaleString()}
                     </td>
-                    <td className="px-6 py-4 font-medium text-emerald-700">
-                      ₹{inv.amountPaid.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 font-extrabold text-rose-600">
-                      ₹{inv.remainingDue.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      {inv.paymentStatus === 'PAID' ? (
-                        <Badge variant="success">PAID</Badge>
-                      ) : inv.paymentStatus === 'PARTIALLY_PAID' ? (
-                        <Badge variant="warning">PARTIALLY PAID</Badge>
-                      ) : inv.paymentStatus === 'OVERDUE' ? (
-                        <Badge variant="danger">OVERDUE</Badge>
-                      ) : (
-                        <Badge variant="default">UNPAID</Badge>
+                    <td className="py-3.5 px-4">
+                      <span className="text-emerald-700 font-medium block">
+                        ₹{inv.amountPaid.toLocaleString()}
+                      </span>
+                      {inv.remainingDue > 0 && (
+                        <span className="text-rose-700 font-semibold block text-[11px]">
+                          Due: ₹{inv.remainingDue.toLocaleString()}
+                        </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="py-3.5 px-4">
+                      {inv.paymentStatus === 'PAID' && <Badge variant="success">PAID</Badge>}
+                      {inv.paymentStatus === 'PARTIALLY_PAID' && (
+                        <Badge variant="warning">PARTIAL</Badge>
+                      )}
+                      {inv.paymentStatus === 'UNPAID' && <Badge variant="danger">UNPAID</Badge>}
+                      {inv.paymentStatus === 'OVERDUE' && (
+                        <Badge variant="danger" className="animate-pulse">
+                          OVERDUE
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
                         {inv.remainingDue > 0 && (
                           <Button
                             size="sm"
-                            className="h-8 text-xs gap-1"
-                            onClick={() => {
-                              setSelectedInvoiceForPayment({
-                                invoiceId: inv._id,
-                                invoiceNumber: inv.invoiceNumber,
-                                customerName: inv.customerName,
-                                totalBillAmount: inv.grandTotal,
-                                remainingDue: inv.remainingDue,
-                              });
-                            }}
+                            variant="outline"
+                            className="h-7 text-[11px] px-2 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                            onClick={() => setSelectedInvoiceForPayment(inv)}
                           >
-                            <CreditCard className="w-3.5 h-3.5" /> Pay
+                            <CreditCard className="w-3 h-3 mr-1" />
+                            Collect
                           </Button>
                         )}
                         <Button
-                          variant="outline"
                           size="sm"
-                          className="h-8 text-xs px-2"
+                          variant="ghost"
+                          className="h-7 w-7 p-0"
                           onClick={() => navigate(`/invoices/${inv._id}`)}
-                          title="View & Print Invoice"
                         >
-                          <Eye className="w-3.5 h-3.5" />
+                          <Eye className="w-3.5 h-3.5 text-slate-500" />
                         </Button>
                       </div>
                     </td>
@@ -316,24 +269,24 @@ export const InvoiceListPage: React.FC = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-xs text-slate-500">
+          <div className="p-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>
               Page {page} of {totalPages}
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-1">
               <Button
-                variant="outline"
                 size="sm"
+                variant="outline"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
               >
                 Previous
               </Button>
               <Button
-                variant="outline"
                 size="sm"
+                variant="outline"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
               >
                 Next
               </Button>
@@ -345,10 +298,11 @@ export const InvoiceListPage: React.FC = () => {
       {/* Record Payment Modal */}
       {selectedInvoiceForPayment && (
         <RecordCustomerPaymentModal
-          dueItem={selectedInvoiceForPayment}
-          partners={partners}
+          isOpen={Boolean(selectedInvoiceForPayment)}
           onClose={() => setSelectedInvoiceForPayment(null)}
-          onSuccess={() => loadInvoices()}
+          invoice={selectedInvoiceForPayment}
+          partners={partners}
+          onSuccess={() => setSelectedInvoiceForPayment(null)}
         />
       )}
     </div>
