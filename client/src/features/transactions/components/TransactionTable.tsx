@@ -182,12 +182,12 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
               {/* 5. Amount */}
               <TableCell className="text-right">
                 <span
-                  className={`font-semibold font-mono text-sm ${
+                  className={`font-bold font-mono text-sm ${
                     tx.transactionType === 'BUSINESS_INCOME'
                       ? 'text-emerald-600'
                       : tx.transactionType === 'PARTNER_CONTRIBUTION'
                       ? 'text-blue-600'
-                      : 'text-slate-900'
+                      : 'text-rose-600'
                   }`}
                 >
                   {tx.transactionType === 'BUSINESS_INCOME'

@@ -1,20 +1,14 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Users,
   CalendarDays,
-  Receipt,
-  PieChart,
+  FileText,
+  ArrowLeftRight,
+  Users,
   ShieldCheck,
   LogOut,
-  Wallet,
-  Clock,
-  Truck,
-  FileText,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Badge } from '../components/ui/Badge';
 import { SignOutModal } from '../components/ui/SignOutModal';
 import { useAuth } from '../features/auth/context/AuthContext';
 
@@ -25,67 +19,28 @@ interface SidebarProps {
 
 const navItems = [
   {
-    name: 'Executive Dashboard',
-    href: '/',
-    icon: LayoutDashboard,
-    badge: 'Hub',
-    badgeVariant: 'success' as const,
-  },
-  {
-    name: 'Bookings & Events',
+    name: 'Booking & Events',
     href: '/bookings',
     icon: CalendarDays,
-    badge: 'Active',
-    badgeVariant: 'success' as const,
+    description: 'Upcoming & past catering jobs',
   },
   {
-    name: 'Customer Dues',
-    href: '/dues/customers',
-    icon: Clock,
-    badge: 'Receivables',
-    badgeVariant: 'warning' as const,
-  },
-  {
-    name: 'Vendor Dues',
-    href: '/dues/vendors',
-    icon: Truck,
-    badge: 'Payables',
-    badgeVariant: 'warning' as const,
-  },
-  {
-    name: 'Invoices & Billing',
+    name: 'Invoice & Billing',
     href: '/invoices',
     icon: FileText,
-    badge: 'GST/Non-GST',
-    badgeVariant: 'success' as const,
+    description: 'Bills, GST/Non-GST & PDFs',
   },
   {
-    name: 'Cash Custody',
-    href: '/cash-custody',
-    icon: Wallet,
-    badge: 'Cash-in-Hand',
-    badgeVariant: 'success' as const,
-  },
-  {
-    name: 'Transactions Ledger',
+    name: 'Income & Expenses',
     href: '/transactions',
-    icon: Receipt,
-    badge: 'Active',
-    badgeVariant: 'success' as const,
+    icon: ArrowLeftRight,
+    description: 'Daily cash in & cash out',
   },
   {
     name: 'Partner Accounts',
     href: '/partners',
     icon: Users,
-    badge: 'Equal Access',
-    badgeVariant: 'success' as const,
-  },
-  {
-    name: 'Financial Overview',
-    href: '/overview',
-    icon: PieChart,
-    badge: 'Reports',
-    badgeVariant: 'success' as const,
+    description: 'Contributions & balances',
   },
 ];
 
@@ -95,29 +50,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
   return (
     <>
-      {/* Sidebar Container - Visible only on desktop (lg+ screens) */}
+      {/* Desktop Sidebar Navigation */}
       <aside
         className={cn(
-          'hidden lg:flex lg:static lg:translate-x-0 w-72 sm:w-76 lg:w-76 xl:w-80 shrink-0 flex-col bg-white border-r border-slate-200/80 shadow-sm print:hidden'
+          'hidden lg:flex lg:static lg:translate-x-0 w-64 xl:w-72 shrink-0 flex-col bg-white border-r border-slate-200/90 shadow-sm print:hidden'
         )}
       >
         {/* Brand Header */}
         <div className="flex h-16 items-center justify-between px-6 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-semibold shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-sm">
               LC
             </div>
             <div>
               <h1 className="text-sm font-bold text-slate-900 leading-tight">Lotus Caterer</h1>
-              <p className="text-[11px] font-medium text-slate-500">Management System</p>
+              <p className="text-[11px] font-medium text-slate-500">Business Khata</p>
             </div>
           </div>
         </div>
 
-        {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-1.5">
-          <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-            System Modules
+        {/* 4 Primary Navigation Items */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-6 space-y-2">
+          <div className="px-2.5 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            Primary Modules
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -128,35 +83,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                 onClick={() => onClose?.()}
                 className={({ isActive }) =>
                   cn(
-                    'group flex items-center justify-between gap-2.5 px-3 h-10 rounded-lg text-sm font-medium transition-colors',
+                    'group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all select-none',
                     isActive
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-emerald-50 text-emerald-800 font-semibold shadow-xs border border-emerald-200/60'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   )
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                      <Icon
-                        className={cn(
-                          'w-4 h-4 shrink-0 transition-colors',
-                          isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'
-                        )}
-                      />
-                      <span className="truncate">{item.name}</span>
+                    <div
+                      className={cn(
+                        'p-2 rounded-lg transition-colors',
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700'
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
                     </div>
-                    {item.badge && (
-                      <Badge
-                        variant={isActive ? 'default' : item.badgeVariant}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm leading-tight truncate">{item.name}</div>
+                      <div
                         className={cn(
-                          'h-5 px-2 text-[10px] font-semibold tracking-wide rounded-full inline-flex items-center justify-center whitespace-nowrap shrink-0 ml-auto',
-                          isActive ? 'bg-slate-800 text-white border-0' : ''
+                          'text-[11px] font-normal truncate mt-0.5',
+                          isActive ? 'text-emerald-700/80' : 'text-slate-400'
                         )}
                       >
-                        {item.badge}
-                      </Badge>
-                    )}
+                        {item.description}
+                      </div>
+                    </div>
                   </>
                 )}
               </NavLink>
@@ -164,25 +120,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           })}
         </div>
 
-        {/* Footer Info / Active Partner & Sign Out */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 space-y-3">
+        {/* Partner Info & Sign Out Footer */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/60 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-slate-700">
+            <div className="flex items-center gap-2 text-xs text-slate-800 font-semibold">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="font-semibold">{partner?.name || 'Partner Account'}</span>
+              <span>{partner?.name || 'Partner Account'}</span>
             </div>
             {user && (
               <span className="text-[10px] text-slate-400 font-mono">@{user.username}</span>
             )}
           </div>
-          <div className="text-[11px] text-slate-500">
-            Equal 3-Partner authorization active.
-          </div>
+          <p className="text-[11px] text-slate-500">
+            Equal access across all 3 partners.
+          </p>
           <button
-            onClick={() => {
-              setIsSignOutModalOpen(true);
-            }}
-            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
+            type="button"
+            onClick={() => setIsSignOutModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100/80 rounded-xl transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>

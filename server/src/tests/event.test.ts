@@ -105,34 +105,24 @@ const runEventTests = async () => {
       await Event.findByIdAndDelete(event._id);
     });
 
-    // --- 3. Validation: Missing Required Fields ---
-    await test('Validation: rejects missing required fields (title, date, guestName, guestPhone)', async () => {
-      // Missing title
-      assert.throws(() => {
-        createEventSchema.parse({
-          eventDate: '2026-12-15T18:00:00.000Z',
-          guestName: 'Rajesh',
-          guestPhone: '9830011111',
-        });
-      }, /Event\/booking name is required/);
+    // --- 3. Simplified UX: All User Fields Optional ---
+    await test('Simplified Scope: allows event creation with optional/partial fields', async () => {
+      // Parse with partial fields
+      const parsed = createEventSchema.parse({
+        title: 'Quick Catering',
+      });
+      assert.strictEqual(parsed.title, 'Quick Catering');
 
-      // Missing guestName
-      assert.throws(() => {
-        createEventSchema.parse({
-          title: 'Birthday Gala',
-          eventDate: '2026-12-15T18:00:00.000Z',
-          guestPhone: '9830011111',
-        });
-      }, /Guest name is required/);
+      // Create event with only title
+      const event = await eventService.createEvent(partner1._id, {
+        title: 'Quick Catering',
+      });
+      assert.strictEqual(event.title, 'Quick Catering');
+      assert.strictEqual(event.guestName, 'Guest'); // Default fallback
+      assert.ok(event.eventDate); // Defaulted to now
 
-      // Missing guestPhone
-      assert.throws(() => {
-        createEventSchema.parse({
-          title: 'Birthday Gala',
-          eventDate: '2026-12-15T18:00:00.000Z',
-          guestName: 'Rajesh',
-        });
-      }, /Guest contact number is required/);
+      // Clean up auxiliary event
+      await Event.findByIdAndDelete(event._id);
     });
 
     // --- 4. Validation: Invalid Email ---

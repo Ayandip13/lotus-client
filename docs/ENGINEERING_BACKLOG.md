@@ -11,7 +11,8 @@ This document tracks phase-by-phase implementation progress, completed milestone
 - [x] **Phase 3: Bookings, Events & Job Management** (Completed)
 - [x] **Phase 4: Transactions (Income & Expense Ledger), Accounts & Attachments** (Completed)
 - [x] **Phase 5: Advanced Accounts, Due Management, Cash Custody, Billing & Dashboard** (Completed)
-- [ ] **Phase 6: Verification, Polishing & Production Deployment Readiness**
+- [x] **Phase 6: Khatabook-Inspired Scope Simplification & UX Redesign** (Completed)
+- [ ] **Phase 7: Verification, Polishing & Production Deployment Readiness**
 
 ---
 
@@ -122,7 +123,23 @@ This document tracks phase-by-phase implementation progress, completed milestone
 
 ---
 
-### Upcoming Phase 6: Verification, Polishing & Production Deployment Readiness
+## Phase 6 Breakdown: Khatabook-Inspired Scope Simplification & UX Redesign
+### Phase Status: **PHASE 6 COMPLETE**
+
+| Task ID | Item | Status | Notes |
+| :--- | :--- | :--- | :--- |
+| **P6-01** | Strict 4-Module Scope Boundary Enforcement | Completed | Primary navigation, bottom navigation, and application shell strictly limited to: (1) Booking & Events, (2) Invoice & Billing, (3) Income & Expenses, (4) Partner Accounts. Unnecessary modules (Vendor Management, Vendor Dues, Cash Custody, Complex Reports) removed from active UI. |
+| **P6-02** | Mobile & Desktop Navigation Streamlining | Completed | Mobile bottom nav reduced to exactly 4 tabs (Events, Billing, Income & Expenses, Partners) with no nested sheets. Default homepage mapped to Events (`/bookings`). Desktop sidebar aligned with matching emerald green accents. |
+| **P6-03** | Zero-Blocker Event Creation | Completed | All user-entered fields made optional (`title`, `guestName`, `guestPhone`, `eventDate`) with safe system defaults (`Catering Event - <Date>`, `Guest`). Frontend form and backend Zod schemas updated. |
+| **P6-04** | Zero-Blocker Invoicing & Live Preview Workflow | Completed | All customer and event fields optional (`customerName: 'Customer'`, `relatedEvent: undefined` supported). Live "Edit Info" <-> "Live Preview" toggle tab implemented in `InvoiceCreatePage`. Form seamlessly transitions to `/invoices/:id` full preview. |
+| **P6-05** | Invoice Details & Sharing Optimization | Completed | Conditionally hide blank/optional fields (address, email, GSTIN). Direct Edit, WhatsApp share, Print/PDF, and Delete buttons fully verified. |
+| **P6-06** | Income & Expense Visual Standards | Completed | Visual hierarchy enforced: Income strictly formatted with `+ ₹` in emerald green (`text-emerald-600`); Expenses formatted with `- ₹` in crimson red (`text-rose-600`). Header quick buttons for `+ Cash In (Income)` and `- Cash Out (Expense)`. |
+| **P6-07** | Equal 3-Partner Accounts Presentation | Completed | Clean Khatabook-style card presentation for the 3 partners displaying individual contributions, personally covered business expenses, and audit history. |
+| **P6-08** | Full Regression & Build Verification | Completed | All 66 backend unit, service, integration, and audit tests passed. Client production build (`tsc -b && vite build`) and server build (`tsc`) passed with 0 errors. |
+
+---
+
+### Upcoming Phase 7: Verification, Polishing & Production Deployment Readiness
 - Cross-browser and end-to-end user experience audit.
 - Production environment configurations and CI/CD validation.
 - Long-term audit trail archiving and performance optimization.

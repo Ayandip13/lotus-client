@@ -1,15 +1,32 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { TransactionForm } from '../components/TransactionForm';
 import { Alert } from '../../../components/ui/Alert';
 import { useCreateTransaction } from '../hooks/useTransactions';
 
 export const TransactionCreatePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const typeParam = searchParams.get('type');
+  const eventIdParam = searchParams.get('eventId');
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const createMutation = useCreateTransaction();
+
+  // Resolve initial transaction type
+  let initialType = 'BUSINESS_EXPENSE';
+  if (typeParam === 'INCOME' || typeParam === 'BUSINESS_INCOME') {
+    initialType = 'BUSINESS_INCOME';
+  } else if (typeParam === 'CONTRIBUTION' || typeParam === 'PARTNER_CONTRIBUTION') {
+    initialType = 'PARTNER_CONTRIBUTION';
+  }
+
+  const initialData = {
+    transactionType: initialType,
+    relatedEvent: eventIdParam || '',
+  };
 
   const handleSubmit = async (formData: FormData) => {
     try {
@@ -31,7 +48,7 @@ export const TransactionCreatePage: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-          Record Ledger Transaction
+          Record Income & Expense
         </h1>
         <p className="mt-1 text-sm text-slate-500">
           Post an operational expense, client catering payment, or partner capital deposit.
@@ -51,6 +68,7 @@ export const TransactionCreatePage: React.FC = () => {
       )}
 
       <TransactionForm
+        initialData={initialData}
         onSubmit={handleSubmit}
         isSubmitting={createMutation.isPending}
         submitLabel="Record Transaction"

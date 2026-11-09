@@ -8,8 +8,10 @@ import {
   User,
   Phone,
   Mail,
+  MapPin,
   Save,
   ArrowLeft,
+  CheckCircle2,
 } from 'lucide-react';
 import { bookingFormSchema, BookingFormSchema } from '../schemas/booking.schema';
 import { BookingFormData } from '../types/booking.types';
@@ -36,7 +38,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   // Format initial date to YYYY-MM-DD for standard date input if given as ISO
   const formattedDate = initialData?.eventDate
     ? new Date(initialData.eventDate).toISOString().split('T')[0]
-    : '';
+    : new Date().toISOString().split('T')[0];
 
   const {
     register,
@@ -56,49 +58,63 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   });
 
   const handleFormSubmit = async (values: BookingFormSchema) => {
-    // Convert date string to ISO date
-    const isoDate = new Date(values.eventDate).toISOString();
+    // Convert date string safely to ISO date
+    const isoDate = values.eventDate && !isNaN(Date.parse(values.eventDate))
+      ? new Date(values.eventDate).toISOString()
+      : new Date().toISOString();
+
     await onSubmit({
       ...values,
+      title: values.title || '',
       eventDate: isoDate,
+      guestName: values.guestName || '',
+      guestPhone: values.guestPhone || '',
     });
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 max-w-4xl">
-      {/* 1. Event / Booking Specifications */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-slate-900 font-semibold">
-            <CalendarDays className="w-5 h-5 text-slate-700" />
-            <CardTitle>Catering Event / Booking Details</CardTitle>
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5 max-w-3xl">
+      {/* Friendly Khatabook Helper Note */}
+      <div className="flex items-center gap-2 p-3 bg-emerald-50/70 border border-emerald-200/60 rounded-xl text-emerald-800 text-xs">
+        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <span>
+          <strong>Quick Save:</strong> All fields are optional. Enter whatever details you have now, and update anytime later.
+        </span>
+      </div>
+
+      {/* 1. Event Specifications */}
+      <Card className="border-slate-200/90 shadow-xs rounded-2xl">
+        <CardHeader className="pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+            <CalendarDays className="w-4 h-4 text-emerald-600" />
+            <CardTitle className="text-base font-bold">Event Information</CardTitle>
           </div>
-          <CardDescription>
-            Specify the name, scheduled execution date, and service details for this catering job.
+          <CardDescription className="text-xs text-slate-500">
+            Event name, scheduled date, and menu notes
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="pt-4 space-y-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <Input
-              label="Event / Booking Title *"
-              placeholder="e.g. Roy Family Wedding Reception"
-              leftIcon={<FileText className="w-4 h-4" />}
+              label="Event Name (Optional)"
+              placeholder="e.g. Roy Wedding Reception"
+              leftIcon={<FileText className="w-4 h-4 text-slate-400" />}
               error={errors.title?.message}
               {...register('title')}
             />
 
             <Input
-              label="Event Date *"
+              label="Event Date (Optional)"
               type="date"
-              leftIcon={<CalendarDays className="w-4 h-4" />}
+              leftIcon={<CalendarDays className="w-4 h-4 text-slate-400" />}
               error={errors.eventDate?.message}
               {...register('eventDate')}
             />
           </div>
 
           <Textarea
-            label="Event Details & Notes (Optional)"
-            placeholder="e.g. Buffet menu for 350 guests, starters counter, special dessert arrangements..."
+            label="Menu Notes / Event Details (Optional)"
+            placeholder="e.g. 500 pax, Fish Fry, Basanti Pulao, Mutton Kasha, Rasomalai..."
             rows={3}
             error={errors.eventDetails?.message}
             {...register('eventDetails')}
@@ -106,57 +122,54 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* 2. Customer & Contact Information */}
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-2 text-slate-900 font-semibold">
-            <User className="w-5 h-5 text-slate-700" />
-            <CardTitle>Customer & Contact Details</CardTitle>
+      {/* 2. Customer Contact */}
+      <Card className="border-slate-200/90 shadow-xs rounded-2xl">
+        <CardHeader className="pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+            <User className="w-4 h-4 text-emerald-600" />
+            <CardTitle className="text-base font-bold">Client / Guest Details</CardTitle>
           </div>
-          <CardDescription>
-            Record the client or guest representative details responsible for this catering event.
+          <CardDescription className="text-xs text-slate-500">
+            Contact person, mobile number, and event address
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="pt-4 space-y-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <Input
-              label="Customer / Contact Name *"
+              label="Customer Name (Optional)"
               placeholder="e.g. Subhashish Roy"
-              leftIcon={<User className="w-4 h-4" />}
+              leftIcon={<User className="w-4 h-4 text-slate-400" />}
               error={errors.guestName?.message}
               {...register('guestName')}
             />
 
             <Input
               type="tel"
-              isPhone
-              label="Contact Phone Number *"
+              label="Phone Number (Optional)"
               placeholder="e.g. 9830012345"
-              leftIcon={<Phone className="w-4 h-4" />}
+              leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
               error={errors.guestPhone?.message}
               {...register('guestPhone')}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <Input
-              label="Customer Email (Optional)"
+              label="Email Address (Optional)"
               type="email"
-              placeholder="e.g. guest@example.com"
-              leftIcon={<Mail className="w-4 h-4" />}
+              placeholder="e.g. client@gmail.com"
+              leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
               error={errors.guestEmail?.message}
               {...register('guestEmail')}
             />
 
-            <div className="md:col-span-1">
-              <Textarea
-                label="Venue / Contact Address (Optional)"
-                placeholder="e.g. Royal Palace Banquet, Salt Lake, Kolkata"
-                rows={2}
-                error={errors.guestAddress?.message}
-                {...register('guestAddress')}
-              />
-            </div>
+            <Input
+              label="Venue / Address (Optional)"
+              placeholder="e.g. Swabhumi The Heritage Plaza, Kolkata"
+              leftIcon={<MapPin className="w-4 h-4 text-slate-400" />}
+              error={errors.guestAddress?.message}
+              {...register('guestAddress')}
+            />
           </div>
         </CardContent>
       </Card>
@@ -165,7 +178,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       <div className="flex items-center justify-between pt-2">
         <Link to={cancelHref}>
           <Button variant="outline" type="button" leftIcon={<ArrowLeft className="w-4 h-4" />}>
-            Cancel
+            Back
           </Button>
         </Link>
 
@@ -173,6 +186,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           type="submit"
           isLoading={isSubmitting}
           disabled={isSubmitting}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 shadow-sm"
           leftIcon={<Save className="w-4 h-4" />}
         >
           {submitLabel}

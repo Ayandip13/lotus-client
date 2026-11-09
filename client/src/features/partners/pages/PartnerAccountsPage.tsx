@@ -75,8 +75,8 @@ export const PartnerAccountsPage: React.FC = () => {
         </div>
 
         <Link to="/transactions/new">
-          <Button size="md" variant="primary" leftIcon={<Plus className="w-4 h-4" />} className="shadow-sm">
-            Record Contribution / Expense
+          <Button size="md" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm text-xs" leftIcon={<Plus className="w-4 h-4" />}>
+            + Record Entry
           </Button>
         </Link>
       </div>
@@ -120,9 +120,9 @@ export const PartnerAccountsPage: React.FC = () => {
               <div
                 key={partner.partnerId}
                 onClick={() => setSelectedPartnerId(partner.partnerId)}
-                className={`p-5 rounded-xl border cursor-pointer transition-all ${
+                className={`p-5 rounded-2xl border cursor-pointer transition-all ${
                   isSelected
-                    ? 'border-slate-900 bg-white shadow-md ring-2 ring-slate-900/10'
+                    ? 'border-emerald-600 bg-white shadow-md ring-2 ring-emerald-500/10'
                     : 'border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300'
                 }`}
               >
@@ -131,7 +131,7 @@ export const PartnerAccountsPage: React.FC = () => {
                     <div
                       className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${
                         isSelected
-                          ? 'bg-slate-900 text-white'
+                          ? 'bg-emerald-600 text-white'
                           : 'bg-slate-200 text-slate-700'
                       }`}
                     >

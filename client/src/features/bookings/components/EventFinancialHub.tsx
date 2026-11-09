@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Info } from 'lucide-react';
+import { Eye, ArrowUpRight, ArrowDownRight, FileText } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Skeleton, SkeletonStatCard, SkeletonTable } from '../../../components/ui/Skeleton';
 import { useEventFinancials } from '../hooks/useBookings';
-import { useVendors } from '../../dues/hooks/useDues';
 import { usePartnerSummaries } from '../../accounts/hooks/useAccounts';
 import { RecordCustomerPaymentModal } from '../../dues/components/RecordCustomerPaymentModal';
-import { RecordVendorPaymentModal } from '../../dues/components/RecordVendorPaymentModal';
-import { CreateVendorBillModal } from '../../dues/components/CreateVendorBillModal';
 
 interface EventFinancialHubProps {
   eventId: string;
@@ -17,19 +14,13 @@ interface EventFinancialHubProps {
 
 export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'invoices' | 'collections' | 'expenses' | 'vendors'>('invoices');
-
-  // Modals
+  const [activeTab, setActiveTab] = useState<'invoices' | 'collections' | 'expenses'>('invoices');
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<any>(null);
-  const [selectedVendorDue, setSelectedVendorDue] = useState<any>(null);
-  const [isVendorBillModalOpen, setIsVendorBillModalOpen] = useState(false);
 
-  // Queries using centralized TanStack Query hooks
   const { data, isLoading: isFinLoading } = useEventFinancials(eventId);
-  const { data: vendors = [], isLoading: isVendorsLoading } = useVendors();
   const { data: rawPartners = [], isLoading: isPartnersLoading } = usePartnerSummaries();
 
-  const loading = isFinLoading || isVendorsLoading || isPartnersLoading;
+  const loading = isFinLoading || isPartnersLoading;
 
   const partners = rawPartners.map((p: any) => ({
     id: p.partnerId || p._id,
@@ -47,7 +38,6 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
           <div className="flex gap-2">
             <Skeleton className="h-8 w-24 rounded-lg" />
             <Skeleton className="h-8 w-28 rounded-lg" />
-            <Skeleton className="h-8 w-24 rounded-lg" />
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -62,91 +52,77 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
 
   if (!data) return null;
 
-  const { summary, collections, expenses, invoices, vendorBills } = data;
+  const { summary, collections, expenses, invoices } = data;
+  const netCashflow = (summary.totalAmountCollected || 0) - (summary.totalExpenses || 0);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
       {/* Header & Quick Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h2 className="text-base font-bold text-slate-900">Event Financial Hub</h2>
+          <h2 className="text-base font-bold text-slate-900">Event Financials & Invoices</h2>
           <p className="text-xs text-slate-500">
-            Dedicated financials, billings, collections, and supplier dues for this event
+            Track invoices, customer payments, and event expenses in one simple place
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
-            variant="outline"
-            className="text-xs"
+            className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
             onClick={() => navigate(`/invoices/new?eventId=${eventId}`)}
           >
-            + Create Invoice
+            <FileText className="w-3.5 h-3.5 mr-1" />
+            + New Invoice
           </Button>
           <Button
             size="sm"
             variant="outline"
-            className="text-xs"
-            onClick={() => navigate(`/transactions/new?eventId=${eventId}`)}
+            className="text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+            onClick={() => navigate(`/transactions/new?type=INCOME&eventId=${eventId}`)}
           >
-            + Record Ledger Entry
+            <ArrowDownRight className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+            + Record Income
           </Button>
           <Button
             size="sm"
-            className="text-xs"
-            onClick={() => setIsVendorBillModalOpen(true)}
+            variant="outline"
+            className="text-xs border-rose-200 text-rose-700 hover:bg-rose-50"
+            onClick={() => navigate(`/transactions/new?type=EXPENSE&eventId=${eventId}`)}
           >
-            + Add Vendor Due
+            <ArrowUpRight className="w-3.5 h-3.5 mr-1 text-rose-600" />
+            + Record Expense
           </Button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
           <span className="text-[10px] uppercase font-bold text-slate-500 block">Total Invoiced</span>
-          <p className="text-base font-bold text-slate-900 mt-1">₹{summary.totalInvoiced.toLocaleString()}</p>
+          <p className="text-lg font-bold text-slate-900 mt-1">₹{summary.totalInvoiced.toLocaleString()}</p>
         </div>
 
-        <div className="p-3 bg-emerald-50/60 border border-emerald-200/60 rounded-xl">
+        <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl">
           <span className="text-[10px] uppercase font-bold text-emerald-800 block">Amount Collected</span>
-          <p className="text-base font-bold text-emerald-700 mt-1">
-            ₹{summary.totalAmountCollected.toLocaleString()}
+          <p className="text-lg font-bold text-emerald-700 mt-1">
+            + ₹{summary.totalAmountCollected.toLocaleString()}
           </p>
         </div>
 
-        <div className="p-3 bg-rose-50/60 border border-rose-200/60 rounded-xl">
+        <div className="p-3.5 bg-rose-50/70 border border-rose-200/80 rounded-xl">
           <span className="text-[10px] uppercase font-bold text-rose-800 block">Customer Due</span>
-          <p className="text-base font-bold text-rose-600 mt-1">
+          <p className="text-lg font-bold text-rose-600 mt-1">
             ₹{summary.remainingCustomerDue.toLocaleString()}
           </p>
         </div>
 
-        <div className="p-3 bg-amber-50/60 border border-amber-200/60 rounded-xl">
-          <span className="text-[10px] uppercase font-bold text-amber-800 block">Recorded Expenses</span>
-          <p className="text-base font-bold text-amber-700 mt-1">₹{summary.totalExpenses.toLocaleString()}</p>
-        </div>
-
-        <div className="p-3 bg-indigo-50/60 border border-indigo-200/60 rounded-xl">
-          <span className="text-[10px] uppercase font-bold text-indigo-800 block">Vendor Due</span>
-          <p className="text-base font-bold text-indigo-700 mt-1">₹{summary.totalVendorDue.toLocaleString()}</p>
-        </div>
-
-        <div className="p-3 bg-slate-900 text-white rounded-xl">
-          <span className="text-[10px] uppercase font-bold text-slate-300 block">Net Cashflow</span>
-          <p className={`text-base font-black mt-1 ${summary.netCashflow >= 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-            ₹{summary.netCashflow.toLocaleString()}
+        <div className="p-3.5 bg-slate-900 text-white rounded-xl">
+          <span className="text-[10px] uppercase font-bold text-slate-300 block">Net Balance</span>
+          <p className={`text-lg font-black mt-1 ${netCashflow >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {netCashflow >= 0 ? '+ ' : ''}₹{netCashflow.toLocaleString()}
           </p>
         </div>
-      </div>
-
-      <div className="p-2.5 bg-slate-50 rounded-lg text-[11px] text-slate-600 flex items-center gap-1.5 border border-slate-200/60">
-        <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-        <span>
-          <strong>Accounting Principle:</strong> Net cashflow represents cash collected minus cash expenses. Final profit
-          must also account for outstanding vendor payables and partner contributions.
-        </span>
       </div>
 
       {/* Hub Tabs */}
@@ -155,7 +131,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
           onClick={() => setActiveTab('invoices')}
           className={`pb-2.5 border-b-2 transition ${
             activeTab === 'invoices'
-              ? 'border-slate-900 text-slate-900 font-bold'
+              ? 'border-emerald-600 text-emerald-700 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
@@ -165,31 +141,21 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
           onClick={() => setActiveTab('collections')}
           className={`pb-2.5 border-b-2 transition ${
             activeTab === 'collections'
-              ? 'border-slate-900 text-slate-900 font-bold'
+              ? 'border-emerald-600 text-emerald-700 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Customer Collections ({collections.length})
+          Payments Received ({collections.length})
         </button>
         <button
           onClick={() => setActiveTab('expenses')}
           className={`pb-2.5 border-b-2 transition ${
             activeTab === 'expenses'
-              ? 'border-slate-900 text-slate-900 font-bold'
+              ? 'border-emerald-600 text-emerald-700 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
           Expenses ({expenses.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('vendors')}
-          className={`pb-2.5 border-b-2 transition ${
-            activeTab === 'vendors'
-              ? 'border-slate-900 text-slate-900 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          Vendor Payables ({vendorBills.length})
         </button>
       </div>
 
@@ -197,7 +163,16 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
       {activeTab === 'invoices' && (
         <div className="space-y-3">
           {invoices.length === 0 ? (
-            <p className="text-xs text-slate-500 py-4 text-center">No invoices issued for this event yet.</p>
+            <div className="text-center py-8 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <p className="text-sm text-slate-500 mb-2">No invoices created for this event yet.</p>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                onClick={() => navigate(`/invoices/new?eventId=${eventId}`)}
+              >
+                + Create First Invoice
+              </Button>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -214,7 +189,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {invoices.map((inv: any) => (
-                    <tr key={inv._id}>
+                    <tr key={inv._id} className="hover:bg-slate-50/60">
                       <td className="py-2.5 px-3 font-bold text-slate-900">{inv.invoiceNumber}</td>
                       <td className="py-2.5 px-3 text-slate-500">
                         {new Date(inv.invoiceDate).toLocaleDateString()}
@@ -236,7 +211,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                           {inv.remainingDue > 0 && (
                             <Button
                               size="sm"
-                              className="h-7 text-[11px] px-2"
+                              className="h-7 text-[11px] px-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                               onClick={() =>
                                 setSelectedInvoiceForPayment({
                                   invoiceId: inv._id,
@@ -247,7 +222,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                                 })
                               }
                             >
-                              Pay
+                              Collect
                             </Button>
                           )}
                           <Button
@@ -256,7 +231,8 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                             className="h-7 text-[11px] px-2"
                             onClick={() => navigate(`/invoices/${inv._id}`)}
                           >
-                            <Eye className="w-3 h-3" />
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
                           </Button>
                         </div>
                       </td>
@@ -286,14 +262,14 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {collections.map((c: any) => (
-                    <tr key={c._id}>
+                    <tr key={c._id} className="hover:bg-slate-50/60">
                       <td className="py-2.5 px-3 text-slate-500">
                         {new Date(c.transactionDate).toLocaleDateString()}
                       </td>
                       <td className="py-2.5 px-3 font-medium text-slate-800">{c.description}</td>
                       <td className="py-2.5 px-3 text-slate-600">{c.partner?.name || 'Common Business'}</td>
                       <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
-                        ₹{c.amount.toLocaleString()}
+                        + ₹{c.amount.toLocaleString()}
                       </td>
                     </tr>
                   ))}
@@ -322,7 +298,7 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {expenses.map((e: any) => (
-                    <tr key={e._id}>
+                    <tr key={e._id} className="hover:bg-slate-50/60">
                       <td className="py-2.5 px-3 text-slate-500">
                         {new Date(e.transactionDate).toLocaleDateString()}
                       </td>
@@ -333,8 +309,8 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-slate-600">{e.partner?.name || '-'}</td>
-                      <td className="py-2.5 px-3 text-right font-bold text-amber-700">
-                        ₹{e.amount.toLocaleString()}
+                      <td className="py-2.5 px-3 text-right font-bold text-rose-600">
+                        - ₹{e.amount.toLocaleString()}
                       </td>
                     </tr>
                   ))}
@@ -345,95 +321,13 @@ export const EventFinancialHub: React.FC<EventFinancialHubProps> = ({ eventId })
         </div>
       )}
 
-      {activeTab === 'vendors' && (
-        <div className="space-y-3">
-          {vendorBills.length === 0 ? (
-            <p className="text-xs text-slate-500 py-4 text-center">No vendor payables associated with this event.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-[10px] font-bold uppercase text-slate-500 border-b border-slate-200">
-                  <tr>
-                    <th className="py-2.5 px-3">Vendor</th>
-                    <th className="py-2.5 px-3">Description</th>
-                    <th className="py-2.5 px-3">Total Payable</th>
-                    <th className="py-2.5 px-3">Paid</th>
-                    <th className="py-2.5 px-3 text-rose-600">Remaining Due</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {vendorBills.map((vb: any) => (
-                    <tr key={vb._id}>
-                      <td className="py-2.5 px-3">
-                        <p className="font-bold text-slate-900">{vb.vendor?.name}</p>
-                        <span className="text-[10px] text-slate-500">{vb.vendor?.category}</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-700">{vb.description}</td>
-                      <td className="py-2.5 px-3 font-semibold">₹{vb.totalAmount.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-emerald-700">₹{vb.paidAmount.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 font-bold text-rose-600">
-                        ₹{vb.remainingAmount.toLocaleString()}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <Badge variant={vb.status === 'PAID' ? 'success' : 'default'}>{vb.status}</Badge>
-                      </td>
-                      <td className="py-2.5 px-3 text-right">
-                        {vb.remainingAmount > 0 && (
-                          <Button
-                            size="sm"
-                            className="h-7 text-[11px] px-2"
-                            onClick={() =>
-                              setSelectedVendorDue({
-                                billId: vb._id,
-                                vendorName: vb.vendor?.name,
-                                description: vb.description,
-                                totalPayableAmount: vb.totalAmount,
-                                remainingAmount: vb.remainingAmount,
-                              })
-                            }
-                          >
-                            Pay
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Payment Modals */}
+      {/* Payment Collection Modal */}
       {selectedInvoiceForPayment && (
         <RecordCustomerPaymentModal
           dueItem={selectedInvoiceForPayment}
           partners={partners}
           onClose={() => setSelectedInvoiceForPayment(null)}
           onSuccess={() => setSelectedInvoiceForPayment(null)}
-        />
-      )}
-
-      {selectedVendorDue && (
-        <RecordVendorPaymentModal
-          dueItem={selectedVendorDue}
-          partners={partners}
-          onClose={() => setSelectedVendorDue(null)}
-          onSuccess={() => setSelectedVendorDue(null)}
-        />
-      )}
-
-      {isVendorBillModalOpen && (
-        <CreateVendorBillModal
-          isOpen={isVendorBillModalOpen}
-          vendors={vendors}
-          events={[{ id: eventId, title: data?.event?.title || 'This Event' }]}
-          defaultEventId={eventId}
-          onClose={() => setIsVendorBillModalOpen(false)}
-          onSuccess={() => setIsVendorBillModalOpen(false)}
         />
       )}
     </div>

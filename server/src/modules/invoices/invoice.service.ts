@@ -63,9 +63,12 @@ export class InvoiceService {
    * Creates a new customer invoice (GST or Non-GST) with strict line-item calculations.
    */
   async createInvoice(partnerId: string | Types.ObjectId, data: CreateInvoiceInput): Promise<IInvoice> {
-    const event = await Event.findOne({ _id: data.relatedEvent, isDeleted: false });
-    if (!event) {
-      throw new BadRequestError('Referenced event was not found or is deleted');
+    let event = null;
+    if (data.relatedEvent && data.relatedEvent.trim() !== '') {
+      event = await Event.findOne({ _id: data.relatedEvent, isDeleted: false });
+      if (!event) {
+        throw new BadRequestError('Referenced event was not found or is deleted');
+      }
     }
 
     let subtotal = 0;
@@ -154,15 +157,15 @@ export class InvoiceService {
       try {
         invoice = new Invoice({
           invoiceNumber,
-          invoiceType: data.invoiceType,
-          invoiceDate: new Date(data.invoiceDate),
+          invoiceType: data.invoiceType || 'NON_GST',
+          invoiceDate: data.invoiceDate ? new Date(data.invoiceDate) : new Date(),
           dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
-          customerName: data.customerName,
-          customerPhone: data.customerPhone,
+          customerName: data.customerName && data.customerName.trim() !== '' ? data.customerName.trim() : 'Customer',
+          customerPhone: data.customerPhone ? data.customerPhone.trim() : '',
           customerEmail: data.customerEmail || undefined,
           customerAddress: data.customerAddress || undefined,
           customerGstin: data.customerGstin || undefined,
-          relatedEvent: event._id,
+          relatedEvent: event ? event._id : undefined,
           items: computedItems,
           subtotal,
           subtotalPaise,

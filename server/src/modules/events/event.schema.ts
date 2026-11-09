@@ -2,13 +2,16 @@ import { z } from 'zod';
 
 export const createEventSchema = z.object({
   title: z
-    .string({ required_error: 'Event/booking name is required' })
+    .string()
     .trim()
-    .min(2, 'Event/booking name must be at least 2 characters')
-    .max(200, 'Event/booking name must not exceed 200 characters'),
+    .max(200, 'Event/booking name must not exceed 200 characters')
+    .optional()
+    .or(z.literal('')),
   eventDate: z
-    .string({ required_error: 'Event date is required' })
-    .refine((val) => !isNaN(Date.parse(val)), {
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
       message: 'Invalid event date format (must be ISO-8601 date string)',
     }),
   eventDetails: z
@@ -18,15 +21,17 @@ export const createEventSchema = z.object({
     .optional()
     .or(z.literal('')),
   guestName: z
-    .string({ required_error: 'Guest name is required' })
+    .string()
     .trim()
-    .min(2, 'Guest name must be at least 2 characters')
-    .max(100, 'Guest name must not exceed 100 characters'),
+    .max(100, 'Guest name must not exceed 100 characters')
+    .optional()
+    .or(z.literal('')),
   guestPhone: z
-    .string({ required_error: 'Guest contact number is required' })
+    .string()
     .trim()
-    .min(5, 'Contact number must be at least 5 characters')
-    .max(20, 'Contact number must not exceed 20 characters'),
+    .max(20, 'Contact number must not exceed 20 characters')
+    .optional()
+    .or(z.literal('')),
   guestEmail: z
     .string()
     .trim()

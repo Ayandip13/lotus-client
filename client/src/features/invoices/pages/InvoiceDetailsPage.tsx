@@ -84,7 +84,7 @@ export const InvoiceDetailsPage: React.FC = () => {
     }
 
     // 2. Fallback: Open WhatsApp directly with prefilled text
-    const cleanPhone = invoice.customerPhone.replace(/[^0-9]/g, '');
+    const cleanPhone = (invoice.customerPhone || '').replace(/[^0-9]/g, '');
     const targetPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
     const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
@@ -443,7 +443,7 @@ export const InvoiceDetailsPage: React.FC = () => {
           onConfirm={handleDeleteInvoice}
           isDeleting={deleteInvoiceMutation.isPending}
           invoiceNumber={invoice.invoiceNumber}
-          customerName={invoice.customerName}
+          customerName={invoice.customerName || 'Customer'}
         />
       )}
 
@@ -454,8 +454,8 @@ export const InvoiceDetailsPage: React.FC = () => {
             invoiceId: invoice._id,
             invoiceNumber: invoice.invoiceNumber,
             invoiceDate: invoice.invoiceDate,
-            customerName: invoice.customerName,
-            customerPhone: invoice.customerPhone,
+            customerName: invoice.customerName || 'Customer',
+            customerPhone: invoice.customerPhone || '',
             totalBillAmount: invoice.grandTotal,
             amountReceived: invoice.amountPaid,
             remainingDue: invoice.remainingDue,

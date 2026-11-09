@@ -18,12 +18,24 @@ export class EventService {
     partnerId: string | Types.ObjectId,
     data: CreateEventInput
   ): Promise<IEvent> {
+    const parsedDate = data.eventDate && !isNaN(Date.parse(data.eventDate))
+      ? new Date(data.eventDate)
+      : new Date();
+
+    const title = data.title && data.title.trim() !== ''
+      ? data.title.trim()
+      : `Catering Event - ${parsedDate.toLocaleDateString('en-IN')}`;
+
+    const guestName = data.guestName && data.guestName.trim() !== ''
+      ? data.guestName.trim()
+      : 'Guest';
+
     const event = new Event({
-      title: data.title,
-      eventDate: new Date(data.eventDate),
-      eventDetails: data.eventDetails ? data.eventDetails.trim() : undefined,
-      guestName: data.guestName,
-      guestPhone: data.guestPhone,
+      title,
+      eventDate: parsedDate,
+      eventDetails: data.eventDetails && data.eventDetails.trim() !== '' ? data.eventDetails.trim() : undefined,
+      guestName,
+      guestPhone: data.guestPhone && data.guestPhone.trim() !== '' ? data.guestPhone.trim() : '',
       guestEmail: data.guestEmail && data.guestEmail.trim() !== '' ? data.guestEmail.trim() : undefined,
       guestAddress: data.guestAddress && data.guestAddress.trim() !== '' ? data.guestAddress.trim() : undefined,
       createdByPartner: partnerId,

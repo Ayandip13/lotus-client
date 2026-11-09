@@ -52,11 +52,11 @@ export interface IInvoice extends Document {
   invoiceDate: Date;
   dueDate?: Date;
   customerName: string;
-  customerPhone: string;
+  customerPhone?: string;
   customerEmail?: string;
   customerAddress?: string;
   customerGstin?: string;
-  relatedEvent: Types.ObjectId | IEvent;
+  relatedEvent?: Types.ObjectId | IEvent;
   items: IInvoiceLineItem[];
   subtotal: number;
   subtotalPaise: number;
@@ -154,14 +154,14 @@ const invoiceSchema = new Schema<IInvoice>(
     },
     customerName: {
       type: String,
-      required: [true, 'Customer name is required'],
       trim: true,
+      default: 'Customer',
       index: true,
     },
     customerPhone: {
       type: String,
-      required: [true, 'Customer contact number is required'],
       trim: true,
+      default: '',
       index: true,
     },
     customerEmail: {
@@ -184,7 +184,7 @@ const invoiceSchema = new Schema<IInvoice>(
     relatedEvent: {
       type: Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Associated catering event reference is required'],
+      default: undefined,
       index: true,
     },
     items: {

@@ -76,7 +76,7 @@ export const TransactionCard: React.FC<TransactionCardProps> = ({
                 ? 'text-emerald-600'
                 : transaction.transactionType === 'PARTNER_CONTRIBUTION'
                 ? 'text-blue-600'
-                : 'text-slate-900'
+                : 'text-rose-600'
             }`}
           >
             {transaction.transactionType === 'BUSINESS_INCOME'

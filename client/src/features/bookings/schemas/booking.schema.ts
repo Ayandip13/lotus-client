@@ -4,12 +4,14 @@ export const bookingFormSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(2, 'Event / Booking name must be at least 2 characters')
-    .max(200, 'Event / Booking name cannot exceed 200 characters'),
+    .max(200, 'Event / Booking name cannot exceed 200 characters')
+    .optional()
+    .or(z.literal('')),
   eventDate: z
     .string()
-    .min(1, 'Please select the scheduled event date')
-    .refine((val) => !isNaN(Date.parse(val)), {
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
       message: 'Please provide a valid date',
     }),
   eventDetails: z
@@ -21,12 +23,15 @@ export const bookingFormSchema = z.object({
   guestName: z
     .string()
     .trim()
-    .min(2, 'Guest / Client name must be at least 2 characters')
-    .max(100, 'Guest name cannot exceed 100 characters'),
+    .max(100, 'Guest name cannot exceed 100 characters')
+    .optional()
+    .or(z.literal('')),
   guestPhone: z
     .string()
     .trim()
-    .regex(/^[0-9]{10}$/, 'Contact phone number must be exactly 10 digits'),
+    .max(20, 'Contact phone number cannot exceed 20 characters')
+    .optional()
+    .or(z.literal('')),
   guestEmail: z
     .string()
     .trim()

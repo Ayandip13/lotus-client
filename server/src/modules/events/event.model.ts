@@ -21,14 +21,13 @@ const eventSchema = new Schema<IEvent>(
   {
     title: {
       type: String,
-      required: [true, 'Event/booking name is required'],
       trim: true,
-      minlength: [2, 'Event/booking name must be at least 2 characters long'],
+      default: 'Catering Event',
       maxlength: [200, 'Event/booking name must not exceed 200 characters'],
     },
     eventDate: {
       type: Date,
-      required: [true, 'Event date is required'],
+      default: Date.now,
       index: true,
     },
     eventDetails: {
@@ -39,17 +38,15 @@ const eventSchema = new Schema<IEvent>(
     },
     guestName: {
       type: String,
-      required: [true, 'Guest name is required'],
       trim: true,
-      minlength: [2, 'Guest name must be at least 2 characters long'],
+      default: 'Guest',
       maxlength: [100, 'Guest name must not exceed 100 characters'],
       index: true,
     },
     guestPhone: {
       type: String,
-      required: [true, 'Guest contact number is required'],
       trim: true,
-      minlength: [5, 'Contact number must be at least 5 characters long'],
+      default: '',
       maxlength: [20, 'Contact number must not exceed 20 characters'],
       index: true,
     },

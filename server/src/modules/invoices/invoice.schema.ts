@@ -24,29 +24,38 @@ export const businessDetailsSchema = z.object({
 });
 
 export const createInvoiceSchema = z.object({
-  invoiceType: z.enum(['GST', 'NON_GST'], {
-    required_error: 'Invoice type must be either GST or NON_GST',
-  }),
-  invoiceDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: 'Valid invoice date is required',
-  }),
+  invoiceType: z.enum(['GST', 'NON_GST']).default('NON_GST'),
+  invoiceDate: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
+      message: 'Valid invoice date is required',
+    }),
   dueDate: z
     .string()
-    .refine((val) => !isNaN(Date.parse(val)), {
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
       message: 'Invalid due date format',
-    })
-    .optional(),
-  customerName: z.string().trim().min(2, 'Customer name must be at least 2 characters'),
-  customerPhone: z.string().trim().min(5, 'Customer phone must be at least 5 digits'),
+    }),
+  customerName: z.string().trim().optional().or(z.literal('')),
+  customerPhone: z.string().trim().optional().or(z.literal('')),
   customerEmail: z.string().trim().email('Invalid customer email').optional().or(z.literal('')),
-  customerAddress: z.string().trim().optional(),
+  customerAddress: z.string().trim().optional().or(z.literal('')),
   customerGstin: z.string().trim().optional().or(z.literal('')),
-  relatedEvent: z.string().regex(objectIdRegex, 'Invalid event ID format'),
+  relatedEvent: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => !val || objectIdRegex.test(val), {
+      message: 'Invalid event ID format',
+    }),
   items: z.array(lineItemSchema).min(1, 'At least one line item is required'),
   discount: z.number().min(0, 'Discount cannot be negative').optional(),
   isInterState: z.boolean().optional(),
   businessDetails: businessDetailsSchema.optional(),
-  notes: z.string().trim().optional(),
+  notes: z.string().trim().optional().or(z.literal('')),
 });
 
 export const recordInvoicePaymentSchema = z.object({

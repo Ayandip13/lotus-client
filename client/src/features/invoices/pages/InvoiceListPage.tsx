@@ -154,13 +154,13 @@ export const InvoiceListPage: React.FC = () => {
             )}
           </div>
           <p className="text-sm text-slate-500">
-            Generate and manage customer-facing GST and Non-GST catering invoices
+            Create customer invoices, track advances, and share bills via WhatsApp or PDF
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => navigate('/invoices/new')} className="gap-2">
+          <Button onClick={() => navigate('/invoices/new')} className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm">
             <Plus className="w-4 h-4" />
-            Create Invoice
+            New Invoice
           </Button>
         </div>
       </div>

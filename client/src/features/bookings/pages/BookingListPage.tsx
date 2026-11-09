@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { queryKeys } from '../../../lib/queryKeys';
 import { Link } from 'react-router-dom';
@@ -7,8 +7,8 @@ import {
   Search,
   CalendarDays,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
+  Clock,
+  History,
 } from 'lucide-react';
 import { bookingService } from '../services/bookingService';
 import { BookingEvent } from '../types/booking.types';
@@ -19,9 +19,11 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Alert } from '../../../components/ui/Alert';
 import { SkeletonTable } from '../../../components/ui/Skeleton';
+import { cn } from '../../../lib/utils';
 
 export const BookingListPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'UPCOMING' | 'PAST' | 'ALL'>('UPCOMING');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -31,8 +33,8 @@ export const BookingListPage: React.FC = () => {
   React.useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
-      setPage(1); // Reset to page 1 on new search
-    }, 350);
+      setPage(1);
+    }, 300);
     return () => clearTimeout(handler);
   }, [search]);
 
@@ -42,7 +44,7 @@ export const BookingListPage: React.FC = () => {
     queryFn: () =>
       bookingService.getBookings({
         page,
-        limit: 10,
+        limit: 50,
         search: debouncedSearch,
         sortBy: 'eventDate',
         sortOrder: 'desc',
@@ -57,7 +59,6 @@ export const BookingListPage: React.FC = () => {
     onSuccess: () => {
       setDeletingBooking(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.events.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
     },
   });
 
@@ -66,55 +67,127 @@ export const BookingListPage: React.FC = () => {
     await deleteMutation.mutateAsync(deletingBooking._id);
   };
 
-  const bookings = data?.items || [];
-  const pagination = data?.pagination;
+  const allBookings = data?.items || [];
+
+  // Filter into Upcoming vs Past based on today's start of day
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  }, []);
+
+  const { upcomingBookings, pastBookings } = useMemo(() => {
+    const upcoming: BookingEvent[] = [];
+    const past: BookingEvent[] = [];
+
+    allBookings.forEach((b) => {
+      const eventTime = new Date(b.eventDate).getTime();
+      if (eventTime >= today) {
+        upcoming.push(b);
+      } else {
+        past.push(b);
+      }
+    });
+
+    // Upcoming sorted nearest first
+    upcoming.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+    // Past sorted newest first
+    past.sort((a, b) => new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime());
+
+    return { upcomingBookings: upcoming, pastBookings: past };
+  }, [allBookings, today]);
+
+  // Current list depending on activeTab
+  const displayedBookings = useMemo(() => {
+    if (activeTab === 'UPCOMING') return upcomingBookings;
+    if (activeTab === 'PAST') return pastBookings;
+    return allBookings;
+  }, [activeTab, upcomingBookings, pastBookings, allBookings]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Catering Bookings & Events
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Booking & Events
             </h1>
             {isFetching && !isLoading && (
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-slate-400" />
             )}
           </div>
-          <p className="mt-1 text-sm text-slate-500">
-            Maintain independent records of catering jobs, guest details, and execution dates.
+          <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
+            Create and manage catering assignments, client contact details, and dates.
           </p>
         </div>
 
         <Link to="/bookings/new">
-          <Button leftIcon={<Plus className="w-4 h-4" />} className="w-full sm:w-auto shadow-sm">
-            New Booking / Event
+          <Button
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-xs"
+          >
+            New Event
           </Button>
         </Link>
       </div>
 
-      {/* 2. Search & Filter Bar */}
-      <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm">
-        <div className="relative flex-1">
+      {/* 2. Khatabook-Style Tabs & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Simple Tab Switcher */}
+        <div className="inline-flex p-1 bg-slate-100/90 rounded-xl text-xs font-semibold select-none self-start">
+          <button
+            type="button"
+            onClick={() => setActiveTab('UPCOMING')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+              activeTab === 'UPCOMING'
+                ? 'bg-white text-emerald-800 shadow-xs font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            )}
+          >
+            <Clock className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Upcoming ({upcomingBookings.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('PAST')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+              activeTab === 'PAST'
+                ? 'bg-white text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            )}
+          >
+            <History className="w-3.5 h-3.5 text-slate-500" />
+            <span>Past Events ({pastBookings.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('ALL')}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer',
+              activeTab === 'ALL'
+                ? 'bg-white text-slate-900 shadow-xs font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            )}
+          >
+            <span>All ({allBookings.length})</span>
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
           <Input
-            placeholder="Search by event title, guest name, or phone number..."
+            placeholder="Search event, guest or phone..."
             leftIcon={<Search className="w-4 h-4 text-slate-400" />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border-slate-200"
+            className="border-slate-200 h-9 text-xs"
           />
         </div>
-        {search && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSearch('')}
-            className="text-xs text-slate-500 hover:text-slate-800"
-          >
-            Clear
-          </Button>
-        )}
       </div>
 
       {/* 3. Error Banner */}
@@ -131,26 +204,35 @@ export const BookingListPage: React.FC = () => {
 
       {/* 4. Loading Skeleton */}
       {isLoading ? (
-        <SkeletonTable rows={6} columns={6} />
-      ) : bookings.length === 0 ? (
+        <SkeletonTable rows={6} columns={5} />
+      ) : displayedBookings.length === 0 ? (
         /* 5. Empty State */
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 mb-3">
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center space-y-3">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
             <CalendarDays className="h-6 w-6" />
           </div>
-          <h3 className="text-sm font-semibold text-slate-900">
-            {debouncedSearch ? 'No matching bookings found' : 'No catering bookings yet'}
-          </h3>
-          <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
-            {debouncedSearch
-              ? `No records match "${debouncedSearch}". Try searching with a different name or phone number.`
-              : 'Start logging upcoming catering assignments, client requirements, and contact details.'}
-          </p>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">
+              {debouncedSearch
+                ? 'No matching events found'
+                : activeTab === 'UPCOMING'
+                ? 'No upcoming catering events scheduled'
+                : activeTab === 'PAST'
+                ? 'No past completed events found'
+                : 'No catering events yet'}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+              {debouncedSearch
+                ? `No records match "${debouncedSearch}". Try searching with a different name or phone number.`
+                : 'Start by creating a catering event. You can save with whatever details you have now!'}
+            </p>
+          </div>
+
           {!debouncedSearch && (
-            <div className="mt-5">
+            <div className="pt-2">
               <Link to="/bookings/new">
-                <Button size="sm" leftIcon={<Plus className="w-4 h-4" />}>
-                  Create First Booking
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold" leftIcon={<Plus className="w-4 h-4" />}>
+                  + Create Event
                 </Button>
               </Link>
             </div>
@@ -160,16 +242,16 @@ export const BookingListPage: React.FC = () => {
         /* 6. Records Layout: Desktop Table & Mobile Cards */
         <div className="space-y-4">
           {/* Desktop View (>= lg) */}
-          <div className="hidden lg:block shadow-sm">
+          <div className="hidden lg:block shadow-xs rounded-2xl overflow-hidden border border-slate-200/90 bg-white">
             <BookingTable
-              bookings={bookings}
+              bookings={displayedBookings}
               onDeleteClick={(booking) => setDeletingBooking(booking)}
             />
           </div>
 
           {/* Mobile & Tablet Card Grid (< lg) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-3">
-            {bookings.map((booking) => (
+            {displayedBookings.map((booking) => (
               <BookingCard
                 key={booking._id}
                 booking={booking}
@@ -177,40 +259,6 @@ export const BookingListPage: React.FC = () => {
               />
             ))}
           </div>
-
-          {/* 7. Pagination Controls */}
-          {pagination && pagination.totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-xs text-slate-500">
-              <div>
-                Showing page <span className="font-semibold text-slate-900">{pagination.page}</span>{' '}
-                of <span className="font-semibold text-slate-900">{pagination.totalPages}</span>{' '}
-                ({pagination.totalItems} total {pagination.totalItems === 1 ? 'record' : 'records'})
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={!pagination.hasPrevPage}
-                  leftIcon={<ChevronLeft className="w-4 h-4" />}
-                  className="h-8 text-xs"
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!pagination.hasNextPage}
-                  rightIcon={<ChevronRight className="w-4 h-4" />}
-                  className="h-8 text-xs"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 

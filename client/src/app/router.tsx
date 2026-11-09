@@ -1,6 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
-import { DashboardShellPage } from '../pages/DashboardShellPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
@@ -12,14 +11,9 @@ import { PartnerAccountsPage } from '../features/partners/pages/PartnerAccountsP
 import { TransactionListPage } from '../features/transactions/pages/TransactionListPage';
 import { TransactionCreatePage } from '../features/transactions/pages/TransactionCreatePage';
 import { TransactionEditPage } from '../features/transactions/pages/TransactionEditPage';
-import { DateWiseExpensePage } from '../features/accounts/pages/DateWiseExpensePage';
-import { FinancialOverviewPage } from '../features/accounts/pages/FinancialOverviewPage';
-import { CustomerDuesPage } from '../features/dues/pages/CustomerDuesPage';
-import { VendorDuesPage } from '../features/dues/pages/VendorDuesPage';
 import { InvoiceListPage } from '../features/invoices/pages/InvoiceListPage';
 import { InvoiceCreatePage } from '../features/invoices/pages/InvoiceCreatePage';
 import { InvoiceDetailsPage } from '../features/invoices/pages/InvoiceDetailsPage';
-import { CashCustodyPage } from '../features/cashCustody/pages/CashCustodyPage';
 
 export const router = createBrowserRouter([
   {
@@ -33,13 +27,14 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
+          // 1. Booking & Events is the default homepage
           {
             index: true,
-            element: <DashboardShellPage />,
+            element: <Navigate to="/bookings" replace />,
           },
           {
-            path: 'partners',
-            element: <PartnerAccountsPage />,
+            path: 'events',
+            element: <Navigate to="/bookings" replace />,
           },
           {
             path: 'bookings',
@@ -62,45 +57,8 @@ export const router = createBrowserRouter([
               },
             ],
           },
-          {
-            path: 'transactions',
-            children: [
-              {
-                index: true,
-                element: <TransactionListPage />,
-              },
-              {
-                path: 'new',
-                element: <TransactionCreatePage />,
-              },
-              {
-                path: 'date-wise',
-                element: <DateWiseExpensePage />,
-              },
-              {
-                path: ':id/edit',
-                element: <TransactionEditPage />,
-              },
-            ],
-          },
-          {
-            path: 'overview',
-            element: <FinancialOverviewPage />,
-          },
-          // Phase 5 Routes
-          {
-            path: 'dues',
-            children: [
-              {
-                path: 'customers',
-                element: <CustomerDuesPage />,
-              },
-              {
-                path: 'vendors',
-                element: <VendorDuesPage />,
-              },
-            ],
-          },
+
+          // 2. Invoice & Billing
           {
             path: 'invoices',
             children: [
@@ -122,9 +80,52 @@ export const router = createBrowserRouter([
               },
             ],
           },
+
+          // 3. Income & Expenses
+          {
+            path: 'transactions',
+            children: [
+              {
+                index: true,
+                element: <TransactionListPage />,
+              },
+              {
+                path: 'new',
+                element: <TransactionCreatePage />,
+              },
+              {
+                path: ':id/edit',
+                element: <TransactionEditPage />,
+              },
+            ],
+          },
+
+          // 4. Partner Accounts
+          {
+            path: 'partners',
+            element: <PartnerAccountsPage />,
+          },
+
+          // Graceful redirects from removed modules to the 4 core modules
+          {
+            path: 'overview',
+            element: <Navigate to="/transactions" replace />,
+          },
+          {
+            path: 'dues/customers',
+            element: <Navigate to="/invoices" replace />,
+          },
+          {
+            path: 'dues/vendors',
+            element: <Navigate to="/transactions" replace />,
+          },
+          {
+            path: 'dues',
+            element: <Navigate to="/invoices" replace />,
+          },
           {
             path: 'cash-custody',
-            element: <CashCustodyPage />,
+            element: <Navigate to="/partners" replace />,
           },
         ],
       },

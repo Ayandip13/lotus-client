@@ -143,14 +143,27 @@ export const TransactionListPage: React.FC = () => {
             )}
           </div>
           <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500">
-            Centralized financial transactions, partner contributions, and operational expenses with receipt attachments.
+            Track business income (green), business expenses (red), and partner payments
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Link to="/transactions/new" className="w-full sm:w-auto">
-            <Button size="sm" leftIcon={<Plus className="w-4 h-4" />} className="w-full sm:w-auto shadow-sm">
-              Record Transaction
+        <div className="flex flex-wrap items-center gap-2">
+          <Link to="/transactions/new?type=INCOME" className="w-full sm:w-auto">
+            <Button
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              className="w-full sm:w-auto shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
+            >
+              + Cash In (Income)
+            </Button>
+          </Link>
+          <Link to="/transactions/new?type=EXPENSE" className="w-full sm:w-auto">
+            <Button
+              size="sm"
+              leftIcon={<Plus className="w-4 h-4" />}
+              className="w-full sm:w-auto shadow-sm bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs"
+            >
+              - Cash Out (Expense)
             </Button>
           </Link>
         </div>

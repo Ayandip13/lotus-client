@@ -86,6 +86,22 @@ This document contains **only confirmed client requirements** and explicitly reg
   - Six independent financial metrics (no misleading single combined balance).
   - Partner cash-in-hand cards, overdue due alerts, upcoming events in chronological order, and recent ledger activity.
 
+### 1.10 Scope Simplification & Khatabook-Inspired UX Redesign (Phase 6)
+- **Strictly 4 Core Modules**:
+  1. **Booking & Events** (`/bookings` - default home view): Simple catering event creation, upcoming and past event filtering, event details, and linked financials.
+  2. **Invoice & Billing** (`/invoices`): Simple GST and Non-GST bills, zero-blocker creation, instant live preview, direct editing from preview, PDF generation, and WhatsApp sharing.
+  3. **Income & Expenses** (`/transactions`): Clear visual hierarchy with Green (`+ ₹`) for income and Red (`- ₹`) for expenses. Quick action buttons for `+ Cash In (Income)` and `- Cash Out (Expense)`.
+  4. **Partner Accounts** (`/partners`): Clean 3-partner presentation showing individual capital contributions, personally covered business expenses, and linked transaction histories with equal access.
+- **Form UX (Zero-Blocker Invoicing & Event Creation)**:
+  - All user-entered customer and event details are optional.
+  - Safe fallbacks auto-generate missing titles (`Catering Event - <Date>`) and default guest names (`Guest`).
+  - No blocking submission due to missing non-critical details.
+  - Calculation integrity preserved (no NaN or negative total values).
+- **Navigation**:
+  - Mobile: Exactly 4 bottom navigation tabs (Events, Billing, Income & Expenses, Partners).
+  - Desktop: Simplified sidebar containing the same 4 modules.
+  - Deprecated complex modules (Vendor Directory, Vendor Dues, Cash Custody Handover, Complex Reports) removed from active UI navigation.
+
 ---
 
 ## 2. Unresolved Business Questions

@@ -50,12 +50,12 @@ export interface InvoiceItem {
   invoiceType: InvoiceType;
   invoiceDate: string;
   dueDate?: string;
-  customerName: string;
-  customerPhone: string;
+  customerName?: string;
+  customerPhone?: string;
   customerEmail?: string;
   customerAddress?: string;
   customerGstin?: string;
-  relatedEvent: {
+  relatedEvent?: {
     _id: string;
     title: string;
     eventDate: string;
@@ -99,13 +99,13 @@ export interface CreateInvoicePayload {
   invoiceType: InvoiceType;
   invoiceDate: string;
   dueDate?: string;
-  customerName: string;
-  customerPhone: string;
+  customerName?: string;
+  customerPhone?: string;
   customerEmail?: string;
   customerAddress?: string;
   customerGstin?: string;
-  relatedEvent: string;
-  items: Array<{
+  relatedEvent?: string;
+  items?: Array<{
     description: string;
     quantity: number;
     unit: string;
