@@ -76,7 +76,7 @@ export const PartnerAccountsPage: React.FC = () => {
 
         <Link to="/transactions/new">
           <Button size="md" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm text-xs" leftIcon={<Plus className="w-4 h-4" />}>
-            + Record Entry
+            Record Entry
           </Button>
         </Link>
       </div>
@@ -120,20 +120,18 @@ export const PartnerAccountsPage: React.FC = () => {
               <div
                 key={partner.partnerId}
                 onClick={() => setSelectedPartnerId(partner.partnerId)}
-                className={`p-5 rounded-2xl border cursor-pointer transition-all ${
-                  isSelected
+                className={`p-5 rounded-2xl border cursor-pointer transition-all ${isSelected
                     ? 'border-emerald-600 bg-white shadow-md ring-2 ring-emerald-500/10'
                     : 'border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div
-                      className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                        isSelected
+                      className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs ${isSelected
                           ? 'bg-emerald-600 text-white'
                           : 'bg-slate-200 text-slate-700'
-                      }`}
+                        }`}
                     >
                       {partner.partnerName.slice(0, 2).toUpperCase()}
                     </div>
@@ -283,11 +281,10 @@ export const PartnerAccountsPage: React.FC = () => {
                     <div className="flex items-center gap-4 self-end sm:self-center">
                       <div className="text-right">
                         <div
-                          className={`font-mono font-bold text-base ${
-                            tx.transactionType === 'PARTNER_CONTRIBUTION'
+                          className={`font-mono font-bold text-base ${tx.transactionType === 'PARTNER_CONTRIBUTION'
                               ? 'text-blue-600'
                               : 'text-purple-700'
-                          }`}
+                            }`}
                         >
                           {tx.transactionType === 'PARTNER_CONTRIBUTION' ? '+' : ''}
                           {formatINR(tx.amount)}

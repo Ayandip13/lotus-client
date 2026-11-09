@@ -13,6 +13,7 @@ import {
   Landmark,
   Calendar,
   X,
+  Minus,
 } from 'lucide-react';
 import { transactionService } from '../services/transactionService';
 import { accountService } from '../../accounts/services/accountService';
@@ -154,16 +155,16 @@ export const TransactionListPage: React.FC = () => {
               leftIcon={<Plus className="w-4 h-4" />}
               className="w-full sm:w-auto shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
             >
-              + Cash In (Income)
+              Cash In (Income)
             </Button>
           </Link>
           <Link to="/transactions/new?type=EXPENSE" className="w-full sm:w-auto">
             <Button
               size="sm"
-              leftIcon={<Plus className="w-4 h-4" />}
+              leftIcon={<Minus className="w-4 h-4" />}
               className="w-full sm:w-auto shadow-sm bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs"
             >
-              - Cash Out (Expense)
+              Cash Out (Expense)
             </Button>
           </Link>
         </div>
@@ -173,43 +174,39 @@ export const TransactionListPage: React.FC = () => {
       <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto scrollbar-none pb-px text-xs sm:text-sm">
         <button
           onClick={() => handleTabChange('ALL')}
-          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            activeTab === 'ALL'
-              ? 'border-slate-900 text-slate-900 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+          className={`px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'ALL'
+            ? 'border-slate-900 text-slate-900 font-semibold'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
         >
           All Ledger Entries
         </button>
         <button
           onClick={() => handleTabChange('BUSINESS_INCOME')}
-          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            activeTab === 'BUSINESS_INCOME'
-              ? 'border-emerald-600 text-emerald-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'BUSINESS_INCOME'
+            ? 'border-emerald-600 text-emerald-700 font-semibold'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
         >
           <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
           <span>Business Income</span>
         </button>
         <button
           onClick={() => handleTabChange('BUSINESS_EXPENSE')}
-          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            activeTab === 'BUSINESS_EXPENSE'
-              ? 'border-rose-600 text-rose-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'BUSINESS_EXPENSE'
+            ? 'border-rose-600 text-rose-700 font-semibold'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
         >
           <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600" />
           <span>Business Expenses</span>
         </button>
         <button
           onClick={() => handleTabChange('PARTNER_CONTRIBUTION')}
-          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-            activeTab === 'PARTNER_CONTRIBUTION'
-              ? 'border-blue-600 text-blue-700 font-semibold'
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
+          className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'PARTNER_CONTRIBUTION'
+            ? 'border-blue-600 text-blue-700 font-semibold'
+            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
         >
           <Landmark className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
           <span>Partner Contributions</span>
